@@ -48,7 +48,7 @@ if(USE_DMTX)
   list(APPEND opt_libs ${DMTX_LIBRARIES})
 endif()
 
-vp_add_module(detection visp_core)
+vp_add_module(detection visp_core OPTIONAL visp_tt)
 vp_glob_module_sources()
 vp_module_include_directories(${opt_incs})
 vp_create_module(${opt_libs})
