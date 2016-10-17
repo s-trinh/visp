@@ -157,8 +157,59 @@ void regularImageAdd(const vpImage<unsigned char> &I1, const vpImage<unsigned ch
   unsigned char *ptr_I1   = I1.bitmap;
   unsigned char *ptr_I2   = I2.bitmap;
   unsigned char *ptr_Ires = Ires.bitmap;
+  unsigned int cpt = 0;
 
-  for (unsigned int cpt = 0; cpt < Ires.getSize(); cpt++, ++ptr_I1, ++ptr_I2, ++ptr_Ires) {
+  for (; cpt <= Ires.getSize()-16; cpt+=16) {
+    *ptr_Ires = saturate ? vpMath::saturate<unsigned char>( (short int) *ptr_I1 + (short int) *ptr_I2 ) : *ptr_I1 + *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = saturate ? vpMath::saturate<unsigned char>( (short int) *ptr_I1 + (short int) *ptr_I2 ) : *ptr_I1 + *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = saturate ? vpMath::saturate<unsigned char>( (short int) *ptr_I1 + (short int) *ptr_I2 ) : *ptr_I1 + *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = saturate ? vpMath::saturate<unsigned char>( (short int) *ptr_I1 + (short int) *ptr_I2 ) : *ptr_I1 + *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = saturate ? vpMath::saturate<unsigned char>( (short int) *ptr_I1 + (short int) *ptr_I2 ) : *ptr_I1 + *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = saturate ? vpMath::saturate<unsigned char>( (short int) *ptr_I1 + (short int) *ptr_I2 ) : *ptr_I1 + *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = saturate ? vpMath::saturate<unsigned char>( (short int) *ptr_I1 + (short int) *ptr_I2 ) : *ptr_I1 + *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = saturate ? vpMath::saturate<unsigned char>( (short int) *ptr_I1 + (short int) *ptr_I2 ) : *ptr_I1 + *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = saturate ? vpMath::saturate<unsigned char>( (short int) *ptr_I1 + (short int) *ptr_I2 ) : *ptr_I1 + *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = saturate ? vpMath::saturate<unsigned char>( (short int) *ptr_I1 + (short int) *ptr_I2 ) : *ptr_I1 + *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = saturate ? vpMath::saturate<unsigned char>( (short int) *ptr_I1 + (short int) *ptr_I2 ) : *ptr_I1 + *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = saturate ? vpMath::saturate<unsigned char>( (short int) *ptr_I1 + (short int) *ptr_I2 ) : *ptr_I1 + *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = saturate ? vpMath::saturate<unsigned char>( (short int) *ptr_I1 + (short int) *ptr_I2 ) : *ptr_I1 + *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = saturate ? vpMath::saturate<unsigned char>( (short int) *ptr_I1 + (short int) *ptr_I2 ) : *ptr_I1 + *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = saturate ? vpMath::saturate<unsigned char>( (short int) *ptr_I1 + (short int) *ptr_I2 ) : *ptr_I1 + *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = saturate ? vpMath::saturate<unsigned char>( (short int) *ptr_I1 + (short int) *ptr_I2 ) : *ptr_I1 + *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+  }
+
+  for (; cpt < Ires.getSize(); cpt++, ++ptr_I1, ++ptr_I2, ++ptr_Ires) {
     *ptr_Ires = saturate ? vpMath::saturate<unsigned char>( (short int) *ptr_I1 + (short int) *ptr_I2 ) : *ptr_I1 + *ptr_I2;
   }
 }
@@ -179,6 +230,129 @@ void regularImageSubtract(const vpImage<unsigned char> &I1, const vpImage<unsign
 
   for (unsigned int cpt = 0; cpt < Ires.getSize(); cpt++, ++ptr_I1, ++ptr_I2, ++ptr_Ires) {
     *ptr_Ires = saturate ? vpMath::saturate<unsigned char>( (short int) *ptr_I1 - (short int) *ptr_I2 ) : *ptr_I1 - *ptr_I2;
+  }
+}
+
+void regularImageBitwiseAnd(const vpImage<unsigned char> &I1, const vpImage<unsigned char> &I2,
+                            vpImage<unsigned char> &Ires) {
+  if (I1.getSize() == 0) {
+    std::cerr << "I1 input image is empty!" << std::endl;
+    return;
+  }
+
+  if (I1.getHeight() != I2.getHeight() || I1.getWidth() != I2.getWidth()) {
+    throw (vpException(vpException::dimensionError, "The two images do not have the same size"));
+  }
+
+  if (Ires.getHeight() != I1.getHeight() || Ires.getWidth() != I1.getWidth()) {
+    Ires.resize(I1.getHeight(), I1.getWidth());
+  }
+
+  unsigned char *ptr_I1   = I1.bitmap;
+  unsigned char *ptr_I2   = I2.bitmap;
+  unsigned char *ptr_Ires = Ires.bitmap;
+  unsigned int cpt = 0;
+
+  for (; cpt <= Ires.getSize()-16; cpt+=16) {
+    *ptr_Ires = *ptr_I1 & *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = *ptr_I1 & *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = *ptr_I1 & *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = *ptr_I1 & *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = *ptr_I1 & *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = *ptr_I1 & *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = *ptr_I1 & *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = *ptr_I1 & *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = *ptr_I1 & *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = *ptr_I1 & *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = *ptr_I1 & *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = *ptr_I1 & *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = *ptr_I1 & *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = *ptr_I1 & *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = *ptr_I1 & *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+
+    *ptr_Ires = *ptr_I1 & *ptr_I2;
+    ++ptr_I1; ++ptr_I2; ++ptr_Ires;
+  }
+
+  for (; cpt < Ires.getSize(); cpt++, ++ptr_I1, ++ptr_I2, ++ptr_Ires) {
+    *ptr_Ires = *ptr_I1 & *ptr_I2;
+  }
+}
+
+void regularImageBitwiseOr(const vpImage<unsigned char> &I1, const vpImage<unsigned char> &I2,
+                           vpImage<unsigned char> &Ires) {
+  if (I1.getSize() == 0) {
+    std::cerr << "I1 input image is empty!" << std::endl;
+    return;
+  }
+
+  if (I1.getHeight() != I2.getHeight() || I1.getWidth() != I2.getWidth()) {
+    throw (vpException(vpException::dimensionError, "The two images do not have the same size"));
+  }
+
+  if (Ires.getHeight() != I1.getHeight() || Ires.getWidth() != I1.getWidth()) {
+    Ires.resize(I1.getHeight(), I1.getWidth());
+  }
+
+  unsigned char *ptr_I1   = I1.bitmap;
+  unsigned char *ptr_I2   = I2.bitmap;
+  unsigned char *ptr_Ires = Ires.bitmap;
+
+  for (unsigned int cpt = 0; cpt < Ires.getSize(); cpt++, ++ptr_I1, ++ptr_I2, ++ptr_Ires) {
+    *ptr_Ires = *ptr_I1 | *ptr_I2;
+  }
+}
+
+void regularImageBitwiseXor(const vpImage<unsigned char> &I1, const vpImage<unsigned char> &I2,
+                            vpImage<unsigned char> &Ires) {
+  if (I1.getSize() == 0) {
+    std::cerr << "I1 input image is empty!" << std::endl;
+    return;
+  }
+
+  if (I1.getHeight() != I2.getHeight() || I1.getWidth() != I2.getWidth()) {
+    throw (vpException(vpException::dimensionError, "The two images do not have the same size"));
+  }
+
+  if (Ires.getHeight() != I1.getHeight() || Ires.getWidth() != I1.getWidth()) {
+    Ires.resize(I1.getHeight(), I1.getWidth());
+  }
+
+  unsigned char *ptr_I1   = I1.bitmap;
+  unsigned char *ptr_I2   = I2.bitmap;
+  unsigned char *ptr_Ires = Ires.bitmap;
+
+  for (unsigned int cpt = 0; cpt < Ires.getSize(); cpt++, ++ptr_I1, ++ptr_I2, ++ptr_Ires) {
+    *ptr_Ires = *ptr_I1 ^ *ptr_I2;
   }
 }
 
@@ -504,6 +678,138 @@ main(int argc, const char ** argv)
       std::cout << "Write: " << filename << std::endl;
       vpImageIo::write(I_invert, filename);
     }
+
+
+    //Test bitwise and
+    vpImage<unsigned char> I_mask = I;
+    unsigned int cpt = 0;
+    for (unsigned int i = 0; i < I_mask.getHeight(); i++) {
+      for (unsigned int j = 0; j < I_mask.getWidth(); j++, cpt++) {
+        I_mask[i][j] = (unsigned char) (cpt % 256);
+      }
+    }
+
+    vpImage<unsigned char> I_bitwise_and;
+    vpImageTools::imageBitwiseAnd(I, I_mask, I_bitwise_and);
+
+    vpImage<unsigned char> I_bitwise_and_regular;
+    regularImageBitwiseAnd(I, I_mask, I_bitwise_and_regular);
+    if (I_bitwise_and != I_bitwise_and_regular) {
+      throw vpException(vpException::fatalError, "(I_bitwise_and != I_bitwise_and_regular)");
+    } else {
+      std::cout << "\n(I_bitwise_and == I_bitwise_and_regular)? " << (I_bitwise_and == I_bitwise_and_regular) << std::endl;
+    }
+
+    //Test bitwise or
+    vpImage<unsigned char> I_bitwise_or;
+    vpImageTools::imageBitwiseOr(I_bitwise_and, I_mask, I_bitwise_or);
+
+    vpImage<unsigned char> I_bitwise_or_regular;
+    regularImageBitwiseOr(I_bitwise_and, I_mask, I_bitwise_or_regular);
+    if (I_bitwise_or != I_bitwise_or_regular) {
+      throw vpException(vpException::fatalError, "(I_bitwise_or != I_bitwise_or_regular)");
+    } else {
+      std::cout << "(I_bitwise_or == I_bitwise_or_regular)? " << (I_bitwise_or == I_bitwise_or_regular) << std::endl;
+    }
+
+    //Test bitwise xor
+    vpImage<unsigned char> I_bitwise_xor;
+    vpImageTools::imageBitwiseXor(I_bitwise_or, I_bitwise_and, I_bitwise_xor);
+
+    vpImage<unsigned char> I_bitwise_xor_regular;
+    regularImageBitwiseXor(I_bitwise_or, I_bitwise_and, I_bitwise_xor_regular);
+    if (I_bitwise_xor != I_bitwise_xor_regular) {
+      throw vpException(vpException::fatalError, "(I_bitwise_xor != I_bitwise_xor_regular)");
+    } else {
+      std::cout << "(I_bitwise_xor == I_bitwise_xor_regular)? " << (I_bitwise_xor == I_bitwise_xor_regular) << std::endl;
+    }
+
+
+    //Benchmark bitwise and
+    I_bitwise_and = 0;
+    t_sse = vpTime::measureTimeMs();
+    for (int cpt = 0; cpt < nbIterations; cpt++) {
+      vpImageTools::imageBitwiseAnd(I, I_mask, I_bitwise_and);
+    }
+    t_sse = vpTime::measureTimeMs() - t_sse;
+    std::cout << "\nBitwise AND ; t_sse (" << nbIterations << " iterations)=" << t_sse << " ms" << std::endl;
+
+    I_bitwise_and_regular = 0;
+    t = vpTime::measureTimeMs();
+    for (int cpt = 0; cpt < nbIterations; cpt++) {
+      regularImageBitwiseAnd(I, I_mask, I_bitwise_and_regular);
+    }
+    t = vpTime::measureTimeMs() - t;
+    std::cout << "Bitwise AND ; t (" << nbIterations << " iterations)=" << t << " ms"
+              << " ; Speed-up: " << (t / t_sse) << "X"  << std::endl;
+    std::cout << "(I_bitwise_and == I_bitwise_and_regular)? " << (I_bitwise_and == I_bitwise_and_regular) << std::endl;
+
+    // Write bitwise and
+    filename = vpIoTools::createFilePath(opath, "Klimt_bitwise_and_sse.pgm");
+    std::cout << "\nWrite: " << filename << std::endl;
+    vpImageIo::write(I_bitwise_and, filename);
+
+    filename = vpIoTools::createFilePath(opath, "Klimt_bitwise_and.pgm");
+    std::cout << "Write: " << filename << std::endl;
+    vpImageIo::write(I_bitwise_and_regular, filename);
+
+
+    //Benchmark bitwise or
+    I_bitwise_or = 0;
+    t_sse = vpTime::measureTimeMs();
+    for (int cpt = 0; cpt < nbIterations; cpt++) {
+      vpImageTools::imageBitwiseOr(I, I_mask, I_bitwise_or);
+    }
+    t_sse = vpTime::measureTimeMs() - t_sse;
+    std::cout << "\nBitwise OR ; t_sse (" << nbIterations << " iterations)=" << t_sse << " ms" << std::endl;
+
+    I_bitwise_or_regular = 0;
+    t = vpTime::measureTimeMs();
+    for (int cpt = 0; cpt < nbIterations; cpt++) {
+      regularImageBitwiseOr(I, I_mask, I_bitwise_or_regular);
+    }
+    t = vpTime::measureTimeMs() - t;
+    std::cout << "Bitwise OR ; t (" << nbIterations << " iterations)=" << t << " ms"
+              << " ; Speed-up: " << (t / t_sse) << "X"  << std::endl;
+    std::cout << "(I_bitwise_or == I_bitwise_or_regular)? " << (I_bitwise_or == I_bitwise_or_regular) << std::endl;
+
+    // Write bitwise or
+    filename = vpIoTools::createFilePath(opath, "Klimt_bitwise_or_sse.pgm");
+    std::cout << "\nWrite: " << filename << std::endl;
+    vpImageIo::write(I_bitwise_or, filename);
+
+    filename = vpIoTools::createFilePath(opath, "Klimt_bitwise_or.pgm");
+    std::cout << "Write: " << filename << std::endl;
+    vpImageIo::write(I_bitwise_or_regular, filename);
+
+
+    //Benchmark bitwise xor
+    I_bitwise_xor = 0;
+    t_sse = vpTime::measureTimeMs();
+    for (int cpt = 0; cpt < nbIterations; cpt++) {
+      vpImageTools::imageBitwiseXor(I, I_mask, I_bitwise_xor);
+    }
+    t_sse = vpTime::measureTimeMs() - t_sse;
+    std::cout << "\nBitwise XOR ; t_sse (" << nbIterations << " iterations)=" << t_sse << " ms" << std::endl;
+
+    I_bitwise_xor_regular = 0;
+    t = vpTime::measureTimeMs();
+    for (int cpt = 0; cpt < nbIterations; cpt++) {
+      regularImageBitwiseXor(I, I_mask, I_bitwise_xor_regular);
+    }
+    t = vpTime::measureTimeMs() - t;
+    std::cout << "Bitwise XOR ; t (" << nbIterations << " iterations)=" << t << " ms"
+              << " ; Speed-up: " << (t / t_sse) << "X"  << std::endl;
+    std::cout << "(I_bitwise_xor == I_bitwise_xor_regular)? " << (I_bitwise_xor == I_bitwise_xor_regular) << std::endl;
+
+    // Write bitwise xor
+    filename = vpIoTools::createFilePath(opath, "Klimt_bitwise_xor_sse.pgm");
+    std::cout << "\nWrite: " << filename << std::endl;
+    vpImageIo::write(I_bitwise_xor, filename);
+
+    filename = vpIoTools::createFilePath(opath, "Klimt_bitwise_xor.pgm");
+    std::cout << "Write: " << filename << std::endl;
+    vpImageIo::write(I_bitwise_xor_regular, filename);
 
 
     return EXIT_SUCCESS;

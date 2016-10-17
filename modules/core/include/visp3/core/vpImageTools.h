@@ -128,6 +128,18 @@ public:
                             const vpImage<unsigned char> &I2,
                             vpImage<unsigned char> &Ires,
                             const bool saturate=false);
+
+  static void imageBitwiseAnd(const vpImage<unsigned char> &I1,
+                              const vpImage<unsigned char> &I2,
+                              vpImage<unsigned char> &Ires);
+
+  static void imageBitwiseOr(const vpImage<unsigned char> &I1,
+                             const vpImage<unsigned char> &I2,
+                             vpImage<unsigned char> &Ires);
+
+  static void imageBitwiseXor(const vpImage<unsigned char> &I1,
+                              const vpImage<unsigned char> &I2,
+                              vpImage<unsigned char> &Ires);
 } ;
 
 /*!
