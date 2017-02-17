@@ -51,6 +51,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <eigen3/Eigen/Dense>
+
 bool testSvdOpenCvGSLCoherence(double epsilon);
 #ifdef VISP_HAVE_GSL
 bool testRandom(double epsilon);
@@ -131,10 +133,16 @@ int
 main()
 {
   try {
-    vpMatrix L(60000,6), Ls ;
-    for (unsigned int i=0 ; i < L.getRows() ; i++)
-      for  (unsigned int j=0 ; j < L.getCols() ; j++)
+    vpMatrix L(60000, 6), Ls ;
+    Eigen::MatrixXd L_Eigen(L.getRows(), L.getCols());
+
+    for (unsigned int i=0 ; i < L.getRows() ; i++) {
+      for  (unsigned int j=0 ; j < L.getCols() ; j++) {
         L[i][j] = 2*i+j + cos((double)(i+j))+((double)(i)) ;
+        L_Eigen(i, j) = L[i][j];
+      }
+    }
+
     //  std::cout << L << std::endl ;
     Ls = L ;
     std::cout << "--------------------------------------"<<std::endl ;
@@ -142,13 +150,52 @@ main()
     vpColVector W(L.getCols()) ;
     vpMatrix V(L.getCols(), L.getCols()) ;
 
-    double t = vpTime::measureTimeMs() ;
+    double t = vpTime::measureTimeMs();
     L.svdNr(W,V) ;
     t = vpTime::measureTimeMs() -t ;
 
-    std::cout <<"svdNr Numerical recipes \n time " <<t << std::endl;
-    std::cout << W.t() ;
-    std::cout << "--------------------------------------"<<std::endl ;
+    std::cout <<"svdNr Numerical recipes: time " << t << " ms" << std::endl;
+    std::cout << "W:\n" << W.t() << std::endl;
+    std::cout << "V:\n" << V.t() << std::endl;
+    std::cout << "--------------------------------------\n" <<std::endl ;
+
+
+    vpMatrix L_OpenCV = L;
+    vpColVector W_OpenCV(L_OpenCV.getCols());
+    vpMatrix V_OpenCV(L_OpenCV.getCols(), L_OpenCV.getCols());
+
+    t = vpTime::measureTimeMs();
+    L_OpenCV.svdOpenCV(W_OpenCV, V_OpenCV);
+    t = vpTime::measureTimeMs() - t;
+    std::cout << "SVD OpenCV: time " << t << " ms" << std::endl;
+    std::cout << "W_OpenCV:\n" << W_OpenCV.t() << std::endl;
+    std::cout << "V_OpenCV:\n" << V_OpenCV.t() << std::endl;
+    std::cout << "--------------------------------------\n" <<std::endl ;
+
+
+    vpMatrix L_Lapack = L;
+    vpColVector W_Lapack(L_Lapack.getCols());
+    vpMatrix V_Lapack(L_Lapack.getCols(), L_Lapack.getCols());
+
+    t = vpTime::measureTimeMs();
+    L_Lapack.svdLapack(W_Lapack, V_Lapack);
+    t = vpTime::measureTimeMs() - t;
+    std::cout << "SVD Lapack: time " << t << " ms" << std::endl;
+    std::cout << "W_Lapack:\n" << W_Lapack.t() << std::endl;
+    std::cout << "V_Lapack:\n" << V_Lapack.t() << std::endl;
+    std::cout << "--------------------------------------\n" <<std::endl ;
+
+
+//    Eigen::Map<Eigen::MatrixXd> L_Eigen(L.data, 60000, 6, Eigen::RowMajor);
+//    Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> > L_Eigen(L.data, L.getRows(), L.getCols());
+
+    t = vpTime::measureTimeMs();
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(L_Eigen, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    t = vpTime::measureTimeMs() - t;
+    std::cout << "Eigen: " << t << " ms" << std::endl;
+    std::cout << "Singular values:\n" << svd.singularValues() << std::endl;
+//    std::cout << "U: " << svd.matrixU() << std::endl;
+    std::cout << "V: " << svd.matrixV() << std::endl;
 
 
 #ifdef VISP_HAVE_GSL
@@ -173,25 +220,25 @@ main()
     std::cout << "--------------------------------------"<<std::endl ;
 #endif
 
-    std::cout << "--------------------------------------"<<std::endl ;
-    std::cout << "TESTING OPENCV-GSL coherence:" ;
+//    std::cout << "--------------------------------------"<<std::endl ;
+//    std::cout << "TESTING OPENCV-GSL coherence:" ;
 
-    bool ret2 = true;
-    for(unsigned int i=0;i<1;i++)
-      ret2 = ret2 & testSvdOpenCvGSLCoherence(0.00001);
-    if(ret2)
-      std:: cout << "Success"<< std:: endl;
-    else
-      std:: cout << "Fail"<< std:: endl;
+//    bool ret2 = true;
+//    for(unsigned int i=0;i<1;i++)
+//      ret2 = ret2 & testSvdOpenCvGSLCoherence(0.00001);
+//    if(ret2)
+//      std:: cout << "Success"<< std:: endl;
+//    else
+//      std:: cout << "Fail"<< std:: endl;
 
-    std::cout << "--------------------------------------"<<std::endl ;
+//    std::cout << "--------------------------------------"<<std::endl ;
 
-    L = Ls ;
-    t = vpTime::measureTimeMs() ;
-    L.svdFlake(W,V) ;
-    t = vpTime::measureTimeMs() -t ;
-    std::cout <<"svdFlake\n time " <<t << std::endl;
-    std::cout << W.t() ;
+//    L = Ls ;
+//    t = vpTime::measureTimeMs() ;
+//    L.svdFlake(W,V) ;
+//    t = vpTime::measureTimeMs() -t ;
+//    std::cout <<"svdFlake\n time " <<t << std::endl;
+//    std::cout << W.t() << std::endl;
     return 0;
   }
   catch(vpException &e) {
