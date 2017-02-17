@@ -54,10 +54,10 @@
 #include <visp3/io/vpParseArgv.h>
 
 // List of allowed command line options
-#define GETOPTARGS	"cdh"
+#define GETOPTARGS	"cdt:h"
 
 void usage(const char *name, const char *badparam);
-bool getOptions(int argc, const char **argv, bool &click_allowed, bool &display);
+bool getOptions(int argc, const char **argv, bool &click_allowed, bool &display, int &testNb);
 
 /*!
 
@@ -85,6 +85,9 @@ OPTIONS:                                               \n\
   -d \n\
      Turn off the display.\n\
 \n\
+  -t <test> \n\
+     Regression test number.\n\
+\n\
   -h\n\
      Print the help.\n");
 
@@ -103,7 +106,7 @@ OPTIONS:                                               \n\
   \return false if the program has to be stopped, true otherwise.
 
 */
-bool getOptions(int argc, const char **argv, bool &click_allowed, bool &display)
+bool getOptions(int argc, const char **argv, bool &click_allowed, bool &display, int &testNb)
 {
   const char *optarg_;
   int	c;
@@ -112,6 +115,8 @@ bool getOptions(int argc, const char **argv, bool &click_allowed, bool &display)
     switch (c) {
     case 'c': click_allowed = false; break;
     case 'd': display = false; break;
+    case 't': testNb = atoi(optarg_); break;
+
     case 'h': usage(argv[0], NULL); return false; break;
 
     default:
@@ -131,6 +136,40 @@ bool getOptions(int argc, const char **argv, bool &click_allowed, bool &display)
   return true;
 }
 
+void learn_on_images(const std::string &dirname, const std::string &filename, const vpHomogeneousMatrix &cMo,
+                     vpMbEdgeTracker &tracker, vpKeyPoint &keypoints, const int id) {
+  vpImage<unsigned char> I;
+
+  //Read image
+  std::string filenameRef = vpIoTools::createFilePath(dirname, filename);
+  vpImageIo::read(I, filenameRef);
+
+  //Init pose at image
+  tracker.initFromPose(I, cMo);
+
+  //Detect keypoints on the image
+  std::vector<cv::KeyPoint> trainKeyPoints;
+  double elapsedTime;
+  keypoints.detect(I, trainKeyPoints, elapsedTime);
+
+  //Keep only keypoints on the cube
+  std::vector<vpPolygon> polygons;
+  std::vector<std::vector<vpPoint> > roisPt;
+  std::pair<std::vector<vpPolygon>, std::vector<std::vector<vpPoint> > > pair = tracker.getPolygonFaces(true, true, true); //To detect an issue with CI
+  polygons = pair.first;
+  roisPt = pair.second;
+
+  vpCameraParameters cam;
+  tracker.getCameraParameters(cam);
+
+  //Compute the 3D coordinates
+  std::vector<cv::Point3f> points3f;
+  vpKeyPoint::compute3DForPointsInPolygons(cMo, cam, trainKeyPoints, polygons, roisPt, points3f);
+
+  //Build the reference keypoints
+  keypoints.buildReference(I, trainKeyPoints, points3f, true, id);
+}
+
 /*!
   \example testKeyPoint-2.cpp
 
@@ -141,9 +180,10 @@ int main(int argc, const char ** argv) {
     std::string env_ipath;
     bool opt_click_allowed = true;
     bool opt_display = true;
+    int test = 0;
 
     // Read the command line options
-    if (getOptions(argc, argv, opt_click_allowed, opt_display) == false) {
+    if (getOptions(argc, argv, opt_click_allowed, opt_display, test) == false) {
       exit (-1);
     }
 
@@ -217,20 +257,8 @@ int main(int argc, const char ** argv) {
     std::string cao_model_file = vpIoTools::createFilePath(env_ipath, "ViSP-images/mbt/cube.cao");
     tracker.loadModel(cao_model_file);
 
-    //Initialize the pose
-    std::string init_file = vpIoTools::createFilePath(env_ipath, "ViSP-images/mbt/cube.init");
-    if (opt_display && opt_click_allowed) {
-      tracker.initClick(I, init_file);
-    }
-    else
-    {
-      vpHomogeneousMatrix cMoi(0.02044769891, 0.1101505452, 0.5078963719, 2.063603907, 1.110231561, -0.4392789872);
-      tracker.initFromPose(I, cMoi);
-    }
-
     //Get the init pose
     vpHomogeneousMatrix cMo;
-    tracker.getPose(cMo);
 
     //Init keypoints
     vpKeyPoint keypoints("ORB", "ORB", "BruteForce-Hamming");
@@ -248,77 +276,94 @@ int main(int argc, const char ** argv) {
 #endif
 #endif
 
-    //TODO: regression
-    vpKeyPoint keypoints_part1, keypoints_part2;
+    switch (test) {
+      case 0:
+        keypoints.loadLearningData("testKeyPoint-2_regression_ORB_xml/testKeyPoint-2_regression_ORB.xml", false);
+        break;
 
-    //Detect keypoints on the current image
-    std::vector<cv::KeyPoint> trainKeyPoints;
-    double elapsedTime;
-    keypoints.detect(I, trainKeyPoints, elapsedTime);
+      case 1:
+        keypoints.loadLearningData("testKeyPoint-2_regression_ORB_bin/testKeyPoint-2_regression_ORB.bin", true);
+        break;
 
-    //Keep only keypoints on the cube
-    std::vector<vpPolygon> polygons;
-    std::vector<std::vector<vpPoint> > roisPt;
-    std::pair<std::vector<vpPolygon>, std::vector<std::vector<vpPoint> > > pair = tracker.getPolygonFaces(true); //To detect an issue with CI
-    polygons = pair.first;
-    roisPt = pair.second;
+      case 2:
+        keypoints.loadLearningData("testKeyPoint-2_regression_ORB_no_img_xml/testKeyPoint-2_regression_ORB_no_img.xml", false);
+        break;
 
-    //Compute the 3D coordinates
-    std::vector<cv::Point3f> points3f;
-    vpKeyPoint::compute3DForPointsInPolygons(cMo, cam, trainKeyPoints, polygons, roisPt, points3f);
+      case 3:
+        keypoints.loadLearningData("testKeyPoint-2_regression_ORB_no_img_bin/testKeyPoint-2_regression_ORB_no_img.bin", true);
+        break;
 
-    //Build the reference keypoints
-    keypoints.buildReference(I, trainKeyPoints, points3f, false, 1);
-    //TODO: regression
-    keypoints_part1.buildReference(I, trainKeyPoints, points3f, false, 1);
+      case 4:
+        keypoints.loadLearningData("testKeyPoint-2_regression_ORB_part1_xml/testKeyPoint-2_regression_ORB_part1.xml", false, true);
+        keypoints.loadLearningData("testKeyPoint-2_regression_ORB_part2_xml/testKeyPoint-2_regression_ORB_part2.xml", false, true);
+        break;
 
+      case 5:
+        keypoints.loadLearningData("testKeyPoint-2_regression_ORB_part1_bin/testKeyPoint-2_regression_ORB_part1.bin", true, false);
+        keypoints.loadLearningData("testKeyPoint-2_regression_ORB_part2_bin/testKeyPoint-2_regression_ORB_part2.bin", true, true);
+        break;
 
-    //Read image 150
-    filenameRef = vpIoTools::createFilePath(dirname, "image0150.pgm");
-    vpImageIo::read(I, filenameRef);
+      case 6:
+        keypoints.loadLearningData("testKeyPoint-2_regression_ORB_part2_xml/testKeyPoint-2_regression_ORB_part2.xml", false, true);
+        keypoints.loadLearningData("testKeyPoint-2_regression_ORB_part1_xml/testKeyPoint-2_regression_ORB_part1.xml", false, true);
+        break;
 
-    //Init pose at image 150
-    cMo.buildFrom(0.02651282185, -0.03713587374, 0.6873765919, 2.314744454, 0.3492296488, -0.1226054828);
-    tracker.initFromPose(I, cMo);
+      case 7:
+        keypoints.loadLearningData("testKeyPoint-2_regression_ORB_part2_bin/testKeyPoint-2_regression_ORB_part2.bin", true, true);
+        keypoints.loadLearningData("testKeyPoint-2_regression_ORB_part1_bin/testKeyPoint-2_regression_ORB_part1.bin", true, true);
+        break;
 
-    //Detect keypoints on the image 150
-    keypoints.detect(I, trainKeyPoints, elapsedTime);
+      case 8:
+        {
+          keypoints.loadLearningData("testKeyPoint-2_regression_ORB_part1_xml/testKeyPoint-2_regression_ORB_part1.xml", false);
 
-    //Keep only keypoints on the cube
-    pair = tracker.getPolygonFaces(true, true, true); //To detect an issue with CI
-    polygons = pair.first;
-    roisPt = pair.second;
+          vpHomogeneousMatrix cMo;
+          cMo.buildFrom(0.02651282185, -0.03713587374, 0.6873765919, 2.314744454, 0.3492296488, -0.1226054828);
+          learn_on_images(dirname, "image0150.pgm", cMo, tracker, keypoints, 2);
 
-    //Compute the 3D coordinates
-    vpKeyPoint::compute3DForPointsInPolygons(cMo, cam, trainKeyPoints, polygons, roisPt, points3f);
+          cMo.buildFrom(0.02965448956, -0.07283091786, 0.7253526051, 2.300529617, -0.4286674806, 0.1788761025);
+          learn_on_images(dirname, "image0200.pgm", cMo, tracker, keypoints, 3);
+        }
+        break;
 
-    //Build the reference keypoints
-    keypoints.buildReference(I, trainKeyPoints, points3f, true, 2);
-    keypoints_part2.buildReference(I, trainKeyPoints, points3f, true, 2);
+      case 9:
+        {
+          keypoints.loadLearningData("testKeyPoint-2_regression_ORB_part1_bin/testKeyPoint-2_regression_ORB_part1.bin", true);
 
+          vpHomogeneousMatrix cMo;
+          cMo.buildFrom(0.02651282185, -0.03713587374, 0.6873765919, 2.314744454, 0.3492296488, -0.1226054828);
+          learn_on_images(dirname, "image0150.pgm", cMo, tracker, keypoints, 2);
 
-    //Read image 200
-    filenameRef = vpIoTools::createFilePath(dirname, "image0200.pgm");
-    vpImageIo::read(I, filenameRef);
+          cMo.buildFrom(0.02965448956, -0.07283091786, 0.7253526051, 2.300529617, -0.4286674806, 0.1788761025);
+          learn_on_images(dirname, "image0200.pgm", cMo, tracker, keypoints, 3);
+        }
+        break;
 
-    //Init pose at image 200
-    cMo.buildFrom(0.02965448956, -0.07283091786, 0.7253526051, 2.300529617, -0.4286674806, 0.1788761025);
-    tracker.initFromPose(I, cMo);
+      case 10:
+        {
+          keypoints.loadLearningData("testKeyPoint-2_regression_ORB_part2_xml/testKeyPoint-2_regression_ORB_part2.xml", false);
 
-    //Detect keypoints on the image 200
-    keypoints.detect(I, trainKeyPoints, elapsedTime);
+          vpHomogeneousMatrix cMo;
+          cMo.buildFrom(0.02044769891, 0.1101505452, 0.5078963719, 2.063603907, 1.110231561, -0.4392789872);
+          learn_on_images(dirname, "image0000.pgm", cMo, tracker, keypoints, 1);
+        }
+        break;
 
-    //Keep only keypoints on the cube
-    pair = tracker.getPolygonFaces(false); //To detect an issue with CI
-    polygons = pair.first;
-    roisPt = pair.second;
+      case 11:
+        {
+          keypoints.loadLearningData("testKeyPoint-2_regression_ORB_part2_bin/testKeyPoint-2_regression_ORB_part2.bin", true);
 
-    //Compute the 3D coordinates
-    vpKeyPoint::compute3DForPointsInPolygons(cMo, cam, trainKeyPoints, polygons, roisPt, points3f);
+          vpHomogeneousMatrix cMo;
+          cMo.buildFrom(0.02044769891, 0.1101505452, 0.5078963719, 2.063603907, 1.110231561, -0.4392789872);
+          learn_on_images(dirname, "image0000.pgm", cMo, tracker, keypoints, 1);
+        }
+        break;
 
-    //Build the reference keypoints
-    keypoints.buildReference(I, trainKeyPoints, points3f, true, 3);
-    keypoints_part2.buildReference(I, trainKeyPoints, points3f, true, 3);
+      default:
+        std::cerr << "Bad test number!" << std::endl;
+        break;
+    }
+
 
 
     //Init reader for getting the input image sequence
@@ -338,7 +383,6 @@ int main(int argc, const char ** argv) {
 #endif
 
     vpImage<unsigned char> IMatching;
-
     keypoints.createImageMatching(I, IMatching);
 
     if (opt_display) {
@@ -347,7 +391,6 @@ int main(int argc, const char ** argv) {
     }
 
     bool opt_click = false;
-    double error;
     vpMouseButton::vpMouseButtonType button;
     while((opt_display && !g.end()) || (!opt_display && g.getFrameIndex() < 30)) {
       g.acquire(I);
@@ -362,7 +405,7 @@ int main(int argc, const char ** argv) {
       }
 
       //Match keypoints and estimate the pose
-      if(keypoints.matchPoint(I, cam, cMo, error, elapsedTime)) {
+      if(keypoints.matchPoint(I, cam, cMo)) {
         tracker.setCameraParameters(cam);
         tracker.setPose(I, cMo);
 
@@ -427,32 +470,6 @@ int main(int argc, const char ** argv) {
         }
       }
     }
-
-    //TODO: regression
-    vpIoTools::makeDirectory("testKeyPoint-2_regression_ORB_xml");
-    keypoints.saveLearningData("testKeyPoint-2_regression_ORB_xml/testKeyPoint-2_regression_ORB.xml", false);
-
-    vpIoTools::makeDirectory("testKeyPoint-2_regression_ORB_bin");
-    keypoints.saveLearningData("testKeyPoint-2_regression_ORB_bin/testKeyPoint-2_regression_ORB.bin", true);
-
-    vpIoTools::makeDirectory("testKeyPoint-2_regression_ORB_no_img_xml");
-    keypoints.saveLearningData("testKeyPoint-2_regression_ORB_no_img_xml/testKeyPoint-2_regression_ORB_no_img.xml", false, false);
-
-    vpIoTools::makeDirectory("testKeyPoint-2_regression_ORB_no_img_bin");
-    keypoints.saveLearningData("testKeyPoint-2_regression_ORB_no_img_bin/testKeyPoint-2_regression_ORB_no_img.bin", true, false);
-
-
-    vpIoTools::makeDirectory("testKeyPoint-2_regression_ORB_part1_xml");
-    keypoints_part1.saveLearningData("testKeyPoint-2_regression_ORB_part1_xml/testKeyPoint-2_regression_ORB_part1.xml", false);
-
-    vpIoTools::makeDirectory("testKeyPoint-2_regression_ORB_part2_xml");
-    keypoints_part2.saveLearningData("testKeyPoint-2_regression_ORB_part2_xml/testKeyPoint-2_regression_ORB_part2.xml", false);
-
-    vpIoTools::makeDirectory("testKeyPoint-2_regression_ORB_part1_bin");
-    keypoints_part1.saveLearningData("testKeyPoint-2_regression_ORB_part1_bin/testKeyPoint-2_regression_ORB_part1.bin", true);
-
-    vpIoTools::makeDirectory("testKeyPoint-2_regression_ORB_part2_bin");
-    keypoints_part2.saveLearningData("testKeyPoint-2_regression_ORB_part2_bin/testKeyPoint-2_regression_ORB_part2.bin", true);
 
   } catch(vpException &e) {
     std::cerr << e.what() << std::endl;

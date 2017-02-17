@@ -2660,7 +2660,7 @@ void vpKeyPoint::loadLearningData(const std::string &filename, const bool binary
       if(image_id != -1) {
 #ifdef VISP_HAVE_MODULE_IO
         //No training images if image_id == -1
-        m_mapOfImageId[class_id] = image_id + startImageId;
+        m_mapOfImageId[m_trainKeyPoints.back().class_id] = image_id + startImageId;
 #endif
       }
 
@@ -2987,6 +2987,9 @@ void vpKeyPoint::loadLearningData(const std::string &filename, const bool binary
 
   //Set _reference_computed to true as we load learning file
   _reference_computed = true;
+
+  //Set m_currentImageId
+  m_currentImageId = m_mapOfImages.size();
 }
 
 /*!
