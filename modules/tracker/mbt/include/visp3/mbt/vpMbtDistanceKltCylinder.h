@@ -205,7 +205,9 @@ public:
   inline void         setTracked(const bool& track) {this->isTrackedKltCylinder = track;}
 
 #if (VISP_HAVE_OPENCV_VERSION >= 0x020408)
-  void updateMask(cv::Mat &mask, unsigned char _nb = 255, unsigned int _shiftBorder = 0);
+  void updateMask(cv::Mat &mask,
+                  cv::Mat &debug_mask, cv::Mat &debug_mask_old, cv::Mat &debug_mask_diff,
+                  unsigned char _nb = 255, unsigned int _shiftBorder = 0);
 #else
   void updateMask(IplImage* mask, unsigned char _nb = 255, unsigned int _shiftBorder = 0);
 #endif

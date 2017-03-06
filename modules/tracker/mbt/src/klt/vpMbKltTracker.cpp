@@ -151,6 +151,19 @@ vpMbKltTracker::init(const vpImage<unsigned char>& I)
     faces.setVisible(I, cam, cMo, angleAppears, angleDisappears, reInitialisation);
 #endif
   }
+
+  if (m_debug_mask.empty()) {
+    m_debug_mask = cv::Mat(I.getHeight(), I.getWidth(), CV_8UC3, cv::Vec3b(0,0,0));
+  }
+
+  if (m_debug_mask_old.empty()) {
+    m_debug_mask_old = cv::Mat(I.getHeight(), I.getWidth(), CV_8UC3, cv::Vec3b(0,0,0));
+  }
+
+  if (m_debug_mask_diff.empty()) {
+    m_debug_mask_diff = cv::Mat(I.getHeight(), I.getWidth(), CV_8UC3, cv::Vec3b(0,0,0));
+  }
+
   reinit(I);
 }
 
@@ -183,6 +196,10 @@ vpMbKltTracker::reinit(const vpImage<unsigned char>& I)
     vpImageConvert::convert(faces.getMbScanLineRenderer().getMask(), mask);
   }
   else{
+    m_debug_mask = cv::Vec3b(0,0,0);
+    m_debug_mask_old = cv::Vec3b(0,0,0);
+    m_debug_mask_diff = cv::Vec3b(0,0,0);
+
     unsigned char val = 255/* - i*15*/;
     for(std::list<vpMbtDistanceKltPoints*>::const_iterator it=kltPolygons.begin(); it!=kltPolygons.end(); ++it){
       kltpoly = *it;
@@ -191,7 +208,7 @@ vpMbKltTracker::reinit(const vpImage<unsigned char>& I)
         //other solution is
         kltpoly->polygon->changeFrame(cMo);
         kltpoly->polygon->computePolygonClipped(cam); // Might not be necessary when scanline is activated
-        kltpoly->updateMask(mask, val, maskBorder);
+        kltpoly->updateMask(mask, m_debug_mask, m_debug_mask_old, m_debug_mask_diff, val, maskBorder);
       }
     }
 
@@ -208,7 +225,7 @@ vpMbKltTracker::reinit(const vpImage<unsigned char>& I)
           }
         }
 
-        kltPolyCylinder->updateMask(mask, val, maskBorder);
+        kltPolyCylinder->updateMask(mask, m_debug_mask, m_debug_mask_old, m_debug_mask_diff, val, maskBorder);
       }
     }
   }
@@ -1006,6 +1023,14 @@ vpMbKltTracker::track(const vpImage<unsigned char>& I)
 
   if(postTracking(I, m_w))
     reinit(I);
+
+  cv::imshow("debug_mask", m_debug_mask);
+  cv::imshow("debug_mask_old", m_debug_mask_old);
+  cv::imshow("debug_mask_diff", m_debug_mask_diff);
+  cv::waitKey(1);
+  cv::imwrite("m_debug_mask.png", m_debug_mask);
+  cv::imwrite("m_debug_mask_old.png", m_debug_mask_old);
+  cv::imwrite("m_debug_mask_diff.png", m_debug_mask_diff);
 }
 
 /*!

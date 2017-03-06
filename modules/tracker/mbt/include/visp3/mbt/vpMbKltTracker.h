@@ -459,6 +459,11 @@ protected:
   bool postTracking(const vpImage<unsigned char>& I, vpColVector &w);
   virtual void reinit(const vpImage<unsigned char>& I);
   //@}
+
+private:
+  cv::Mat m_debug_mask;
+  cv::Mat m_debug_mask_old;
+  cv::Mat m_debug_mask_diff;
 };
 
 #endif

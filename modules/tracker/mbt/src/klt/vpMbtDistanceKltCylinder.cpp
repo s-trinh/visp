@@ -384,6 +384,7 @@ vpMbtDistanceKltCylinder::updateMask(
 #else
     IplImage* mask,
 #endif
+    cv::Mat &debug_mask, cv::Mat &debug_mask_old, cv::Mat &debug_mask_diff,
     unsigned char nb, unsigned int shiftBorder)
 {
 #if (VISP_HAVE_OPENCV_VERSION >= 0x020408)
@@ -482,6 +483,26 @@ vpMbtDistanceKltCylinder::updateMask(
               imPt.set_ij(i_d, j_d);
               if (polygon_test.isInside(imPt)) {
                 mask.ptr<uchar>(i)[j] = nb;
+
+                debug_mask.at<cv::Vec3b>(i,j) = cv::Vec3b(0, 0, 255);
+                debug_mask_diff.at<cv::Vec3b>(i,j) = cv::Vec3b(0, 0, 255);
+              }
+
+              if(shiftBorder != 0){
+                if( vpPolygon::isInside(roi, i_d, j_d)
+                    && vpPolygon::isInside(roi, i_d+shiftBorder_d, j_d+shiftBorder_d)
+                    && vpPolygon::isInside(roi, i_d-shiftBorder_d, j_d+shiftBorder_d)
+                    && vpPolygon::isInside(roi, i_d+shiftBorder_d, j_d-shiftBorder_d)
+                    && vpPolygon::isInside(roi, i_d-shiftBorder_d, j_d-shiftBorder_d) ) {
+                  debug_mask_old.at<cv::Vec3b>(i,j) = cv::Vec3b(0, 255, 0);
+                  debug_mask_diff.at<cv::Vec3b>(i,j) = cv::Vec3b(0, 255, 0);
+                }
+              }
+              else{
+                if(vpPolygon::isInside(roi, i, j)){
+                  debug_mask_old.at<cv::Vec3b>(i,j) = cv::Vec3b(0, 255, 0);
+                  debug_mask_diff.at<cv::Vec3b>(i,j) = cv::Vec3b(0, 255, 0);
+                }
               }
             #else
               if (shiftBorder != 0) {
