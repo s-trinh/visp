@@ -201,9 +201,11 @@ bool vpPose::RansacFunctor::poseRansacImpl() {
 
   vpPoint p; //Point used to project using the estimated pose
 
+  //Best error used with MSAC
+  double bestError = std::numeric_limits<double>::max();
+
   bool foundSolution = false;
-  while (nbTrials < m_ransacMaxTrials && m_nbInliers < (unsigned int) m_ransacNbInlierConsensus)
-  {
+  while (nbTrials < m_ransacMaxTrials && m_nbInliers < (unsigned int) m_ransacNbInlierConsensus) {
     //Hold the list of the index of the inliers (points in the consensus set)
     std::vector<unsigned int> cur_consensus;
     //Hold the list of the index of the outliers
@@ -223,8 +225,7 @@ bool vpPose::RansacFunctor::poseRansacImpl() {
     std::vector<bool> usedPt(size, false);
 
     vpPose poseMin;
-    for(unsigned int i = 0; i < nbMinRandom;)
-    {
+    for(unsigned int i = 0; i < nbMinRandom;) {
       if((size_t) std::count(usedPt.begin(), usedPt.end(), true) == usedPt.size()) {
         //All points was picked once, break otherwise we stay in an infinite loop
         break;
@@ -326,17 +327,17 @@ bool vpPose::RansacFunctor::poseRansacImpl() {
         m_cMo = cMo_tmp;
       }
 
-      if (isPoseValid && r < m_ransacThreshold)
-      {
+      if (isPoseValid && r < m_ransacThreshold) {
         unsigned int nbInliersCur = 0;
         unsigned int iter = 0;
-        for (std::vector<vpPoint>::const_iterator it = m_listOfUniquePoints.begin(); it != m_listOfUniquePoints.end(); ++it, iter++)
-        {
+        double totalError = 0.0;
+        for (std::vector<vpPoint>::const_iterator it = m_listOfUniquePoints.begin(); it != m_listOfUniquePoints.end(); ++it, iter++) {
           p.setWorldCoordinates(it->get_oX(), it->get_oY(), it->get_oZ());
           p.track(m_cMo);
 
           double d = vpMath::sqr(p.get_x() - it->get_x()) + vpMath::sqr(p.get_y() - it->get_y());
           double error = sqrt(d);
+
           if(error < m_ransacThreshold) {
             bool degenerate = false;
             if (m_checkDegeneratePoints) {
@@ -350,20 +351,30 @@ bool vpPose::RansacFunctor::poseRansacImpl() {
               nbInliersCur++;
               cur_consensus.push_back(iter);
               cur_inliers.push_back(*it);
+              totalError += error;
             } else {
               cur_outliers.push_back(iter);
+              totalError += m_ransacThreshold;
             }
-          }
-          else {
+          } else {
             cur_outliers.push_back(iter);
+            totalError += m_ransacThreshold;
           }
         }
 
-        if(nbInliersCur > m_nbInliers)
-        {
-          foundSolution = true;
-          m_best_consensus = cur_consensus;
-          m_nbInliers = nbInliersCur;
+        if (m_ransacType == RANSAC_TYPE) {
+          if (nbInliersCur > m_nbInliers) {
+            foundSolution = true;
+            m_best_consensus = cur_consensus;
+            m_nbInliers = nbInliersCur;
+          }
+        } else {
+          if (totalError < bestError) {
+            foundSolution = true;
+            m_best_consensus = cur_consensus;
+            bestError = totalError;
+            m_nbInliers = nbInliersCur;
+          }
         }
 
         nbTrials++;
@@ -371,8 +382,7 @@ bool vpPose::RansacFunctor::poseRansacImpl() {
         if(nbTrials >= m_ransacMaxTrials) {
           foundSolution = true;
         }
-      }
-      else {
+      } else {
         nbTrials++;
       }
     } else {
@@ -751,11 +761,13 @@ bool vpPose::poseRansac(vpHomogeneousMatrix & cMo, bool (*func)(vpHomogeneousMat
       unsigned int initial_seed = (unsigned int) i; //((unsigned int) time(NULL) ^ i);
       if(i < (size_t) nbThreads-1) {
         ransac_func[i] = RansacFunctor(cMo, ransacNbInlierConsensus, splitTrials, ransacThreshold,
-                                       initial_seed, checkDegeneratePoints, listOfUniquePoints, func);
+                                       initial_seed, checkDegeneratePoints, listOfUniquePoints, func,
+                                       ransacType);
       } else {
         int maxTrialsRemainder = ransacMaxTrials - splitTrials * (nbThreads-1);
         ransac_func[i] = RansacFunctor(cMo, ransacNbInlierConsensus, maxTrialsRemainder, ransacThreshold,
-                                       initial_seed, checkDegeneratePoints, listOfUniquePoints, func);
+                                       initial_seed, checkDegeneratePoints, listOfUniquePoints, func,
+                                       ransacType);
       }
 
       threads[(size_t) i] = new vpThread((vpThread::Fn) poseRansacImplThread, (vpThread::Args) &ransac_func[ i]);
@@ -791,7 +803,7 @@ bool vpPose::poseRansac(vpHomogeneousMatrix & cMo, bool (*func)(vpHomogeneousMat
   } else {
     //Sequential RANSAC
     RansacFunctor sequentialRansac(cMo, ransacNbInlierConsensus, ransacMaxTrials, ransacThreshold,
-                                   0, checkDegeneratePoints, listOfUniquePoints, func);
+                                   0, checkDegeneratePoints, listOfUniquePoints, func, ransacType);
     sequentialRansac();
     foundSolution = sequentialRansac.getResult();
 

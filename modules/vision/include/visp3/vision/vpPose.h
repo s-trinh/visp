@@ -79,22 +79,27 @@ public:
   //! Methods that could be used to estimate the pose from points.
   typedef enum
     {
-      LAGRANGE         , /*!< Linear Lagrange approach (does't need an initialization) */
-      DEMENTHON        , /*!< Linear Dementhon aproach (does't need an initialization) */
-      LOWE             , /*!< Lowe aproach based on a Levenberg Marquartd non linear minimization scheme that needs an initialization from Lagrange or Dementhon aproach */
-      RANSAC           , /*!< Robust Ransac aproach (does't need an initialization) */
-      LAGRANGE_LOWE    , /*!< Non linear Lowe aproach initialized by Lagrange approach */
-      DEMENTHON_LOWE   , /*!< Non linear Lowe aproach initialized by Dementhon approach */
-      VIRTUAL_VS       , /*!< Non linear virtual visual servoing approach that needs an initialization from Lagrange or Dementhon aproach */
+      LAGRANGE            , /*!< Linear Lagrange approach (does't need an initialization) */
+      DEMENTHON           , /*!< Linear Dementhon aproach (does't need an initialization) */
+      LOWE                , /*!< Lowe aproach based on a Levenberg Marquartd non linear minimization scheme that needs an initialization from Lagrange or Dementhon aproach */
+      RANSAC              , /*!< Robust Ransac aproach (does't need an initialization) */
+      LAGRANGE_LOWE       , /*!< Non linear Lowe aproach initialized by Lagrange approach */
+      DEMENTHON_LOWE      , /*!< Non linear Lowe aproach initialized by Dementhon approach */
+      VIRTUAL_VS          , /*!< Non linear virtual visual servoing approach that needs an initialization from Lagrange or Dementhon aproach */
       DEMENTHON_VIRTUAL_VS, /*!< Non linear virtual visual servoing approach initialized by Dementhon approach */
       LAGRANGE_VIRTUAL_VS   /*!< Non linear virtual visual servoing approach initialized by Lagrange approach */
     } vpPoseMethodType;
 
-  enum FILTERING_RANSAC_FLAGS {
+  enum vpFilteringRansacFlags {
     PREFILTER_DUPLICATE_POINTS        = 0x1,  /*!< Remove duplicate points before the RANSAC. */
     PREFILTER_ALMOST_DUPLICATE_POINTS = 0x2,  /*!< Remove almost duplicate points (up to a tolerance) before the RANSAC. */
     PREFILTER_DEGENERATE_POINTS       = 0x4,  /*!< Remove degenerate points (same 3D or 2D coordinates) before the RANSAC. */
     CHECK_DEGENERATE_POINTS           = 0x8   /*!< Check for degenerate points during the RANSAC. */
+  };
+
+  enum vpRansacType {
+    RANSAC_TYPE,
+    MSAC_TYPE
   };
 
   unsigned int npt ;             //!< Number of point used in pose computation
@@ -124,6 +129,7 @@ private:
   std::vector<vpPoint> listOfPoints;
   bool useParallelRansac;
   int nbParallelRansacThreads;
+  vpRansacType ransacType;
 
 
   //For parallel RANSAC
@@ -133,16 +139,17 @@ private:
                   const unsigned int ransacNbInlierConsensus_, const int ransacMaxTrials_,
                   const double ransacThreshold_, const unsigned int initial_seed_,
                   const bool checkDegeneratePoints_, const std::vector<vpPoint> &listOfUniquePoints_,
-                  bool (*func_)(vpHomogeneousMatrix *)) :
+                  bool (*func_)(vpHomogeneousMatrix *), const vpRansacType &ransacType) :
       m_best_consensus(), m_checkDegeneratePoints(checkDegeneratePoints_), m_cMo(cMo_), m_foundSolution(false),
       m_func(func_), m_initial_seed(initial_seed_), m_listOfUniquePoints(listOfUniquePoints_), m_nbInliers(0),
-      m_ransacMaxTrials(ransacMaxTrials_), m_ransacNbInlierConsensus(ransacNbInlierConsensus_), m_ransacThreshold(ransacThreshold_) {
+      m_ransacMaxTrials(ransacMaxTrials_), m_ransacNbInlierConsensus(ransacNbInlierConsensus_), m_ransacThreshold(ransacThreshold_),
+      m_ransacType(ransacType) {
     }
 
     RansacFunctor() :
       m_best_consensus(),m_checkDegeneratePoints(false), m_cMo(), m_foundSolution(false), m_func(NULL),
       m_initial_seed(0), m_listOfUniquePoints(), m_nbInliers(0), m_ransacMaxTrials(), m_ransacNbInlierConsensus(),
-      m_ransacThreshold() {
+      m_ransacThreshold(), m_ransacType(RANSAC_TYPE) {
     }
 
     void operator()() {
@@ -178,6 +185,7 @@ private:
     int m_ransacMaxTrials;
     unsigned int m_ransacNbInlierConsensus;
     double m_ransacThreshold;
+    vpRansacType m_ransacType;
 
     bool poseRansacImpl();
   };
@@ -200,7 +208,7 @@ public:
   void addPoints(const std::vector<vpPoint>& lP);
   void clearPoint() ;
 
-  bool computePose(vpPoseMethodType method, vpHomogeneousMatrix &cMo, bool (*func)(vpHomogeneousMatrix *)=NULL) ;
+  bool computePose(vpPoseMethodType method, vpHomogeneousMatrix &cMo, bool (*func)(vpHomogeneousMatrix *)=NULL);
   double computeResidual(const vpHomogeneousMatrix &cMo) const ;
   bool coplanar(int &coplanar_plane_type) ;
   void displayModel(vpImage<unsigned char> &I,
@@ -233,6 +241,10 @@ public:
     }
   }
   void setRansacMaxTrials(const int &rM){ ransacMaxTrials = rM; }
+  void setRansacType(const vpRansacType &type) {
+    ransacType = type;
+  }
+
   unsigned int getRansacNbInliers() const { return (unsigned int) ransacInliers.size(); }
   std::vector<unsigned int> getRansacInlierIndex() const{ return ransacInlierIndex; }
   std::vector<vpPoint> getRansacInliers() const{ return ransacInliers; }

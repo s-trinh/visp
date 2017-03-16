@@ -94,7 +94,8 @@ vpPose::vpPose()
     computeCovariance(false), covarianceMatrix(),
     ransacNbInlierConsensus(4), ransacMaxTrials(1000), ransacInliers(), ransacInlierIndex(), ransacThreshold(0.0001),
     distanceToPlaneForCoplanarityTest(0.001), ransacFlags(PREFILTER_DUPLICATE_POINTS),
-    listOfPoints(), useParallelRansac(false), nbParallelRansacThreads(0) //0 means that OpenMP is used to get the number of CPU threads
+    listOfPoints(), useParallelRansac(false), nbParallelRansacThreads(0), //0 means that OpenMP is used to get the number of CPU threads
+    ransacType(RANSAC_TYPE)
 {
 #if (DEBUG_LEVEL1)
   std::cout << "begin vpPose::vpPose() " << std::endl ;

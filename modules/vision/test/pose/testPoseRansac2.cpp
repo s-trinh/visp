@@ -1846,7 +1846,12 @@ bool testRansac(const std::vector<vpPoint> &bunnyModelPoints_original, const std
 
   //Add data to vpPose
   vpPose pose;
-  vpPose pose_ransac, pose_ransac2;
+  vpPose pose_ransac; //1000 RANSAC iterations
+  vpPose pose_ransac2; //RANSAC + probability=0.99
+  vpPose pose_msac; //1000 MSAC iterations
+  vpPose pose_msac2; //MSAC probability=0.99
+  pose_msac.setRansacType(vpPose::MSAC_TYPE);
+  pose_msac2.setRansacType(vpPose::MSAC_TYPE);
 
 #if defined (VISP_HAVE_PTHREAD) || (defined (_WIN32) && !defined(WINRT_8_0)) || defined (VISP_HAVE_OPENMP)
 #  define TEST_PARALLEL_RANSAC
@@ -1854,11 +1859,16 @@ bool testRansac(const std::vector<vpPoint> &bunnyModelPoints_original, const std
 
 #ifdef TEST_PARALLEL_RANSAC
   vpPose pose_ransac_parallel, pose_ransac_parallel2;
+  vpPose pose_msac_parallel, pose_msac_parallel2;
   pose_ransac_parallel.setUseParallelRansac(true);
   pose_ransac_parallel2.setUseParallelRansac(true);
+  pose_msac_parallel.setUseParallelRansac(true);
+  pose_msac_parallel2.setUseParallelRansac(true);
 
   pose_ransac_parallel.setRansacFilterFlags(vpPose::PREFILTER_DUPLICATE_POINTS + vpPose::CHECK_DEGENERATE_POINTS);
   pose_ransac_parallel2.setRansacFilterFlags(vpPose::PREFILTER_DUPLICATE_POINTS + vpPose::CHECK_DEGENERATE_POINTS);
+  pose_msac_parallel.setRansacFilterFlags(vpPose::PREFILTER_DUPLICATE_POINTS + vpPose::CHECK_DEGENERATE_POINTS);
+  pose_msac_parallel2.setRansacFilterFlags(vpPose::PREFILTER_DUPLICATE_POINTS + vpPose::CHECK_DEGENERATE_POINTS);
 
 #if !defined (VISP_HAVE_OPENMP)
   pose_ransac_parallel.setNbParallelRansacThreads(2);
@@ -1867,6 +1877,8 @@ bool testRansac(const std::vector<vpPoint> &bunnyModelPoints_original, const std
 #endif
   pose_ransac.setRansacFilterFlags(vpPose::PREFILTER_DUPLICATE_POINTS + vpPose::CHECK_DEGENERATE_POINTS);
   pose_ransac2.setRansacFilterFlags(vpPose::PREFILTER_DUPLICATE_POINTS + vpPose::CHECK_DEGENERATE_POINTS);
+  pose_msac.setRansacFilterFlags(vpPose::PREFILTER_DUPLICATE_POINTS + vpPose::CHECK_DEGENERATE_POINTS);
+  pose_msac2.setRansacFilterFlags(vpPose::PREFILTER_DUPLICATE_POINTS + vpPose::CHECK_DEGENERATE_POINTS);
   for(std::vector<vpPoint>::const_iterator it = bunnyModelPoints_noisy.begin();
       it != bunnyModelPoints_noisy.end(); ++it) {
     pose.addPoint(*it);
@@ -1874,9 +1886,13 @@ bool testRansac(const std::vector<vpPoint> &bunnyModelPoints_original, const std
   //Test addPoints
   pose_ransac.addPoints(bunnyModelPoints_noisy);
   pose_ransac2.addPoints(bunnyModelPoints_noisy);
+  pose_msac.addPoints(bunnyModelPoints_noisy);
+  pose_msac2.addPoints(bunnyModelPoints_noisy);
 #ifdef TEST_PARALLEL_RANSAC
   pose_ransac_parallel.addPoints(bunnyModelPoints_noisy);
   pose_ransac_parallel2.addPoints(bunnyModelPoints_noisy);
+  pose_msac_parallel.addPoints(bunnyModelPoints_noisy);
+  pose_msac_parallel2.addPoints(bunnyModelPoints_noisy);
 #endif
 
   //Print the number of points in the final data vector
@@ -1884,12 +1900,17 @@ bool testRansac(const std::vector<vpPoint> &bunnyModelPoints_original, const std
             << bunnyModelPoints_noisy.size() << " points." << std::endl << std::endl;
 
   unsigned int nbInlierToReachConsensus = (unsigned int)(60.0 * (double)(bunnyModelPoints_noisy.size()) / 100.0);
-  double threshold = 0.001;
+  double threshold = 0.001, threshold_MSAC = 0.001;
 
   //RANSAC with 1000 iterations
   pose_ransac.setRansacNbInliersToReachConsensus(nbInlierToReachConsensus);
   pose_ransac.setRansacThreshold(threshold);
   pose_ransac.setRansacMaxTrials(1000);
+
+  pose_msac.setRansacNbInliersToReachConsensus(nbInlierToReachConsensus);
+  pose_msac.setRansacThreshold(threshold_MSAC);
+  pose_msac.setRansacMaxTrials(1000);
+
 #ifdef TEST_PARALLEL_RANSAC
   pose_ransac_parallel.setRansacNbInliersToReachConsensus(nbInlierToReachConsensus);
   pose_ransac_parallel.setRansacThreshold(threshold);
@@ -1897,7 +1918,15 @@ bool testRansac(const std::vector<vpPoint> &bunnyModelPoints_original, const std
 
   pose_ransac_parallel2.setRansacNbInliersToReachConsensus(nbInlierToReachConsensus);
   pose_ransac_parallel2.setRansacThreshold(threshold);
-  pose_ransac_parallel2.setRansacMaxTrials(vpPose::computeRansacIterations(0.99, 0.4, 4, -1));
+  pose_ransac_parallel2.setRansacMaxTrials(vpPose::computeRansacIterations(0.99, 0.4, 4, -1));  
+
+  pose_msac_parallel.setRansacNbInliersToReachConsensus(nbInlierToReachConsensus);
+  pose_msac_parallel.setRansacThreshold(threshold);
+  pose_msac_parallel.setRansacMaxTrials(1000);
+
+  pose_msac_parallel2.setRansacNbInliersToReachConsensus(nbInlierToReachConsensus);
+  pose_msac_parallel2.setRansacThreshold(threshold);
+  pose_msac_parallel2.setRansacMaxTrials(vpPose::computeRansacIterations(0.99, 0.4, 4, -1));
 #endif
 
   //RANSAC with p=0.99, epsilon=0.4
@@ -1906,6 +1935,11 @@ bool testRansac(const std::vector<vpPoint> &bunnyModelPoints_original, const std
   int ransac_iterations = vpPose::computeRansacIterations(0.99, 0.4, 4, -1);
   pose_ransac2.setRansacMaxTrials(ransac_iterations);
   std::cout << "Number of RANSAC iterations to ensure p=0.99 and epsilon=0.4: " << ransac_iterations << std::endl;
+
+  pose_msac2.setRansacNbInliersToReachConsensus(nbInlierToReachConsensus);
+  pose_msac2.setRansacThreshold(threshold_MSAC);
+  pose_msac2.setRansacMaxTrials(ransac_iterations);
+
 
   vpHomogeneousMatrix cMo_estimated_RANSAC;
   double t_RANSAC = vpTime::measureTimeMs();
@@ -1918,6 +1952,7 @@ bool testRansac(const std::vector<vpPoint> &bunnyModelPoints_original, const std
   double r_RANSAC_estimated = ground_truth_pose.computeResidual(cMo_estimated_RANSAC);
   std::cout << "Corresponding residual (1000 iterations): " << r_RANSAC_estimated << std::endl;
 
+
   vpHomogeneousMatrix cMo_estimated_RANSAC_2;
   t_RANSAC = vpTime::measureTimeMs();
   pose_ransac2.computePose(vpPose::RANSAC, cMo_estimated_RANSAC_2);
@@ -1929,6 +1964,31 @@ bool testRansac(const std::vector<vpPoint> &bunnyModelPoints_original, const std
 
   double r_RANSAC_estimated_2 = ground_truth_pose.computeResidual(cMo_estimated_RANSAC_2);
   std::cout << "Corresponding residual (" << ransac_iterations << " iterations): " << r_RANSAC_estimated_2 << std::endl;
+
+
+  vpHomogeneousMatrix cMo_estimated_MSAC;
+  double t_MSAC = vpTime::measureTimeMs();
+  pose_msac.computePose(vpPose::RANSAC, cMo_estimated_MSAC);
+  t_MSAC = vpTime::measureTimeMs() - t_MSAC;
+
+  std::cout << "\ncMo estimated with MSAC (1000 iterations) on noisy data:\n" << cMo_estimated_MSAC << std::endl;
+  std::cout << "Computation time: " << t_MSAC << " ms" << std::endl;
+
+  double r_MSAC_estimated = ground_truth_pose.computeResidual(cMo_estimated_MSAC);
+  std::cout << "Corresponding residual (1000 iterations): " << r_MSAC_estimated << std::endl;
+
+
+  vpHomogeneousMatrix cMo_estimated_MSAC_2;
+  t_MSAC = vpTime::measureTimeMs();
+  pose_msac2.computePose(vpPose::RANSAC, cMo_estimated_MSAC_2);
+  t_MSAC = vpTime::measureTimeMs() - t_MSAC;
+
+  std::cout << "\ncMo estimated with MSAC (" << ransac_iterations << " iterations) on noisy data:\n"
+            << cMo_estimated_MSAC_2 << std::endl;
+  std::cout << "Computation time: " << t_MSAC << " ms" << std::endl;
+
+  double r_MSAC_estimated_2 = ground_truth_pose.computeResidual(cMo_estimated_MSAC_2);
+  std::cout << "Corresponding residual (" << ransac_iterations << " iterations): " << r_MSAC_estimated_2 << std::endl;
 
 
   pose.computePose(vpPose::DEMENTHON, cMo_dementhon);
@@ -1960,6 +2020,7 @@ bool testRansac(const std::vector<vpPoint> &bunnyModelPoints_original, const std
   double r_RANSAC_estimated_parallel = ground_truth_pose.computeResidual(cMo_estimated_RANSAC_parallel);
   std::cout << "Corresponding residual (1000 iterations): " << r_RANSAC_estimated_parallel << std::endl;
 
+
   vpHomogeneousMatrix cMo_estimated_RANSAC_parallel2;
   double t_RANSAC_parallel2 = vpTime::measureTimeMs();
   pose_ransac_parallel2.computePose(vpPose::RANSAC, cMo_estimated_RANSAC_parallel2);
@@ -1970,6 +2031,30 @@ bool testRansac(const std::vector<vpPoint> &bunnyModelPoints_original, const std
 
   double r_RANSAC_estimated_parallel2 = ground_truth_pose.computeResidual(cMo_estimated_RANSAC_parallel2);
   std::cout << "Corresponding residual (" << ransac_iterations << " iterations): " << r_RANSAC_estimated_parallel2 << std::endl;
+
+
+  vpHomogeneousMatrix cMo_estimated_MSAC_parallel;
+  double t_MSAC_parallel = vpTime::measureTimeMs();
+  pose_msac_parallel.computePose(vpPose::RANSAC, cMo_estimated_MSAC_parallel);
+  t_MSAC_parallel = vpTime::measureTimeMs() - t_MSAC_parallel;
+
+  std::cout << "\ncMo estimated with parallel MSAC (1000 iterations) on noisy data:\n" << cMo_estimated_MSAC_parallel << std::endl;
+  std::cout << "Computation time: " << t_MSAC_parallel << " ms" << std::endl;
+
+  double r_MSAC_estimated_parallel = ground_truth_pose.computeResidual(cMo_estimated_MSAC_parallel);
+  std::cout << "Corresponding residual (1000 iterations): " << r_MSAC_estimated_parallel << std::endl;
+
+
+  vpHomogeneousMatrix cMo_estimated_MSAC_parallel2;
+  double t_MSAC_parallel2 = vpTime::measureTimeMs();
+  pose_msac_parallel2.computePose(vpPose::RANSAC, cMo_estimated_MSAC_parallel2);
+  t_MSAC_parallel2 = vpTime::measureTimeMs() - t_MSAC_parallel2;
+
+  std::cout << "\ncMo estimated with parallel MSAC (" << ransac_iterations << " iterations) on noisy data:\n" << cMo_estimated_MSAC_parallel2 << std::endl;
+  std::cout << "Computation time: " << t_MSAC_parallel2 << " ms" << std::endl;
+
+  double r_MSAC_estimated_parallel2 = ground_truth_pose.computeResidual(cMo_estimated_MSAC_parallel2);
+  std::cout << "Corresponding residual (" << ransac_iterations << " iterations): " << r_MSAC_estimated_parallel2 << std::endl;
 #endif
 
 
