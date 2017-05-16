@@ -795,6 +795,7 @@ void vpMbTracker::initFromPose(const vpImage<unsigned char>& I, const std::strin
   }
 
   cMo.buildFrom(init_pos);
+
   init(I);
 }
 

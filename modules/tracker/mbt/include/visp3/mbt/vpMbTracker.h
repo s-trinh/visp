@@ -544,7 +544,7 @@ public:
     rendering options) when Ogre visibility is enabled. By default, this functionality
     is turned off.
   */
-  inline void setOgreShowConfigDialog(const bool showConfigDialog){
+  inline virtual void setOgreShowConfigDialog(const bool showConfigDialog){
     ogreShowConfigDialog = showConfigDialog;
   }
 
