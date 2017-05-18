@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 /*!
-  \example mbtGenericTracking.cpp
+  \example mbtGenericTracking2.cpp
 
   \brief Example of tracking with vpGenericTracker on an image sequence containing a cube.
 */
@@ -63,7 +63,7 @@
 
 #define GETOPTARGS  "x:m:i:n:dchtfColwvpT:"
 
-#define USE_XML 1
+#define USE_XML 0
 
 
 void usage(const char *name, const char *badparam)
@@ -308,13 +308,15 @@ main(int argc, const char ** argv)
     else
       initFile = vpIoTools::createFilePath(env_ipath, "ViSP-images/mbt/cube");
 
-    vpImage<unsigned char> I1, I2;
+    std::map<std::string, const vpImage<unsigned char> *> mapOfImages;
+    vpImage<unsigned char> I1, I2, I3;
     vpVideoReader reader;
 
     reader.setFileName(ipath);
     try {
       reader.open(I1);
       I2 = I1;
+      I3 = I1;
     } catch(...) {
       std::cerr << "Cannot open sequence: " << ipath << std::endl;
       return EXIT_FAILURE;
@@ -322,47 +324,66 @@ main(int argc, const char ** argv)
 
     reader.acquire(I1);
     I2 = I1;
+    I3 = I1;
+
+    mapOfImages["Camera1"] = &I1;
+    mapOfImages["Camera2"] = &I2;
+    mapOfImages["Camera3"] = &I3;
 
     // initialise a  display
 #if defined VISP_HAVE_X11
-    vpDisplayX display1, display2;
+    vpDisplayX display1, display2, display3;
 #elif defined VISP_HAVE_GDI
-    vpDisplayGDI display1, display2;
+    vpDisplayGDI display1, display2, display3;
 #elif defined VISP_HAVE_OPENCV
-    vpDisplayOpenCV display1, display2;
+    vpDisplayOpenCV display1, display2, display3;
 #elif defined VISP_HAVE_D3D9
-    vpDisplayD3D display1, display2;
+    vpDisplayD3D display1, display2, display3;
 #elif defined VISP_HAVE_GTK
-    vpDisplayGTK display1, display2;
+    vpDisplayGTK display1, display2, display3;
 #else
     opt_display = false;
 #endif
+
     if (opt_display)
     {
 #if (defined VISP_HAVE_DISPLAY)
       display1.setDownScalingFactor(vpDisplay::SCALE_AUTO);
       display2.setDownScalingFactor(vpDisplay::SCALE_AUTO);
-      display1.init(I1, 100, 100, "Test tracking (Left)");
-      display2.init(I2, (int) I1.getWidth()/vpDisplay::getDownScalingFactor(I1)+110, 100, "Test tracking (Right)");
+      display3.setDownScalingFactor(vpDisplay::SCALE_AUTO);
+
+      display1.init(I1, 100, 100, "Test tracking (Cam1)");
+      display2.init(I2, (int) I1.getWidth()/vpDisplay::getDownScalingFactor(I1)+110, 100, "Test tracking (Cam2)");
+      display3.init(I3, (int) 100, I1.getHeight()/vpDisplay::getDownScalingFactor(I1)+110, "Test tracking (Cam3)");
 #endif
       vpDisplay::display(I1);
       vpDisplay::display(I2);
+      vpDisplay::display(I3);
+
       vpDisplay::flush(I1);
       vpDisplay::flush(I2);
+      vpDisplay::flush(I3);
     }
 
-    vpMbTracker *tracker = new vpMbGenericTracker(2, trackerType);
-    vpHomogeneousMatrix c1Mo, c2Mo;
-    vpCameraParameters cam1, cam2;
+    vpMbTracker *tracker = new vpMbGenericTracker(3, trackerType);
+    std::map<std::string, vpHomogeneousMatrix> mapOfCameraPoses;
+    std::map<std::string, vpCameraParameters> mapOfCameraParams;
 
     // Initialise the tracker: camera parameters, moving edge and KLT settings
 #if defined (VISP_HAVE_XML2) && USE_XML
     // From the xml file
-    dynamic_cast<vpMbGenericTracker*>(tracker)->loadConfigFile(configFile, configFile);
+    std::map<std::string, std::string> mapOfConfigFiles;
+    mapOfConfigFiles["Camera1"] = configFile;
+    mapOfConfigFiles["Camera2"] = configFile;
+    mapOfConfigFiles["Camera3"] = configFile;
+    dynamic_cast<vpMbGenericTracker*>(tracker)->loadConfigFile(mapOfConfigFiles);
 #else
     // By setting the parameters:
-    cam1.initPersProjWithoutDistortion(547, 542, 338, 234);
-    cam2.initPersProjWithoutDistortion(547, 542, 338, 234);
+    vpCameraParameters cam;
+    cam.initPersProjWithoutDistortion(547, 542, 338, 234);
+    mapOfCameraParams["Camera1"] = cam;
+    mapOfCameraParams["Camera2"] = cam;
+    mapOfCameraParams["Camera3"] = cam;
 
     vpMe me;
     me.setMaskSize(5);
@@ -372,6 +393,10 @@ main(int argc, const char ** argv)
     me.setMu1(0.5);
     me.setMu2(0.5);
     me.setSampleStep(4);
+    std::map<std::string, vpMe> mapOfMe;
+    mapOfMe["Camera1"] = me;
+    mapOfMe["Camera2"] = me;
+    mapOfMe["Camera3"] = me;
 
     vpKltOpencv klt;
     klt.setMaxFeatures(10000);
@@ -381,10 +406,14 @@ main(int argc, const char ** argv)
     klt.setHarrisFreeParameter(0.01);
     klt.setBlockSize(3);
     klt.setPyramidLevels(3);
+    std::map<std::string, vpKltOpencv> mapOfKlt;
+    mapOfKlt["Camera1"] = klt;
+    mapOfKlt["Camera2"] = klt;
+    mapOfKlt["Camera3"] = klt;
 
-    dynamic_cast<vpMbGenericTracker*>(tracker)->setCameraParameters(cam1, cam2);
-    dynamic_cast<vpMbGenericTracker*>(tracker)->setMovingEdge(me);
-    dynamic_cast<vpMbGenericTracker*>(tracker)->setKltOpencv(klt);
+    dynamic_cast<vpMbGenericTracker*>(tracker)->setCameraParameters(mapOfCameraParams);
+    dynamic_cast<vpMbGenericTracker*>(tracker)->setMovingEdge(mapOfMe);
+    dynamic_cast<vpMbGenericTracker*>(tracker)->setKltOpencv(mapOfKlt);
     tracker->setAngleAppear( vpMath::rad(65) );
     tracker->setAngleDisappear( vpMath::rad(75) );
     dynamic_cast<vpMbGenericTracker*>(tracker)->setMaskBorder(5);
@@ -392,7 +421,14 @@ main(int argc, const char ** argv)
     // Specify the clipping to
     tracker->setNearClippingDistance(0.01);
     tracker->setFarClippingDistance(0.90);
-    tracker->setClipping(tracker->getClipping() | vpMbtPolygon::FOV_CLIPPING);
+
+    std::map<std::string, unsigned int> mapOfClippingFlags;
+    dynamic_cast<vpMbGenericTracker*>(tracker)->getClipping(mapOfClippingFlags);
+    for (std::map<std::string, unsigned int>::iterator it = mapOfClippingFlags.begin(); it != mapOfClippingFlags.end(); ++it) {
+      it->second = (it->second | vpMbtPolygon::FOV_CLIPPING);
+    }
+
+    dynamic_cast<vpMbGenericTracker*>(tracker)->setClipping(mapOfClippingFlags);
     //   tracker->setClipping(tracker->getClipping() | vpMbtPolygon::LEFT_CLIPPING | vpMbtPolygon::RIGHT_CLIPPING | vpMbtPolygon::UP_CLIPPING | vpMbtPolygon::DOWN_CLIPPING); // Equivalent to FOV_CLIPPING
 #endif
 
@@ -414,12 +450,12 @@ main(int argc, const char ** argv)
     tracker->setProjectionErrorComputation(projectionError);
 
     // Retrieve the camera parameters from the tracker
-    dynamic_cast<vpMbGenericTracker*>(tracker)->getCameraParameters(cam1, cam2);
+    dynamic_cast<vpMbGenericTracker*>(tracker)->getCameraParameters(mapOfCameraParams);
 
     // Loop to position the cube
     if (opt_display && opt_click_allowed)
     {
-      while(!vpDisplay::getClick(I1,false)){
+      while(!vpDisplay::getClick(I1, false)){
         vpDisplay::display(I1);
         vpDisplay::displayText(I1, 15, 10, "click after positioning the object", vpColor::red);
         vpDisplay::flush(I1) ;
@@ -435,25 +471,32 @@ main(int argc, const char ** argv)
     //   - a ./cube/cube.ppm file to display where the user have to click (optionnal, set by the third parameter)
     if (opt_display && opt_click_allowed)
     {
-      dynamic_cast<vpMbGenericTracker*>(tracker)->initClick(I1, I2, initFile, initFile, true);
-      dynamic_cast<vpMbGenericTracker*>(tracker)->getPose(c1Mo, c2Mo);
+      std::map<std::string, std::string> mapOfInitFiles;
+      mapOfInitFiles["Camera1"] = initFile;
+
+      dynamic_cast<vpMbGenericTracker*>(tracker)->initClick(mapOfImages, mapOfInitFiles, true);
+      dynamic_cast<vpMbGenericTracker*>(tracker)->getPose(mapOfCameraPoses);
+
       // display the 3D model at the given pose
-      dynamic_cast<vpMbGenericTracker*>(tracker)->display(I1, I2, c1Mo, c2Mo, cam1, cam2, vpColor::red);
+      dynamic_cast<vpMbGenericTracker*>(tracker)->display(mapOfImages, mapOfCameraPoses, mapOfCameraParams, vpColor::red);
     }
     else
     {
       vpHomogeneousMatrix c1Moi(0.02044769891, 0.1101505452, 0.5078963719, 2.063603907, 1.110231561, -0.4392789872);
-      vpHomogeneousMatrix c2Moi(0.02044769891, 0.1101505452, 0.5078963719, 2.063603907, 1.110231561, -0.4392789872);
-      dynamic_cast<vpMbGenericTracker*>(tracker)->initFromPose(I1, I2, c1Moi, c2Moi);
+      std::map<std::string, vpHomogeneousMatrix> mapOfInitPoses;
+      mapOfInitPoses["Camera1"] = c1Moi;
+
+      dynamic_cast<vpMbGenericTracker*>(tracker)->initFromPose(mapOfImages, mapOfInitPoses);
     }
 
     //track the model
-    dynamic_cast<vpMbGenericTracker*>(tracker)->track(I1, I2);
-    dynamic_cast<vpMbGenericTracker*>(tracker)->getPose(c1Mo, c2Mo);
+    dynamic_cast<vpMbGenericTracker*>(tracker)->track(mapOfImages);
+    dynamic_cast<vpMbGenericTracker*>(tracker)->getPose(mapOfCameraPoses);
 
     if (opt_display) {
       vpDisplay::flush(I1);
       vpDisplay::flush(I2);
+      vpDisplay::flush(I3);
     }
 
     bool quit = false, click = false;
@@ -462,10 +505,16 @@ main(int argc, const char ** argv)
       // acquire a new image
       reader.acquire(I1);
       I2 = I1;
+      I3 = I1;
+      mapOfImages["Camera1"] = &I1;
+      mapOfImages["Camera2"] = &I2;
+      mapOfImages["Camera3"] = &I3;
+
       // display the image
       if (opt_display) {
         vpDisplay::display(I1);
         vpDisplay::display(I2);
+        vpDisplay::display(I3);
 
         std::stringstream ss;
         ss << "Num frame: " << reader.getFrameIndex() << "/" << reader.getLastFrameIndex();
@@ -478,15 +527,19 @@ main(int argc, const char ** argv)
         if (opt_display) {
           vpDisplay::display(I1);
           vpDisplay::display(I2);
+          vpDisplay::display(I3);
         }
 
         tracker->resetTracker();
 #if defined (VISP_HAVE_XML2) && USE_XML
-        dynamic_cast<vpMbGenericTracker*>(tracker)->loadConfigFile(configFile, configFile);
+        dynamic_cast<vpMbGenericTracker*>(tracker)->loadConfigFile(mapOfConfigFiles);
 #else
         // By setting the parameters:
-        cam1.initPersProjWithoutDistortion(547, 542, 338, 234);
-        cam2.initPersProjWithoutDistortion(547, 542, 338, 234);
+        vpCameraParameters cam;
+        cam.initPersProjWithoutDistortion(547, 542, 338, 234);
+        mapOfCameraParams["Camera1"] = cam;
+        mapOfCameraParams["Camera2"] = cam;
+        mapOfCameraParams["Camera3"] = cam;
 
         vpMe me;
         me.setMaskSize(5);
@@ -496,6 +549,10 @@ main(int argc, const char ** argv)
         me.setMu1(0.5);
         me.setMu2(0.5);
         me.setSampleStep(4);
+        std::map<std::string, vpMe> mapOfMe;
+        mapOfMe["Camera1"] = me;
+        mapOfMe["Camera2"] = me;
+        mapOfMe["Camera3"] = me;
 
         vpKltOpencv klt;
         klt.setMaxFeatures(10000);
@@ -505,10 +562,14 @@ main(int argc, const char ** argv)
         klt.setHarrisFreeParameter(0.01);
         klt.setBlockSize(3);
         klt.setPyramidLevels(3);
+        std::map<std::string, vpKltOpencv> mapOfKlt;
+        mapOfKlt["Camera1"] = klt;
+        mapOfKlt["Camera2"] = klt;
+        mapOfKlt["Camera3"] = klt;
 
-        dynamic_cast<vpMbGenericTracker*>(tracker)->setCameraParameters(cam1, cam2);
-        dynamic_cast<vpMbGenericTracker*>(tracker)->setMovingEdge(me);
-        dynamic_cast<vpMbGenericTracker*>(tracker)->setKltOpencv(klt);
+        dynamic_cast<vpMbGenericTracker*>(tracker)->setCameraParameters(mapOfCameraParams);
+        dynamic_cast<vpMbGenericTracker*>(tracker)->setMovingEdge(mapOfMe);
+        dynamic_cast<vpMbGenericTracker*>(tracker)->setKltOpencv(mapOfKlt);
         tracker->setAngleAppear( vpMath::rad(65) );
         tracker->setAngleDisappear( vpMath::rad(75) );
         dynamic_cast<vpMbGenericTracker*>(tracker)->setMaskBorder(5);
@@ -516,36 +577,55 @@ main(int argc, const char ** argv)
         // Specify the clipping to
         tracker->setNearClippingDistance(0.01);
         tracker->setFarClippingDistance(0.90);
-        tracker->setClipping(tracker->getClipping() | vpMbtPolygon::FOV_CLIPPING);
+
+        std::map<std::string, unsigned int> mapOfClippingFlags;
+        dynamic_cast<vpMbGenericTracker*>(tracker)->getClipping(mapOfClippingFlags);
+        for (std::map<std::string, unsigned int>::iterator it = mapOfClippingFlags.begin(); it != mapOfClippingFlags.end(); ++it) {
+          it->second = (it->second | vpMbtPolygon::FOV_CLIPPING);
+        }
+
+        dynamic_cast<vpMbGenericTracker*>(tracker)->setClipping(mapOfClippingFlags);
         //   tracker->setClipping(tracker->getClipping() | vpMbtPolygon::LEFT_CLIPPING | vpMbtPolygon::RIGHT_CLIPPING | vpMbtPolygon::UP_CLIPPING | vpMbtPolygon::DOWN_CLIPPING); // Equivalent to FOV_CLIPPING
 #endif
         tracker->loadModel(modelFile);
-        dynamic_cast<vpMbGenericTracker*>(tracker)->setCameraParameters(cam1, cam2);
+        dynamic_cast<vpMbGenericTracker*>(tracker)->setCameraParameters(mapOfCameraParams);
         tracker->setOgreVisibilityTest(useOgre);
         tracker->setScanLineVisibilityTest(useScanline);
         tracker->setCovarianceComputation(computeCovariance);
         tracker->setProjectionErrorComputation(projectionError);
-        dynamic_cast<vpMbGenericTracker*>(tracker)->initFromPose(I1, I2, c1Mo, c2Mo);
+        dynamic_cast<vpMbGenericTracker*>(tracker)->initFromPose(mapOfImages, mapOfCameraPoses);
       }
 
       // Test to set an initial pose
       if (reader.getFrameIndex() == reader.getFirstFrameIndex() + 50) {
-        c1Mo.buildFrom(0.0439540832,  0.0845870108,  0.5477322481,  2.179498458,  0.8611798108, -0.3491961946);
-        c2Mo.buildFrom(0.0439540832,  0.0845870108,  0.5477322481,  2.179498458,  0.8611798108, -0.3491961946);
+        vpHomogeneousMatrix c1Moi;
+        c1Moi.buildFrom(0.0439540832,  0.0845870108,  0.5477322481,  2.179498458,  0.8611798108, -0.3491961946);
+        std::map<std::string, vpHomogeneousMatrix> mapOfSetPoses;
+        mapOfSetPoses["Camera1"] = c1Moi;
+
         std::cout << "Test set pose" << std::endl;
-        dynamic_cast<vpMbGenericTracker*>(tracker)->setPose(I1, I2, c1Mo, c2Mo);
+        dynamic_cast<vpMbGenericTracker*>(tracker)->setPose(mapOfImages, mapOfSetPoses);
       }
 
       // track the object: stop tracking from frame 40 to 50
       if (reader.getFrameIndex() - reader.getFirstFrameIndex() < 40 || reader.getFrameIndex() - reader.getFirstFrameIndex() >= 50) {
-        dynamic_cast<vpMbGenericTracker*>(tracker)->track(I1, I2);
-        dynamic_cast<vpMbGenericTracker*>(tracker)->getPose(c1Mo, c2Mo);
+        dynamic_cast<vpMbGenericTracker*>(tracker)->track(mapOfImages);
+        dynamic_cast<vpMbGenericTracker*>(tracker)->getPose(mapOfCameraPoses);
         if (opt_display) {
           // display the 3D model
-          dynamic_cast<vpMbGenericTracker*>(tracker)->display(I1, I2, c1Mo, c2Mo, cam1, cam2, vpColor::darkRed);
+          if (reader.getFrameIndex() - reader.getFirstFrameIndex() >= 50) {
+            std::map<std::string, const vpImage<unsigned char> *> mapOfSubImages;
+            mapOfSubImages["Camera1"] = &I1;
+            mapOfSubImages["Camera2"] = &I2;
+
+            dynamic_cast<vpMbGenericTracker*>(tracker)->display(mapOfSubImages, mapOfCameraPoses, mapOfCameraParams, vpColor::red, 3);
+          } else {
+            dynamic_cast<vpMbGenericTracker*>(tracker)->display(mapOfImages, mapOfCameraPoses, mapOfCameraParams, vpColor::red, 3);
+          }
           // display the frame
-          vpDisplay::displayFrame (I1, c1Mo, cam1, 0.05);
-          vpDisplay::displayFrame (I2, c2Mo, cam2, 0.05);
+          vpDisplay::displayFrame (I1, mapOfCameraPoses["Camera1"], mapOfCameraParams["Camera1"], 0.05);
+          vpDisplay::displayFrame (I2, mapOfCameraPoses["Camera2"], mapOfCameraParams["Camera2"], 0.05);
+          vpDisplay::displayFrame (I3, mapOfCameraPoses["Camera3"], mapOfCameraParams["Camera3"], 0.05);
         }
       }
 
@@ -578,6 +658,7 @@ main(int argc, const char ** argv)
 
       vpDisplay::flush(I1);
       vpDisplay::flush(I2);
+      vpDisplay::flush(I3);
     }
     if (opt_click_allowed && !quit) {
       vpDisplay::getClick(I1);
