@@ -12,6 +12,7 @@
 
 int main(int argc, char** argv)
 {
+  // OpenCV is required here by the video reader
 #if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100)
   try {
     std::string opt_videoname_left = "teabox_left.mpg";

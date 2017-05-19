@@ -11,7 +11,9 @@ class VISP_EXPORT vpMbGenericTracker : public vpMbTracker {
 public:
   enum vpTrackerType {
     EDGE_TRACKER  = 1 << 0,   /*!< Model-based tracking using moving edges features. */
+#if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
     KLT_TRACKER   = 1 << 1    /*!< Model-based tracking using KLT features. */
+#endif
   };
 
   vpMbGenericTracker();
@@ -61,12 +63,15 @@ public:
   virtual vpMbHiddenFaces<vpMbtPolygon>& getFaces();
   virtual vpMbHiddenFaces<vpMbtPolygon>& getFaces(const std::string &cameraName);
 
+#if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
   virtual std::list<vpMbtDistanceCircle*>& getFeaturesCircle();
   virtual std::list<vpMbtDistanceKltCylinder*>& getFeaturesKltCylinder();
   virtual std::list<vpMbtDistanceKltPoints*>& getFeaturesKlt();
+#endif
 
   virtual double getGoodMovingEdgesRatioThreshold() const;
 
+#if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
   virtual vpKltOpencv getKltOpencv() const;
   virtual void getKltOpencv(vpKltOpencv &klt1, vpKltOpencv &klt2) const;
   virtual void getKltOpencv(std::map<std::string, vpKltOpencv> &mapOfKlts) const;
@@ -74,21 +79,25 @@ public:
   virtual std::vector<vpImagePoint> getKltImagePoints() const;
   virtual std::map<int, vpImagePoint> getKltImagePointsWithId() const;
 
-#if (VISP_HAVE_OPENCV_VERSION >= 0x020408)
+#  if (VISP_HAVE_OPENCV_VERSION >= 0x020408)
   virtual std::vector<cv::Point2f> getKltPoints() const;
+#  endif
 #endif
-
   virtual void getLcircle(const std::string &cameraName, std::list<vpMbtDistanceCircle *>& circlesList, const unsigned int level=0) const;
   virtual void getLcylinder(const std::string &cameraName, std::list<vpMbtDistanceCylinder *>& cylindersList, const unsigned int level=0) const;
   virtual void getLline(const std::string &cameraName, std::list<vpMbtDistanceLine *>& linesList, const unsigned int level=0) const;
 
+#if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
   virtual unsigned int getMaskBorder() const;
+#endif
 
   virtual vpMe getMovingEdge() const;
   virtual void getMovingEdge(vpMe &me1, vpMe &me2) const;
   virtual void getMovingEdge(std::map<std::string, vpMe> &mapOfMovingEdges) const;
 
+#if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
   virtual int getNbKltPoints() const;
+#endif
 
   virtual unsigned int getNbPoints(const unsigned int level=0) const;
   virtual void getNbPoints(std::map<std::string, unsigned int> &mapOfNbPoints, const unsigned int level=0) const;
@@ -181,15 +190,19 @@ public:
   virtual void setNbRayCastingAttemptsForVisibility(const unsigned int &attempts);
 #endif
 
+#if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
   virtual void setKltOpencv(const vpKltOpencv &t);
   virtual void setKltOpencv(const vpKltOpencv &t1, const vpKltOpencv &t2);
   virtual void setKltOpencv(const std::map<std::string, vpKltOpencv> &mapOfKlts);
+#endif
 
   virtual void setLod(const bool useLod, const std::string &name="");
 
+#if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
   virtual void setMaskBorder(const unsigned int &e);
   virtual void setMaskBorder(const unsigned int &e1, const unsigned int &e2);
   virtual void setMaskBorder(const std::map<std::string, unsigned int> &mapOfErosions);
+#endif
 
   virtual void setMinLineLengthThresh(const double minLineLengthThresh, const std::string &name="");
   virtual void setMinPolygonAreaThresh(const double minPolygonAreaThresh, const std::string &name="");
@@ -220,7 +233,9 @@ public:
   virtual void setTrackerType(const int type);
 
   virtual void setUseEdgeTracking(const std::string &name, const bool &useEdgeTracking);
+#if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
   virtual void setUseKltTracking(const std::string &name, const bool &useKltTracking);
+#endif
 
   virtual void testTracking();
 
@@ -256,7 +271,11 @@ protected:
 
 
 private:
-  class TrackerWrapper : public vpMbEdgeTracker, public vpMbKltTracker {
+  class TrackerWrapper : public vpMbEdgeTracker
+    #if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
+      , public vpMbKltTracker
+    #endif
+  {
     friend class vpMbGenericTracker;
 
   public:

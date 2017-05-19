@@ -11,6 +11,7 @@
 
 int main(int argc, char** argv)
 {
+  // OpenCV is required here by the video reader
 #if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100)
   try {
     std::string opt_videoname = "teabox.mpg";
@@ -84,7 +85,7 @@ int main(int argc, char** argv)
       dynamic_cast<vpMbGenericTracker*>(tracker)->setMovingEdge(me);
     }
 
-#ifdef VISP_HAVE_MODULE_KLT
+#if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
     if (opt_tracker == 2 || opt_tracker == 3) {
       vpKltOpencv klt_settings;
       klt_settings.setMaxFeatures(300);
