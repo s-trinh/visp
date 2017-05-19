@@ -2960,6 +2960,13 @@ void vpMbGenericTracker::track(std::map<std::string, const vpImage<unsigned char
                                 #endif
                                     )) == 0 ) {
       std::cerr << "Bad tracker type: " << tracker->m_trackerType << std::endl;
+
+#if !defined(VISP_HAVE_MODULE_KLT) || !(defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
+    if (tracker->m_trackerType & KLT_TRACKER) {
+      throw vpException(vpException::fatalError, "The KLT module is not available!");
+    }
+#endif
+
       return;
     }
 
@@ -3008,6 +3015,16 @@ vpMbGenericTracker::TrackerWrapper::TrackerWrapper() :
 vpMbGenericTracker::TrackerWrapper::TrackerWrapper(const int trackerType) :
   m_error(), m_L(), m_trackerType(trackerType), m_w(), m_weightedError()
 {
+  if ( (m_trackerType & (EDGE_TRACKER
+                       #if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
+                         | KLT_TRACKER
+                       #endif
+                         )) == 0 ) {
+    std::stringstream ss;
+    ss << "Bad value for tracker type: " << m_trackerType << "!";
+    throw vpException(vpTrackingException::badValue, ss.str());
+  }
+
   m_lambda = 1.0;
   m_maxIter = 30;
 
@@ -3751,10 +3768,13 @@ void vpMbGenericTracker::TrackerWrapper::setPose(const vpImage<unsigned char> &I
 #if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
   vpMbKltTracker::setPose(I, cdMo);
 #else
-  (void)cdMo;
+  cMo = cdMo;
+  init(I);
+  return;
 #endif
 
-  resetMovingEdge();
+  if (m_trackerType & EDGE_TRACKER)
+    resetMovingEdge();
 
   if (useScanLine) {
     cam.computeFov(I.getWidth(), I.getHeight());
@@ -3763,21 +3783,24 @@ void vpMbGenericTracker::TrackerWrapper::setPose(const vpImage<unsigned char> &I
   }
 
 #if 0
-  initPyramid(I, Ipyramid);
+  if (m_trackerType & EDGE_TRACKER) {
+    initPyramid(I, Ipyramid);
 
-  unsigned int i = (unsigned int) scales.size();
-  do {
-    i--;
-    if(scales[i]){
-      downScale(i);
-      initMovingEdge(*Ipyramid[i], cMo);
-      upScale(i);
-    }
-  } while(i != 0);
+    unsigned int i = (unsigned int) scales.size();
+    do {
+      i--;
+      if(scales[i]){
+        downScale(i);
+        initMovingEdge(*Ipyramid[i], cMo);
+        upScale(i);
+      }
+    } while(i != 0);
 
-  cleanPyramid(Ipyramid);
+    cleanPyramid(Ipyramid);
+  }
 #else
-  initMovingEdge(I, cMo);
+  if (m_trackerType & EDGE_TRACKER)
+    initMovingEdge(I, cMo);
 #endif
 }
 
@@ -3793,6 +3816,16 @@ void vpMbGenericTracker::TrackerWrapper::setScanLineVisibilityTest(const bool &v
 }
 
 void vpMbGenericTracker::TrackerWrapper::setTrackerType(const int type) {
+  if ( (type & (EDGE_TRACKER
+              #if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
+                | KLT_TRACKER
+              #endif
+                )) == 0 ) {
+    std::stringstream ss;
+    ss << "Bad value for tracker type: " << type << "!";
+    throw vpException(vpTrackingException::badValue, ss.str());
+  }
+
   m_trackerType = type;
 }
 
