@@ -137,7 +137,7 @@ void vpMbEdgeKltMultiTracker::computeVVS(std::map<std::string, const vpImage<uns
   m_nbrow = initMbtTracking(mapOfImages, lvl);
 
   if(m_nbInfos < 4 && m_nbrow < 4) {
-    throw vpTrackingException(vpTrackingException::notEnoughPointError, "\n\t\t Error-> not enough data");
+    throw vpTrackingException(vpTrackingException::notEnoughPointError, "Error: not enough features");
   } else if(m_nbrow < 4) {
     m_nbrow = 0;
   }

@@ -878,8 +878,7 @@ vpMbEdgeKltTracker::trackFirstLoop(const vpImage<unsigned char>& I, vpColVector 
   unsigned int nbrow = initMbtTracking(lvl);
 
   if (nbrow==0){
-//     vpERROR_TRACE("\n\t\t Error-> not enough data in the interaction matrix...") ;
-//     throw vpTrackingException(vpTrackingException::notEnoughPointError, "\n\t\t Error-> not enough data in the interaction matrix...");
+//     throw vpTrackingException(vpTrackingException::notEnoughPointError, "Error: not enough features in the interaction matrix...");
       return nbrow;
   }
 

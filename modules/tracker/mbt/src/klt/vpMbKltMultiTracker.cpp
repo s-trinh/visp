@@ -2604,8 +2604,7 @@ void vpMbKltMultiTracker::track(std::map<std::string, const vpImage<unsigned cha
   preTracking(mapOfImages);
 
   if (m_nbInfos < 4 || m_nbFaceUsed == 0) {
-    vpERROR_TRACE("\n\t\t Error-> not enough data") ;
-    throw vpTrackingException(vpTrackingException::notEnoughPointError, "\n\t\t Error-> not enough data");
+    throw vpTrackingException(vpTrackingException::notEnoughPointError, "Error: not enough features");
   }
 
   computeVVS();
