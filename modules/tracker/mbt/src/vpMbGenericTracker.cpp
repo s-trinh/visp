@@ -3441,8 +3441,7 @@ void vpMbGenericTracker::TrackerWrapper::loadConfigFile(const std::string& confi
     xmlp.parse(configFile.c_str());
   }
   catch(...){
-    vpERROR_TRACE("Can't open XML file \"%s\"\n ", configFile);
-    throw vpException(vpException::ioError, "problem to parse configuration file.");
+    throw vpException(vpException::ioError, "Can't open XML file \"%s\"\n ", configFile.c_str());
   }
 
   vpCameraParameters camera;
