@@ -93,6 +93,7 @@ int main(int argc, char** argv)
     if(opt_tracker == 0)
       dynamic_cast<vpMbEdgeMultiTracker*>   (tracker)->loadConfigFile(objectname_left + ".xml", objectname_right + ".xml");
 #if defined(VISP_HAVE_MODULE_KLT)
+    else if (opt_tracker == 1)
       dynamic_cast<vpMbKltMultiTracker*>    (tracker)->loadConfigFile(objectname_left + ".xml", objectname_right + ".xml");
     else
       dynamic_cast<vpMbEdgeKltMultiTracker*>(tracker)->loadConfigFile(objectname_left + ".xml", objectname_right + ".xml");

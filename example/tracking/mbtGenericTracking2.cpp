@@ -413,7 +413,7 @@ main(int argc, const char ** argv)
     mapOfKlt["Camera3"] = klt;
 
     dynamic_cast<vpMbGenericTracker*>(tracker)->setKltOpencv(mapOfKlt);
-    dynamic_cast<vpMbGenericTracker*>(tracker)->setMaskBorder(5);
+    dynamic_cast<vpMbGenericTracker*>(tracker)->setKltMaskBorder(5);
 #endif
 
     dynamic_cast<vpMbGenericTracker*>(tracker)->setCameraParameters(mapOfCameraParams);
@@ -572,7 +572,7 @@ main(int argc, const char ** argv)
         mapOfKlt["Camera3"] = klt;
 
         dynamic_cast<vpMbGenericTracker*>(tracker)->setKltOpencv(mapOfKlt);
-        dynamic_cast<vpMbGenericTracker*>(tracker)->setMaskBorder(5);
+        dynamic_cast<vpMbGenericTracker*>(tracker)->setKltMaskBorder(5);
 #endif
 
         dynamic_cast<vpMbGenericTracker*>(tracker)->setCameraParameters(mapOfCameraParams);

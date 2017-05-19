@@ -783,12 +783,12 @@ std::map<std::string, CvPoint2D32f*> vpMbKltMultiTracker::getKltPoints() {
 
   \return The number of features
 */
-std::map<std::string, int> vpMbKltMultiTracker::getNbKltPoints() const {
+std::map<std::string, int> vpMbKltMultiTracker::getKltNbPoints() const {
   std::map<std::string, int> mapOfFeatures;
 
   for(std::map<std::string, vpMbKltTracker*>::const_iterator it = m_mapOfKltTrackers.begin();
       it != m_mapOfKltTrackers.end(); ++it) {
-    mapOfFeatures[it->first] = it->second->getNbKltPoints();
+    mapOfFeatures[it->first] = it->second->getKltNbPoints();
   }
 
   return mapOfFeatures;
@@ -2170,10 +2170,10 @@ void vpMbKltMultiTracker::setLod(const bool useLod, const std::string &cameraNam
 
   \param  e : The desired erosion.
 */
-void vpMbKltMultiTracker::setMaskBorder(const unsigned int &e) {
+void vpMbKltMultiTracker::setKltMaskBorder(const unsigned int &e) {
   for(std::map<std::string, vpMbKltTracker*>::const_iterator it = m_mapOfKltTrackers.begin();
       it != m_mapOfKltTrackers.end(); ++it) {
-    it->second->setMaskBorder(e);
+    it->second->setKltMaskBorder(e);
   }
 
   maskBorder = e;
@@ -2515,10 +2515,10 @@ void vpMbKltMultiTracker::setScanLineVisibilityTest(const bool &v) {
 
   \param th : Threshold for the weight below which a point is rejected.
 */
-void vpMbKltMultiTracker::setThresholdAcceptation(const double th) {
+void vpMbKltMultiTracker::setKltThresholdAcceptation(const double th) {
   for(std::map<std::string, vpMbKltTracker*>::const_iterator it = m_mapOfKltTrackers.begin();
       it != m_mapOfKltTrackers.end(); ++it) {
-    it->second->setThresholdAcceptation(th);
+    it->second->setKltThresholdAcceptation(th);
   }
 
   threshold_outlier = th;
@@ -2611,6 +2611,37 @@ void vpMbKltMultiTracker::track(std::map<std::string, const vpImage<unsigned cha
   computeVVS();
 
   postTracking(mapOfImages);
+}
+
+//////////////// Deprecated ////////////////
+/*!
+  Get the current number of klt points for each camera.
+  \deprecated Use rather getKltNbPoints()
+
+  \return The number of features
+*/
+std::map<std::string, int> vpMbKltMultiTracker::getNbKltPoints() const {
+
+  return getKltNbPoints();
+}
+
+/*!
+  Set the erosion of the mask used on the Model faces.
+  \deprecated Use rather setKltMaskBorder()
+
+  \param  e : The desired erosion.
+*/
+void vpMbKltMultiTracker::setMaskBorder(const unsigned int &e) {
+  setKltMaskBorder(e);
+}
+
+/*!
+  Set the threshold for the acceptation of a point.
+
+  \param th : Threshold for the weight below which a point is rejected.
+*/
+void vpMbKltMultiTracker::setThresholdAcceptation(const double th) {
+  setKltThresholdAcceptation(th);
 }
 
 #elif !defined(VISP_BUILD_SHARED_LIBS)

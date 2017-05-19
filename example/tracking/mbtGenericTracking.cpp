@@ -384,7 +384,7 @@ main(int argc, const char ** argv)
     klt.setPyramidLevels(3);
 
     dynamic_cast<vpMbGenericTracker*>(tracker)->setKltOpencv(klt);
-    dynamic_cast<vpMbGenericTracker*>(tracker)->setMaskBorder(5);
+    dynamic_cast<vpMbGenericTracker*>(tracker)->setKltMaskBorder(5);
 #endif
 
     dynamic_cast<vpMbGenericTracker*>(tracker)->setCameraParameters(cam1, cam2);
@@ -512,7 +512,7 @@ main(int argc, const char ** argv)
         klt.setPyramidLevels(3);
 
         dynamic_cast<vpMbGenericTracker*>(tracker)->setKltOpencv(klt);
-        dynamic_cast<vpMbGenericTracker*>(tracker)->setMaskBorder(5);
+        dynamic_cast<vpMbGenericTracker*>(tracker)->setKltMaskBorder(5);
 #endif
 
         dynamic_cast<vpMbGenericTracker*>(tracker)->setCameraParameters(cam1, cam2);

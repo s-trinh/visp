@@ -88,16 +88,13 @@ public:
   virtual void getLline(const std::string &cameraName, std::list<vpMbtDistanceLine *>& linesList, const unsigned int level=0) const;
 
 #if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
-  virtual unsigned int getMaskBorder() const;
+  virtual unsigned int getKltMaskBorder() const;
+  virtual int getKltNbPoints() const;
 #endif
 
   virtual vpMe getMovingEdge() const;
   virtual void getMovingEdge(vpMe &me1, vpMe &me2) const;
   virtual void getMovingEdge(std::map<std::string, vpMe> &mapOfMovingEdges) const;
-
-#if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
-  virtual int getNbKltPoints() const;
-#endif
 
   virtual unsigned int getNbPoints(const unsigned int level=0) const;
   virtual void getNbPoints(std::map<std::string, unsigned int> &mapOfNbPoints, const unsigned int level=0) const;
@@ -191,18 +188,16 @@ public:
 #endif
 
 #if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
+  virtual void setKltMaskBorder(const unsigned int &e);
+  virtual void setKltMaskBorder(const unsigned int &e1, const unsigned int &e2);
+  virtual void setKltMaskBorder(const std::map<std::string, unsigned int> &mapOfErosions);
+
   virtual void setKltOpencv(const vpKltOpencv &t);
   virtual void setKltOpencv(const vpKltOpencv &t1, const vpKltOpencv &t2);
   virtual void setKltOpencv(const std::map<std::string, vpKltOpencv> &mapOfKlts);
 #endif
 
   virtual void setLod(const bool useLod, const std::string &name="");
-
-#if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
-  virtual void setMaskBorder(const unsigned int &e);
-  virtual void setMaskBorder(const unsigned int &e1, const unsigned int &e2);
-  virtual void setMaskBorder(const std::map<std::string, unsigned int> &mapOfErosions);
-#endif
 
   virtual void setMinLineLengthThresh(const double minLineLengthThresh, const std::string &name="");
   virtual void setMinPolygonAreaThresh(const double minPolygonAreaThresh, const std::string &name="");
@@ -289,7 +284,6 @@ private:
     vpColVector m_w;
     //! Weighted error
     vpColVector m_weightedError;
-
 
     TrackerWrapper();
     TrackerWrapper(const int trackerType);

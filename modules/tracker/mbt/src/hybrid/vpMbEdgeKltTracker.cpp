@@ -587,8 +587,7 @@ vpMbEdgeKltTracker::computeVVS(const vpImage<unsigned char>& I, const unsigned i
   nbrow = trackFirstLoop(I, factor, lvl);
 
   if(nbrow < 4 && nbInfos < 4){
-    vpERROR_TRACE("\n\t\t Error-> not enough data") ;
-    throw vpTrackingException(vpTrackingException::notEnoughPointError, "\n\t\t Error-> not enough data");
+    throw vpTrackingException(vpTrackingException::notEnoughPointError, "Error: not enough features");
   }
   else if(nbrow < 4)
     nbrow = 0;

@@ -129,7 +129,7 @@ void vpMbGenericTracker::computeVVS(std::map<std::string, const vpImage<unsigned
   computeVVSInit(mapOfImages);
 
   if (m_error.getRows() < 4) {
-    throw vpTrackingException(vpTrackingException::notEnoughPointError, "\n\t\t Error-> not enough data");
+    throw vpTrackingException(vpTrackingException::notEnoughPointError, "Error: not enough features");
   }
 
   double normRes = 0;
@@ -897,11 +897,11 @@ void vpMbGenericTracker::getLline(const std::string &cameraName, std::list<vpMbt
 
   \return The erosion for the reference camera.
 */
-unsigned int vpMbGenericTracker::getMaskBorder() const {
+unsigned int vpMbGenericTracker::getKltMaskBorder() const {
   std::map<std::string, TrackerWrapper*>::const_iterator it = m_mapOfTrackers.find(m_referenceCameraName);
   if (it != m_mapOfTrackers.end()) {
     TrackerWrapper *tracker = it->second;
-    return tracker->getMaskBorder();
+    return tracker->getKltMaskBorder();
   } else {
     std::cerr << "Cannot find the reference camera: " << m_referenceCameraName << "!" << std::endl;
   }
@@ -949,11 +949,11 @@ void vpMbGenericTracker::getMovingEdge(vpMe &me1, vpMe &me2) const {
 }
 
 #if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
-int vpMbGenericTracker::getNbKltPoints() const {
+int vpMbGenericTracker::getKltNbPoints() const {
   std::map<std::string, TrackerWrapper*>::const_iterator it = m_mapOfTrackers.find(m_referenceCameraName);
   if (it != m_mapOfTrackers.end()) {
     TrackerWrapper *tracker = it->second;
-    return tracker->getNbKltPoints();
+    return tracker->getKltNbPoints();
   } else {
     std::cerr << "Cannot find the reference camera: " << m_referenceCameraName << "!" << std::endl;
   }
@@ -2419,10 +2419,10 @@ void vpMbGenericTracker::setLod(const bool useLod, const std::string &name) {
 
   \note This function will set the new parameter for all the cameras.
 */
-void vpMbGenericTracker::setMaskBorder(const unsigned int &e) {
+void vpMbGenericTracker::setKltMaskBorder(const unsigned int &e) {
   for(std::map<std::string, TrackerWrapper*>::const_iterator it = m_mapOfTrackers.begin(); it != m_mapOfTrackers.end(); ++it) {
     TrackerWrapper *tracker = it->second;
-    tracker->setMaskBorder(e);
+    tracker->setKltMaskBorder(e);
   }
 }
 
@@ -2434,14 +2434,14 @@ void vpMbGenericTracker::setMaskBorder(const unsigned int &e) {
 
   \note This function assumes a stereo configuration of the generic tracker.
 */
-void vpMbGenericTracker::setMaskBorder(const unsigned int &e1, const unsigned int &e2) {
+void vpMbGenericTracker::setKltMaskBorder(const unsigned int &e1, const unsigned int &e2) {
   if (m_mapOfTrackers.size() == 2) {
     std::map<std::string, TrackerWrapper*>::const_iterator it = m_mapOfTrackers.begin();
-    it->second->setMaskBorder(e1);
+    it->second->setKltMaskBorder(e1);
 
     ++it;
 
-    it->second->setMaskBorder(e2);
+    it->second->setKltMaskBorder(e2);
   } else {
     std::stringstream ss;
     ss << "This method requires 2 cameras but there are " << m_mapOfTrackers.size() << " cameras!";
@@ -2454,13 +2454,13 @@ void vpMbGenericTracker::setMaskBorder(const unsigned int &e1, const unsigned in
 
   \param mapOfErosions : Map of desired erosions.
 */
-void vpMbGenericTracker::setMaskBorder(const std::map<std::string, unsigned int> &mapOfErosions) {
+void vpMbGenericTracker::setKltMaskBorder(const std::map<std::string, unsigned int> &mapOfErosions) {
   for (std::map<std::string, unsigned int>::const_iterator it = mapOfErosions.begin(); it != mapOfErosions.end(); ++it) {
     std::map<std::string, TrackerWrapper*>::const_iterator it_tracker = m_mapOfTrackers.find(it->first);
 
     if (it_tracker != m_mapOfTrackers.end()) {
       TrackerWrapper *tracker = it_tracker->second;
-      tracker->setMaskBorder(it->second);
+      tracker->setKltMaskBorder(it->second);
     }
   }
 }
@@ -2959,15 +2959,8 @@ void vpMbGenericTracker::track(std::map<std::string, const vpImage<unsigned char
                                     | KLT_TRACKER
                                 #endif
                                     )) == 0 ) {
-      std::cerr << "Bad tracker type: " << tracker->m_trackerType << std::endl;
 
-#if !defined(VISP_HAVE_MODULE_KLT) || !(defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
-    if (tracker->m_trackerType & KLT_TRACKER) {
-      throw vpException(vpException::fatalError, "The KLT module is not available!");
-    }
-#endif
-
-      return;
+      throw vpException(vpException::fatalError, "Bad tracker type: %d", tracker->m_trackerType);
     }
 
     if (tracker->m_trackerType & (EDGE_TRACKER
@@ -3035,6 +3028,7 @@ vpMbGenericTracker::TrackerWrapper::TrackerWrapper(const int trackerType) :
 
 vpMbGenericTracker::TrackerWrapper::~TrackerWrapper() { }
 
+// Implemented only for debug to use TrackerWrapper as vpMbEdgeTracker
 void vpMbGenericTracker::TrackerWrapper::computeVVS(const vpImage<unsigned char> &I) {
   computeVVSInit(I);
 
@@ -3069,18 +3063,6 @@ void vpMbGenericTracker::TrackerWrapper::computeVVS(const vpImage<unsigned char>
   unsigned int nb_edge_features = m_error_edge.getRows();
 #if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
   unsigned int nb_klt_features = m_error_klt.getRows();
-#endif
-
-#if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
-  if (nb_edge_features < 4 && nb_klt_features < 4) {
-    throw vpTrackingException(vpTrackingException::notEnoughPointError, "Error: not enough moving-edges or keypoints features");
-  } else if(nb_edge_features < 4) {
-    nb_edge_features = 0;
-  }
-#else
-  if (nb_edge_features < 4) {
-    throw vpTrackingException(vpTrackingException::notEnoughPointError, "Error: not enough moving-edges features");
-  }
 #endif
 
   while( std::fabs(normRes_1 - normRes) > m_stopCriteriaEpsilon && (iter < m_maxIter) ) {
