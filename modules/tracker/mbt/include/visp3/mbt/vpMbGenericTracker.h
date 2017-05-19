@@ -130,6 +130,7 @@ public:
                             const vpHomogeneousMatrix &c1Mo, const vpHomogeneousMatrix &c2Mo);
   virtual void initFromPose(const std::map<std::string, const vpImage<unsigned char> *> &mapOfImages,
                             const std::map<std::string, vpHomogeneousMatrix> &mapOfCameraPoses);
+  using vpMbTracker::initFromPose;
 
   virtual void loadConfigFile(const std::string& configFile);
   virtual void loadConfigFile(const std::string& configFile1, const std::string& configFile2);
@@ -138,6 +139,7 @@ public:
   virtual void loadModel(const std::string &modelFile, const bool verbose=false);
   virtual void loadModel(const std::string &modelFile1, const std::string &modelFile2, const bool verbose=false);
   virtual void loadModel(const std::map<std::string, std::string> &mapOfModelFiles, const bool verbose=false);
+  using vpMbTracker::loadModel;
 
   virtual void reInitModel(const vpImage<unsigned char> &I, const std::string &cad_name, const vpHomogeneousMatrix &cMo_, const bool verbose=false);
   virtual void reInitModel(const vpImage<unsigned char> &I1, const vpImage<unsigned char> &I2, const std::string &cad_name1, const std::string &cad_name2,
@@ -238,6 +240,7 @@ protected:
   virtual void computeVVSInteractionMatrixAndResidu(std::map<std::string, const vpImage<unsigned char> *> &mapOfImages,
                                                     std::map<std::string, vpVelocityTwistMatrix> &mapOfVelocityTwist);
   virtual void computeVVSWeights();
+  using vpMbTracker::computeVVSWeights;
 
   virtual void initCircle(const vpPoint& p1, const vpPoint &p2, const vpPoint &p3, const double radius,
                           const int idFace=0, const std::string &name="");
@@ -323,6 +326,7 @@ private:
     virtual void computeVVSInteractionMatrixAndResidu();
     virtual void computeVVSInteractionMatrixAndResidu(const vpImage<unsigned char> &I);
     virtual void computeVVSWeights();
+    using vpMbTracker::computeVVSWeights;
 
     virtual void initCircle(const vpPoint& p1, const vpPoint &p2, const vpPoint &p3, const double radius,
         const int idFace=0, const std::string &name="");
