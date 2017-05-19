@@ -45,7 +45,7 @@
 #include <iostream>
 #include <visp3/core/vpConfig.h>
 
-#if defined(VISP_HAVE_MODULE_MBT) && defined(VISP_HAVE_MODULE_KLT) && defined(VISP_HAVE_OPENCV) && defined(VISP_HAVE_DISPLAY) && (VISP_HAVE_OPENCV_VERSION >= 0x020100)
+#if defined(VISP_HAVE_MODULE_MBT) && defined(VISP_HAVE_DISPLAY)
 
 #include <visp3/core/vpDebug.h>
 #include <visp3/gui/vpDisplayD3D.h>
@@ -398,6 +398,7 @@ main(int argc, const char ** argv)
     mapOfMe["Camera2"] = me;
     mapOfMe["Camera3"] = me;
 
+#if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
     vpKltOpencv klt;
     klt.setMaxFeatures(10000);
     klt.setWindowSize(5);
@@ -411,12 +412,14 @@ main(int argc, const char ** argv)
     mapOfKlt["Camera2"] = klt;
     mapOfKlt["Camera3"] = klt;
 
+    dynamic_cast<vpMbGenericTracker*>(tracker)->setKltOpencv(mapOfKlt);
+    dynamic_cast<vpMbGenericTracker*>(tracker)->setMaskBorder(5);
+#endif
+
     dynamic_cast<vpMbGenericTracker*>(tracker)->setCameraParameters(mapOfCameraParams);
     dynamic_cast<vpMbGenericTracker*>(tracker)->setMovingEdge(mapOfMe);
-    dynamic_cast<vpMbGenericTracker*>(tracker)->setKltOpencv(mapOfKlt);
     tracker->setAngleAppear( vpMath::rad(65) );
     tracker->setAngleDisappear( vpMath::rad(75) );
-    dynamic_cast<vpMbGenericTracker*>(tracker)->setMaskBorder(5);
 
     // Specify the clipping to
     tracker->setNearClippingDistance(0.01);
@@ -554,6 +557,7 @@ main(int argc, const char ** argv)
         mapOfMe["Camera2"] = me;
         mapOfMe["Camera3"] = me;
 
+#if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
         vpKltOpencv klt;
         klt.setMaxFeatures(10000);
         klt.setWindowSize(5);
@@ -567,12 +571,14 @@ main(int argc, const char ** argv)
         mapOfKlt["Camera2"] = klt;
         mapOfKlt["Camera3"] = klt;
 
+        dynamic_cast<vpMbGenericTracker*>(tracker)->setKltOpencv(mapOfKlt);
+        dynamic_cast<vpMbGenericTracker*>(tracker)->setMaskBorder(5);
+#endif
+
         dynamic_cast<vpMbGenericTracker*>(tracker)->setCameraParameters(mapOfCameraParams);
         dynamic_cast<vpMbGenericTracker*>(tracker)->setMovingEdge(mapOfMe);
-        dynamic_cast<vpMbGenericTracker*>(tracker)->setKltOpencv(mapOfKlt);
         tracker->setAngleAppear( vpMath::rad(65) );
         tracker->setAngleDisappear( vpMath::rad(75) );
-        dynamic_cast<vpMbGenericTracker*>(tracker)->setMaskBorder(5);
 
         // Specify the clipping to
         tracker->setNearClippingDistance(0.01);
