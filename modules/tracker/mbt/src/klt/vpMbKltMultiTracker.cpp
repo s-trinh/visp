@@ -2620,7 +2620,6 @@ void vpMbKltMultiTracker::track(std::map<std::string, const vpImage<unsigned cha
   \return The number of features
 */
 std::map<std::string, int> vpMbKltMultiTracker::getNbKltPoints() const {
-
   return getKltNbPoints();
 }
 

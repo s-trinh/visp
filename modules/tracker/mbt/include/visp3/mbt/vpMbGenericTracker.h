@@ -1,7 +1,43 @@
+/****************************************************************************
+ *
+ * This file is part of the ViSP software.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
+ *
+ * This software is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * ("GPL") version 2 as published by the Free Software Foundation.
+ * See the file LICENSE.txt at the root directory of this source
+ * distribution for additional information about the GNU GPL.
+ *
+ * For using ViSP with software that can not be combined with the GNU
+ * GPL, please contact Inria about acquiring a ViSP Professional
+ * Edition License.
+ *
+ * See http://visp.inria.fr for more information.
+ *
+ * This software was developed at:
+ * Inria Rennes - Bretagne Atlantique
+ * Campus Universitaire de Beaulieu
+ * 35042 Rennes Cedex
+ * France
+ *
+ * If you have questions regarding the use of this file, please contact
+ * Inria at visp@inria.fr
+ *
+ * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+ * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * Description:
+ * Generic model-based tracker.
+ *
+ *****************************************************************************/
+/*!
+ \file vpMbGenericTracker.h
+ \brief Generic model-based tracker
+*/
+
 #ifndef __vpMbGenericTracker_h_
 #define __vpMbGenericTracker_h_
-
-#include <iostream>
 
 #include <visp3/mbt/vpMbEdgeTracker.h>
 #include <visp3/mbt/vpMbKltTracker.h>
@@ -82,6 +118,8 @@ public:
 #  if (VISP_HAVE_OPENCV_VERSION >= 0x020408)
   virtual std::vector<cv::Point2f> getKltPoints() const;
 #  endif
+
+  virtual double getKltThresholdAcceptation() const;
 #endif
   virtual void getLcircle(const std::string &cameraName, std::list<vpMbtDistanceCircle *>& circlesList, const unsigned int level=0) const;
   virtual void getLcylinder(const std::string &cameraName, std::list<vpMbtDistanceCylinder *>& cylindersList, const unsigned int level=0) const;
@@ -101,6 +139,9 @@ public:
 
   virtual inline unsigned int getNbPolygon() const;
   virtual void getNbPolygon(std::map<std::string, unsigned int> &mapOfNbPolygons) const;
+
+  virtual vpMbtPolygon* getPolygon(const unsigned int index);
+  virtual vpMbtPolygon* getPolygon(const std::string &cameraName, const unsigned int index);
 
   virtual std::pair<std::vector<vpPolygon>, std::vector<std::vector<vpPoint> > > getPolygonFaces(const bool orderPolygons=true,
                                                                                                  const bool useVisibility=true,
@@ -126,6 +167,12 @@ public:
   virtual void initClick(const std::map<std::string, const vpImage<unsigned char> *> &mapOfImages,
                          const std::map<std::string, std::string> &mapOfInitFiles, const bool displayHelp=false);
 #endif
+
+  using vpMbTracker::initFromPoints;
+  virtual void initFromPoints(const vpImage<unsigned char> &I1, const vpImage<unsigned char> &I2,
+                              const std::string &initFile1, const std::string &initFile2);
+  virtual void initFromPoints(const std::map<std::string, const vpImage<unsigned char> *> &mapOfImages,
+                              const std::map<std::string, std::string> &mapOfInitPoints);
 
   using vpMbTracker::initFromPose;
   virtual void initFromPose(const vpImage<unsigned char> &I1, const vpImage<unsigned char> &I2,
@@ -180,6 +227,8 @@ public:
   virtual void setFarClippingDistance(const double &dist1, const double &dist2);
   virtual void setFarClippingDistance(const std::map<std::string, double> &mapOfClippingDists);
 
+  virtual void setFeatureFactors(const std::map<vpTrackerType, double> &mapOfFeatureFactors);
+
   virtual void setGoodMovingEdgesRatioThreshold(const double  threshold);
 
 #ifdef VISP_HAVE_OGRE
@@ -195,6 +244,8 @@ public:
   virtual void setKltOpencv(const vpKltOpencv &t);
   virtual void setKltOpencv(const vpKltOpencv &t1, const vpKltOpencv &t2);
   virtual void setKltOpencv(const std::map<std::string, vpKltOpencv> &mapOfKlts);
+
+  virtual void setKltThresholdAcceptation(const double th);
 #endif
 
   virtual void setLod(const bool useLod, const std::string &name="");
@@ -364,12 +415,16 @@ protected:
   vpMatrix m_L;
   //! Map of camera transformation matrix between the current camera frame to the reference camera frame (cCurrent_M_cRef)
   std::map<std::string, vpHomogeneousMatrix> m_mapOfCameraTransformationMatrix;
+  //! Ponderation between each feature type in the VVS stage
+  std::map<vpTrackerType, double> m_mapOfFeatureFactors;
   //! Map of Model-based trackers, key is the name of the camera, value is the tracker
   std::map<std::string, TrackerWrapper*> m_mapOfTrackers;
   //! Percentage of good points over total number of points below which tracking is supposed to have failed (only for Edge tracking).
   double m_percentageGdPt;
   //! Name of the reference camera
   std::string m_referenceCameraName;
+  //! Threshold below which the weight associated to a point to consider this one as an outlier (only for KLT tracking).
+  double m_thresholdOutlier;
   //! Robust weights
   vpColVector m_w;
   //! Weighted error

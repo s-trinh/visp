@@ -142,7 +142,7 @@ vpSubMatrix & vpSubMatrix::operator=(const vpSubMatrix &B){
   if ((colNum != B.getCols())||(rowNum != B.getRows()))
   {
     throw(vpMatrixException(vpMatrixException::incorrectMatrixSizeError,
-          vpSubMatrix mismatch in operator vpSubMatrix=vpMatrix")) ;
+          "vpSubMatrix mismatch in operator vpSubMatrix=vpMatrix")) ;
   }
 
   double ** BrowPtrs=B.rowPtrs;

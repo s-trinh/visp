@@ -1,28 +1,65 @@
-#include <iostream>
+/****************************************************************************
+ *
+ * This file is part of the ViSP software.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
+ *
+ * This software is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * ("GPL") version 2 as published by the Free Software Foundation.
+ * See the file LICENSE.txt at the root directory of this source
+ * distribution for additional information about the GNU GPL.
+ *
+ * For using ViSP with software that can not be combined with the GNU
+ * GPL, please contact Inria about acquiring a ViSP Professional
+ * Edition License.
+ *
+ * See http://visp.inria.fr for more information.
+ *
+ * This software was developed at:
+ * Inria Rennes - Bretagne Atlantique
+ * Campus Universitaire de Beaulieu
+ * 35042 Rennes Cedex
+ * France
+ *
+ * If you have questions regarding the use of this file, please contact
+ * Inria at visp@inria.fr
+ *
+ * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+ * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * Description:
+ * Generic model-based tracker.
+ *
+ *****************************************************************************/
 
 #include <visp3/mbt/vpMbGenericTracker.h>
 
 #include <visp3/core/vpDisplay.h>
 #include <visp3/core/vpExponentialMap.h>
-#include <visp3/mbt/vpMbtXmlParser.h>
 #include <visp3/core/vpTrackingException.h>
-
 #include <visp3/mbt/vpMbtEdgeKltXmlParser.h>
 
 
 vpMbGenericTracker::vpMbGenericTracker() :
-  m_error(), m_L(), m_mapOfCameraTransformationMatrix(), m_mapOfTrackers(), m_percentageGdPt(0.4), m_referenceCameraName("Camera"),
-  m_w(), m_weightedError()
+  m_error(), m_L(), m_mapOfCameraTransformationMatrix(), m_mapOfFeatureFactors(), m_mapOfTrackers(), m_percentageGdPt(0.4),
+  m_referenceCameraName("Camera"), m_thresholdOutlier(0.5), m_w(), m_weightedError()
 {
   m_mapOfTrackers["Camera"] = new TrackerWrapper(EDGE_TRACKER);
 
   //Add default camera transformation matrix
   m_mapOfCameraTransformationMatrix["Camera"] = vpHomogeneousMatrix();
+
+  //Add default ponderation between each feature type
+  m_mapOfFeatureFactors[EDGE_TRACKER] = 1.0;
+
+#if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
+  m_mapOfFeatureFactors[KLT_TRACKER] = 1.0;
+#endif
 }
 
 vpMbGenericTracker::vpMbGenericTracker(const unsigned int nbCameras, const int trackerType) :
-  m_error(), m_L(), m_mapOfCameraTransformationMatrix(), m_mapOfTrackers(), m_percentageGdPt(0.4), m_referenceCameraName("Camera"),
-  m_w(), m_weightedError()
+  m_error(), m_L(), m_mapOfCameraTransformationMatrix(), m_mapOfFeatureFactors(), m_mapOfTrackers(), m_percentageGdPt(0.4),
+  m_referenceCameraName("Camera"), m_thresholdOutlier(0.5), m_w(), m_weightedError()
 {
   if (nbCameras == 0) {
     throw vpException(vpTrackingException::fatalError, "Cannot use no camera!");
@@ -44,11 +81,18 @@ vpMbGenericTracker::vpMbGenericTracker(const unsigned int nbCameras, const int t
     //Set by default the reference camera to the first one
     m_referenceCameraName = m_mapOfTrackers.begin()->first;
   }
+
+  //Add default ponderation between each feature type
+  m_mapOfFeatureFactors[EDGE_TRACKER] = 1.0;
+
+#if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
+  m_mapOfFeatureFactors[KLT_TRACKER] = 1.0;
+#endif
 }
 
 vpMbGenericTracker::vpMbGenericTracker(const std::vector<int> &trackerTypes) :
-  m_error(), m_L(), m_mapOfCameraTransformationMatrix(), m_mapOfTrackers(), m_percentageGdPt(0.4), m_referenceCameraName("Camera"),
-  m_w(), m_weightedError()
+  m_error(), m_L(), m_mapOfCameraTransformationMatrix(), m_mapOfFeatureFactors(), m_mapOfTrackers(), m_percentageGdPt(0.4),
+  m_referenceCameraName("Camera"), m_thresholdOutlier(0.5), m_w(), m_weightedError()
 {
   if (trackerTypes.empty()) {
     throw vpException(vpException::badValue, "There is no camera!");
@@ -72,11 +116,18 @@ vpMbGenericTracker::vpMbGenericTracker(const std::vector<int> &trackerTypes) :
     //Set by default the reference camera to the first one
     m_referenceCameraName = m_mapOfTrackers.begin()->first;
   }
+
+  //Add default ponderation between each feature type
+  m_mapOfFeatureFactors[EDGE_TRACKER] = 1.0;
+
+#if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
+  m_mapOfFeatureFactors[KLT_TRACKER] = 1.0;
+#endif
 }
 
 vpMbGenericTracker::vpMbGenericTracker(const std::vector<std::string> &cameraNames, const std::vector<int> &trackerTypes) :
-  m_error(), m_L(), m_mapOfCameraTransformationMatrix(), m_mapOfTrackers(), m_percentageGdPt(0.4), m_referenceCameraName("Camera"),
-  m_w(), m_weightedError()
+  m_error(), m_L(), m_mapOfCameraTransformationMatrix(), m_mapOfFeatureFactors(), m_mapOfTrackers(), m_percentageGdPt(0.4),
+  m_referenceCameraName("Camera"), m_thresholdOutlier(0.5), m_w(), m_weightedError()
 {
   if (cameraNames.size() != trackerTypes.size() || cameraNames.empty()) {
     throw vpException(vpTrackingException::badValue, "cameraNames.size() != trackerTypes.size() || cameraNames.empty()");
@@ -91,6 +142,13 @@ vpMbGenericTracker::vpMbGenericTracker(const std::vector<std::string> &cameraNam
 
   //Set by default the reference camera to the first one
   m_referenceCameraName = m_mapOfTrackers.begin()->first;
+
+  //Add default ponderation between each feature type
+  m_mapOfFeatureFactors[EDGE_TRACKER] = 1.0;
+
+#if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
+  m_mapOfFeatureFactors[KLT_TRACKER] = 1.0;
+#endif
 }
 
 vpMbGenericTracker::~vpMbGenericTracker() {
@@ -122,6 +180,8 @@ void vpMbGenericTracker::computeProjectionError() {
     } else {
       projectionError = 90.0;
     }
+  } else {
+    projectionError = 90.0;
   }
 }
 
@@ -157,9 +217,9 @@ void vpMbGenericTracker::computeVVS(std::map<std::string, const vpImage<unsigned
     mapOfVelocityTwist[it->first] = cVo;
   }
 
-  double factorEdge = 1.0;
+  double factorEdge = m_mapOfFeatureFactors[EDGE_TRACKER];
 #if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
-  double factorKlt = 1.0;
+  double factorKlt = m_mapOfFeatureFactors[KLT_TRACKER];
 #endif
 
   while( std::fabs(normRes_1 - normRes) > m_stopCriteriaEpsilon && (iter < m_maxIter) ) {
@@ -669,7 +729,7 @@ std::list<vpMbtDistanceCircle*>& vpMbGenericTracker::getFeaturesCircle() {
     TrackerWrapper *tracker = it->second;
     return tracker->getFeaturesCircle();
   } else {
-    throw vpException(vpTrackingException::badValue, std::string("Cannot find the reference camera: " + m_referenceCameraName + "!"));
+    throw vpException(vpTrackingException::badValue, "Cannot find the reference camera:  %s!", m_referenceCameraName);
   }
 }
 
@@ -682,7 +742,7 @@ std::list<vpMbtDistanceKltCylinder*>& vpMbGenericTracker::getFeaturesKltCylinder
     TrackerWrapper *tracker = it->second;
     return tracker->getFeaturesKltCylinder();
   } else {
-    throw vpException(vpTrackingException::badValue, std::string("Cannot find the reference camera: " + m_referenceCameraName + "!"));
+    throw vpException(vpTrackingException::badValue, "Cannot find the reference camera:  %s!", m_referenceCameraName);
   }
 }
 
@@ -695,7 +755,7 @@ std::list<vpMbtDistanceKltPoints*>& vpMbGenericTracker::getFeaturesKlt() {
     TrackerWrapper *tracker = it->second;
     return tracker->getFeaturesKlt();
   } else {
-    throw vpException(vpTrackingException::badValue, std::string("Cannot find the reference camera: " + m_referenceCameraName + "!"));
+    throw vpException(vpTrackingException::badValue, "Cannot find the reference camera:  %s!", m_referenceCameraName);
   }
 }
 #endif
@@ -783,6 +843,15 @@ std::vector<cv::Point2f> vpMbGenericTracker::getKltPoints() const {
   }
 
   return std::vector<cv::Point2f>();
+}
+
+/*!
+  Get the threshold for the acceptation of a point.
+
+  \return threshold_outlier : Threshold for the weight below which a point is rejected.
+*/
+double vpMbGenericTracker::getKltThresholdAcceptation() const {
+  return m_thresholdOutlier;
 }
 #endif
 
@@ -1056,6 +1125,45 @@ void vpMbGenericTracker::getNbPolygon(std::map<std::string, unsigned int> &mapOf
 }
 
 /*!
+  Return the polygon (face) "index" for the reference camera.
+
+  \exception vpException::dimensionError if index does not represent a good
+  polygon.
+
+  \param index : Index of the polygon to return.
+  \return Pointer to the polygon index for the reference camera or NULL in case of problem.
+*/
+vpMbtPolygon* vpMbGenericTracker::getPolygon(const unsigned int index) {
+  std::map<std::string, TrackerWrapper*>::const_iterator it = m_mapOfTrackers.find(m_referenceCameraName);
+  if (it != m_mapOfTrackers.end()) {
+    return it->second->getPolygon(index);
+  }
+
+  std::cerr << "The reference camera: " << m_referenceCameraName << " does not exist!" << std::endl;
+  return NULL;
+}
+
+/*!
+  Return the polygon (face) "index" for the specified camera.
+
+  \exception vpException::dimensionError if index does not represent a good
+  polygon.
+
+  \param cameraName : Name of the camera to return the polygon.
+  \param index : Index of the polygon to return.
+  \return Pointer to the polygon index for the specified camera or NULL in case of problem.
+*/
+vpMbtPolygon* vpMbGenericTracker::getPolygon(const std::string &cameraName, const unsigned int index) {
+  std::map<std::string, TrackerWrapper*>::const_iterator it = m_mapOfTrackers.find(cameraName);
+  if (it != m_mapOfTrackers.end()) {
+    return it->second->getPolygon(index);
+  }
+
+  std::cerr << "The camera: " << cameraName << " does not exist!" << std::endl;
+  return NULL;
+}
+
+/*!
   Get the list of polygons faces (a vpPolygon representing the projection of the face in the image and a list of face corners
   in 3D), with the possibility to order by distance to the camera or to use the visibility check to consider if the polygon
   face must be retrieved or not.
@@ -1209,9 +1317,7 @@ void vpMbGenericTracker::initClick(const vpImage<unsigned char> &I1, const vpIma
       tracker->getPose(cMo);
     }
   } else {
-    std::stringstream ss;
-    ss << "Cannot initClick()! Require two cameras but there are " << m_mapOfTrackers.size() << " cameras!";
-    throw vpException(vpTrackingException::initializationError, ss.str());
+    throw vpException(vpTrackingException::initializationError, "Cannot initClick()! Require two cameras but there are %d cameras!", m_mapOfTrackers.size());
   }
 }
 
@@ -1290,9 +1396,7 @@ void vpMbGenericTracker::initClick(const std::map<std::string, const vpImage<uns
       m_mapOfTrackers[*it]->cMo = cCurrentMo;
       m_mapOfTrackers[*it]->init(*it_img->second);
     } else {
-      std::stringstream ss;
-      ss << "Missing image or missing camera transformation matrix! Cannot set the pose for camera: " << (*it) << "!";
-      throw vpException(vpTrackingException::initializationError, ss.str().c_str());
+      throw vpException(vpTrackingException::initializationError, "Missing image or missing camera transformation matrix! Cannot set the pose for camera: %s!", *it);
     }
   }
 }
@@ -1308,6 +1412,101 @@ void vpMbGenericTracker::initFaceFromCorners(vpMbtPolygon &/*polygon*/) {
 
 void vpMbGenericTracker::initFaceFromLines(vpMbtPolygon &/*polygon*/) {
   throw vpException(vpException::fatalError, "vpMbGenericTracker::initFaceFromLines() should not be called!");
+}
+
+/*!
+  Initialise the tracker by reading 3D point coordinates and the corresponding 2D image point coordinates
+  from a file. Comments starting with # character are allowed.
+  3D point coordinates are expressed in meter in the object frame with X, Y and Z values.
+  2D point coordinates are expressied in pixel coordinates, with first the line and then the column of the pixel in the image.
+  The structure of this file is the following.
+  \code
+  # 3D point coordinates
+  4                 # Number of 3D points in the file (minimum is four)
+  0.01 0.01 0.01    #  \
+  ...               #  | 3D coordinates in meters in the object frame
+  0.01 -0.01 -0.01  # /
+  # corresponding 2D point coordinates
+  4                 # Number of image points in the file (has to be the same as the number of 3D points)
+  100 200           #  \
+  ...               #  | 2D coordinates in pixel in the image
+  50 10  		        #  /
+  \endcode
+
+  \param I1 : Input image for the first camera.
+  \param I2 : Input image for the second camera.
+  \param initFile1 : Path to the file containing all the points for the first camera.
+  \param initFile2 : Path to the file containing all the points for the second camera.
+
+  \note This function assumes a stereo configuration of the generic tracker.
+*/
+void vpMbGenericTracker::initFromPoints(const vpImage<unsigned char> &I1, const vpImage<unsigned char> &I2, const std::string &initFile1, const std::string &initFile2) {
+  if (m_mapOfTrackers.size() == 2) {
+    std::map<std::string, TrackerWrapper*>::const_iterator it = m_mapOfTrackers.begin();
+    TrackerWrapper *tracker = it->second;
+    tracker->initFromPoints(I1, initFile1);
+
+    ++it;
+
+    tracker = it->second;
+    tracker->initFromPoints(I2, initFile2);
+
+    it = m_mapOfTrackers.find(m_referenceCameraName);
+    if (it != m_mapOfTrackers.end()) {
+      tracker = it->second;
+
+      //Set the reference cMo
+      tracker->getPose(cMo);
+
+      //Set the reference camera parameters
+      tracker->getCameraParameters(cam);
+    }
+  } else {
+    throw vpException(vpTrackingException::initializationError, "Cannot initFromPoints()! Require two cameras but there are %d cameras!", m_mapOfTrackers.size());
+  }
+}
+
+void vpMbGenericTracker::initFromPoints(const std::map<std::string, const vpImage<unsigned char> *> &mapOfImages, const std::map<std::string, std::string> &mapOfInitPoints) {
+  //Set the reference cMo
+  std::map<std::string, TrackerWrapper*>::const_iterator it_tracker = m_mapOfTrackers.find(m_referenceCameraName);
+  std::map<std::string, const vpImage<unsigned char>* >::const_iterator it_img = mapOfImages.find(m_referenceCameraName);
+  std::map<std::string, std::string>::const_iterator it_initPoints = mapOfInitPoints.find(m_referenceCameraName);
+
+  if (it_tracker != m_mapOfTrackers.end() && it_img != mapOfImages.end() && it_initPoints != mapOfInitPoints.end()) {
+    TrackerWrapper *tracker = it_tracker->second;
+    tracker->initFromPoints(*it_img->second, it_initPoints->second);
+    tracker->getPose(cMo);
+  } else {
+    throw vpException(vpTrackingException::initializationError, "Cannot initFromPoints() for the reference camera!");
+  }
+
+  //Vector of missing initPoints for cameras
+  std::vector<std::string> vectorOfMissingCameraPoints;
+
+  //Set pose for the specified cameras
+  for (it_tracker = m_mapOfTrackers.begin(); it_tracker != m_mapOfTrackers.end(); ++it_tracker) {
+    it_img = mapOfImages.find(it_tracker->first);
+    it_initPoints = mapOfInitPoints.find(it_tracker->first);
+
+    if (it_img != mapOfImages.end() && it_initPoints != mapOfInitPoints.end()) {
+      //Set pose
+      it_tracker->second->initFromPoints(*it_img->second, it_initPoints->second);
+    } else {
+      vectorOfMissingCameraPoints.push_back(it_tracker->first);
+    }
+  }
+
+  for (std::vector<std::string>::const_iterator it = vectorOfMissingCameraPoints.begin(); it != vectorOfMissingCameraPoints.end(); ++it) {
+    it_img = mapOfImages.find(*it);
+    std::map<std::string, vpHomogeneousMatrix>::const_iterator it_camTrans = m_mapOfCameraTransformationMatrix.find(*it);
+
+    if (it_img != mapOfImages.end() && it_camTrans != m_mapOfCameraTransformationMatrix.end()) {
+      vpHomogeneousMatrix cCurrentMo = it_camTrans->second * cMo;
+      m_mapOfTrackers[*it]->initFromPose(*it_img->second, cCurrentMo);
+    } else {
+      throw vpException(vpTrackingException::initializationError, "Missing image or missing camera transformation matrix! Cannot init the pose for camera: %s!", *it);
+    }
+  }
 }
 
 /*!
@@ -1342,9 +1541,7 @@ void vpMbGenericTracker::initFromPose(const vpImage<unsigned char> &I1, const vp
       tracker->getCameraParameters(cam);
     }
   } else {
-    std::stringstream ss;
-    ss << "Cannot initFromPose()! Require two cameras but there are " << m_mapOfTrackers.size() << " cameras!";
-    throw vpException(vpTrackingException::initializationError, ss.str());
+    throw vpException(vpTrackingException::initializationError, "Cannot initFromPose()! Require two cameras but there are %d cameras!", m_mapOfTrackers.size());
   }
 }
 
@@ -1397,9 +1594,7 @@ void vpMbGenericTracker::initFromPose(const std::map<std::string, const vpImage<
       vpHomogeneousMatrix cCurrentMo = it_camTrans->second * cMo;
       m_mapOfTrackers[*it]->initFromPose(*it_img->second, cCurrentMo);
     } else {
-      std::stringstream ss;
-      ss << "Missing image or missing camera transformation matrix! Cannot init the pose for camera: " << (*it) << "!";
-      throw vpException(vpTrackingException::initializationError, ss.str().c_str());
+      throw vpException(vpTrackingException::initializationError, "Missing image or missing camera transformation matrix! Cannot init the pose for camera: %s!", *it);
     }
   }
 }
@@ -1425,9 +1620,7 @@ void vpMbGenericTracker::initFromPose(const vpImage<unsigned char> &I1, const vp
 
     this->cMo = c1Mo;
   } else {
-    std::stringstream ss;
-    ss << "This method requires 2 cameras but there are " << m_mapOfTrackers.size() << " cameras!";
-    throw vpException(vpTrackingException::initializationError, ss.str());
+    throw vpException(vpTrackingException::initializationError, "This method requires 2 cameras but there are %d cameras!", m_mapOfTrackers.size());
   }
 }
 
@@ -1480,9 +1673,7 @@ void vpMbGenericTracker::initFromPose(const std::map<std::string, const vpImage<
       vpHomogeneousMatrix cCurrentMo = it_camTrans->second * cMo;
       m_mapOfTrackers[*it]->initFromPose(*it_img->second, cCurrentMo);
     } else {
-      std::stringstream ss;
-      ss << "Missing image or missing camera transformation matrix! Cannot set the pose for camera: " << (*it) << "!";
-      throw vpException(vpTrackingException::initializationError, ss.str().c_str());
+      throw vpException(vpTrackingException::initializationError, "Missing image or missing camera transformation matrix! Cannot set the pose for camera: %s!", *it);
     }
   }
 }
@@ -1508,7 +1699,7 @@ void vpMbGenericTracker::loadConfigFile(const std::string& configFile) {
   }
 
   if (m_mapOfTrackers.find(m_referenceCameraName) == m_mapOfTrackers.end()) {
-    throw vpException(vpException::fatalError, std::string("Reference camera: " + m_referenceCameraName + " does not exist!"));
+    throw vpException(vpException::fatalError, "Cannot find the reference camera:  %s!", m_referenceCameraName);
   }
 
   m_mapOfTrackers[m_referenceCameraName]->getCameraParameters(this->cam);
@@ -1545,7 +1736,7 @@ void vpMbGenericTracker::loadConfigFile(const std::string& configFile1, const st
   tracker->loadConfigFile(configFile2);
 
   if (m_mapOfTrackers.find(m_referenceCameraName) == m_mapOfTrackers.end()) {
-    throw vpException(vpException::fatalError, std::string("Reference camera: " + m_referenceCameraName + " does not exist!"));
+    throw vpException(vpException::fatalError, "Cannot find the reference camera:  %s!", m_referenceCameraName);
   }
 
   m_mapOfTrackers[m_referenceCameraName]->getCameraParameters(this->cam);
@@ -1575,9 +1766,7 @@ void vpMbGenericTracker::loadConfigFile(const std::map<std::string, std::string>
     if (it_config != mapOfConfigFiles.end()) {
       tracker->loadConfigFile(it_config->second);
     } else {
-      std::stringstream ss;
-      ss << "Missing configuration file for camera: " << it_tracker->first << "!";
-      throw vpException(vpTrackingException::initializationError, ss.str().c_str());
+      throw vpException(vpTrackingException::initializationError, "Missing configuration file for camera: %s!", it_tracker->first);
     }
   }
 
@@ -1592,9 +1781,7 @@ void vpMbGenericTracker::loadConfigFile(const std::map<std::string, std::string>
     this->angleAppears = tracker->getAngleAppear();
     this->angleDisappears = tracker->getAngleDisappear();
   } else {
-    std::stringstream ss;
-    ss << "The reference camera: " << m_referenceCameraName << " does not exist!";
-    throw vpException(vpTrackingException::initializationError, ss.str().c_str());
+    throw vpException(vpTrackingException::initializationError, "The reference camera: %s does not exist!", m_referenceCameraName);
   }
 }
 
@@ -1710,7 +1897,7 @@ void vpMbGenericTracker::loadModel(const std::map<std::string, std::string> &map
       TrackerWrapper *tracker = it_tracker->second;
       tracker->loadModel(it_model->second, verbose);
     } else {
-      throw vpException(vpTrackingException::initializationError, std::string("Cannot load model for camera: " + it_tracker->first));
+      throw vpException(vpTrackingException::initializationError, "Cannot load model for camera: %s", it_tracker->first);
     }
   }
 }
@@ -1733,9 +1920,7 @@ void vpMbGenericTracker::preTracking(std::map<std::string, const vpImage<unsigne
 */
 void vpMbGenericTracker::reInitModel(const vpImage<unsigned char> &I, const std::string &cad_name, const vpHomogeneousMatrix &cMo_, const bool verbose) {
   if (m_mapOfTrackers.size() != 1) {
-    std::stringstream ss;
-    ss << "This method requires exactly one camera, there are " << m_mapOfTrackers.size() << " cameras!";
-    throw vpException(vpTrackingException::fatalError, ss.str().c_str());
+    throw vpException(vpTrackingException::fatalError, "This method requires exactly one camera, there are %d cameras!", m_mapOfTrackers.size());
   }
 
   std::map<std::string, TrackerWrapper*>::const_iterator it_tracker = m_mapOfTrackers.find(m_referenceCameraName);
@@ -1852,6 +2037,8 @@ void vpMbGenericTracker::reInitModel(const std::map<std::string, const vpImage<u
 void vpMbGenericTracker::resetTracker() {
   cMo.eye();
 
+  useScanLine = false;
+
 #ifdef VISP_HAVE_OGRE
   useOgre = false;
 #endif
@@ -1862,8 +2049,26 @@ void vpMbGenericTracker::resetTracker() {
   angleAppears = vpMath::rad(89);
   angleDisappears = vpMath::rad(89);
   clippingFlag = vpPolygon3D::NO_CLIPPING;
+  distNearClip = 0.001;
+  distFarClip = 100;
 
   m_optimizationMethod = vpMbTracker::GAUSS_NEWTON_OPT;
+  m_maxIter = 30;
+  m_stopCriteriaEpsilon = 1e-8;
+  m_initialMu = 0.01;
+
+  //Only for Edge
+  m_percentageGdPt = 0.4;
+
+  //Only for KLT
+  m_thresholdOutlier = 0.5;
+
+  //Reset default ponderation between each feature type
+  m_mapOfFeatureFactors[EDGE_TRACKER] = 1.0;
+
+#if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
+  m_mapOfFeatureFactors[KLT_TRACKER] = 1.0;
+#endif
 
   for (std::map<std::string, TrackerWrapper*>::const_iterator it = m_mapOfTrackers.begin(); it != m_mapOfTrackers.end(); ++it) {
     TrackerWrapper *tracker = it->second;
@@ -1916,9 +2121,7 @@ void vpMbGenericTracker::setAngleAppear(const double &a1, const double &a2) {
       std::cerr << "Cannot find the reference camera: " << m_referenceCameraName << "!" << std::endl;
     }
   } else {
-    std::stringstream ss;
-    ss << "Require two cameras! There are " << m_mapOfTrackers.size() << " cameras!";
-    throw vpException(vpTrackingException::fatalError, ss.str());
+    throw vpException(vpTrackingException::fatalError, "Require two cameras! There are %d cameras!", m_mapOfTrackers.size());
   }
 }
 
@@ -1991,9 +2194,7 @@ void vpMbGenericTracker::setAngleDisappear(const double &a1, const double &a2) {
       std::cerr << "Cannot find the reference camera: " << m_referenceCameraName << "!" << std::endl;
     }
   } else {
-    std::stringstream ss;
-    ss << "Require two cameras! There are " << m_mapOfTrackers.size() << " cameras!";
-    throw vpException(vpTrackingException::fatalError, ss.str());
+    throw vpException(vpTrackingException::fatalError, "Require two cameras! There are %d cameras!", m_mapOfTrackers.size());
   }
 }
 
@@ -2058,9 +2259,7 @@ void vpMbGenericTracker::setCameraParameters(const vpCameraParameters &camera1, 
       std::cerr << "Cannot find the reference camera: " << m_referenceCameraName << "!" << std::endl;
     }
   } else {
-    std::stringstream ss;
-    ss << "Require two cameras! There are " << m_mapOfTrackers.size() << " cameras!";
-    throw vpException(vpTrackingException::fatalError, ss.str());
+    throw vpException(vpTrackingException::fatalError, "Require two cameras! There are %d cameras!", m_mapOfTrackers.size());
   }
 }
 
@@ -2098,7 +2297,7 @@ void vpMbGenericTracker::setCameraTransformationMatrix(const std::string &camera
   if (it != m_mapOfCameraTransformationMatrix.end()) {
     it->second = cameraTransformationMatrix;
   } else {
-    throw vpException(vpTrackingException::fatalError, std::string("Cannot find camera: " + cameraName + "!"));
+    throw vpException(vpTrackingException::fatalError, "Cannot find camera: %s!", cameraName);
   }
 }
 
@@ -2116,7 +2315,7 @@ void vpMbGenericTracker::setCameraTransformationMatrix(const std::map<std::strin
     std::map<std::string, vpHomogeneousMatrix>::const_iterator it_camTrans = mapOfTransformationMatrix.find(it_tracker->first);
 
     if (it_camTrans == mapOfTransformationMatrix.end()) {
-      throw vpException(vpTrackingException::initializationError, std::string("Missing transformation matrix for camera: " + it_tracker->first));
+      throw vpException(vpTrackingException::initializationError, "Missing transformation matrix for camera: %s", it_tracker->first);
     }
   }
 
@@ -2166,9 +2365,7 @@ void vpMbGenericTracker::setClipping(const unsigned int &flags1, const unsigned 
       std::cerr << "Cannot find the reference camera: " << m_referenceCameraName << "!" << std::endl;
     }
   } else {
-    std::stringstream ss;
-    ss << "Require two cameras! There are " << m_mapOfTrackers.size() << " cameras!";
-    throw vpException(vpTrackingException::fatalError, ss.str());
+    throw vpException(vpTrackingException::fatalError, "Require two cameras! There are %d cameras!", m_mapOfTrackers.size());
   }
 }
 
@@ -2255,9 +2452,7 @@ void vpMbGenericTracker::setFarClippingDistance(const double &dist1, const doubl
       std::cerr << "Cannot find the reference camera: " << m_referenceCameraName << "!" << std::endl;
     }
   } else {
-    std::stringstream ss;
-    ss << "Require two cameras! There are " << m_mapOfTrackers.size() << " cameras!";
-    throw vpException(vpTrackingException::fatalError, ss.str());
+    throw vpException(vpTrackingException::fatalError, "Require two cameras! There are %d cameras!", m_mapOfTrackers.size());
   }
 }
 
@@ -2277,6 +2472,20 @@ void vpMbGenericTracker::setFarClippingDistance(const std::map<std::string, doub
       if (it->first == m_referenceCameraName) {
         distFarClip = it->second;
       }
+    }
+  }
+}
+
+/*!
+  Set the feature factors used in the VVS stage (ponderation between the feature types).
+
+  \param mapOfFeatureFactors : Map of feature factors.
+*/
+void vpMbGenericTracker::setFeatureFactors(const std::map<vpTrackerType, double> &mapOfFeatureFactors) {
+  for (std::map<vpTrackerType, double>::iterator it = m_mapOfFeatureFactors.begin(); it != m_mapOfFeatureFactors.end(); ++it) {
+    std::map<vpTrackerType, double>::const_iterator it_factor = mapOfFeatureFactors.find(it->first);
+    if (it_factor != mapOfFeatureFactors.end()) {
+      it->second = it_factor->second;
     }
   }
 }
@@ -2370,9 +2579,7 @@ void vpMbGenericTracker::setKltOpencv(const vpKltOpencv &t1, const vpKltOpencv &
     ++it;
     it->second->setKltOpencv(t2);
   } else {
-    std::stringstream ss;
-    ss << "Require two cameras! There are " << m_mapOfTrackers.size() << " cameras!";
-    throw vpException(vpTrackingException::fatalError, ss.str());
+    throw vpException(vpTrackingException::fatalError, "Require two cameras! There are %d cameras!", m_mapOfTrackers.size());
   }
 }
 
@@ -2389,6 +2596,22 @@ void vpMbGenericTracker::setKltOpencv(const std::map<std::string, vpKltOpencv> &
       TrackerWrapper *tracker = it_tracker->second;
       tracker->setKltOpencv(it->second);
     }
+  }
+}
+
+/*!
+  Set the threshold for the acceptation of a point.
+
+  \param th : Threshold for the weight below which a point is rejected.
+
+  \note This function will set the new parameter for all the cameras.
+*/
+void vpMbGenericTracker::setKltThresholdAcceptation(const double th) {
+  m_thresholdOutlier = th;
+
+  for(std::map<std::string, TrackerWrapper*>::const_iterator it = m_mapOfTrackers.begin(); it != m_mapOfTrackers.end(); ++it) {
+    TrackerWrapper *tracker = it->second;
+    tracker->setKltThresholdAcceptation(th);
   }
 }
 #endif
@@ -2443,9 +2666,7 @@ void vpMbGenericTracker::setKltMaskBorder(const unsigned int &e1, const unsigned
 
     it->second->setKltMaskBorder(e2);
   } else {
-    std::stringstream ss;
-    ss << "This method requires 2 cameras but there are " << m_mapOfTrackers.size() << " cameras!";
-    throw vpException(vpTrackingException::fatalError, ss.str());
+    throw vpException(vpTrackingException::fatalError, "Require two cameras! There are %d cameras!", m_mapOfTrackers.size());
   }
 }
 
@@ -2531,9 +2752,7 @@ void vpMbGenericTracker::setMovingEdge(const vpMe &me1, const vpMe &me2) {
 
     it->second->setMovingEdge(me2);
   } else {
-    std::stringstream ss;
-    ss << "This method requires 2 cameras but there are " << m_mapOfTrackers.size() << " cameras!";
-    throw vpException(vpTrackingException::fatalError, ss.str());
+    throw vpException(vpTrackingException::fatalError, "Require two cameras! There are %d cameras!", m_mapOfTrackers.size());
   }
 }
 
@@ -2593,9 +2812,7 @@ void vpMbGenericTracker::setNearClippingDistance(const double &dist1, const doub
       std::cerr << "Cannot find the reference camera: " << m_referenceCameraName << "!" << std::endl;
     }
   } else {
-    std::stringstream ss;
-    ss << "This method requires 2 cameras but there are " << m_mapOfTrackers.size() << " cameras!";
-    throw vpException(vpTrackingException::fatalError, ss.str());
+    throw vpException(vpTrackingException::fatalError, "Require two cameras! There are %d cameras!", m_mapOfTrackers.size());
   }
 }
 
@@ -2704,7 +2921,7 @@ void vpMbGenericTracker::setPose(const vpImage<unsigned char> &I, const vpHomoge
     TrackerWrapper *tracker = it->second;
     tracker->setPose(I, cdMo);
   } else {
-    throw vpException(vpTrackingException::initializationError, std::string("Reference camera: " + m_referenceCameraName + " does not exist!"));
+    throw vpException(vpTrackingException::initializationError, "The reference camera: %s does not exist!", m_referenceCameraName);
   }
 }
 
@@ -2733,14 +2950,10 @@ void vpMbGenericTracker::setPose(const vpImage<unsigned char> &I1, const vpImage
       //Set reference pose
       it->second->getPose(cMo);
     } else {
-      std::stringstream ss;
-      ss << "The reference camera: " << m_referenceCameraName << " does not exist!";
-      throw vpException(vpTrackingException::fatalError, ss.str());
+      throw vpException(vpTrackingException::fatalError, "The reference camera: %s does not exist!", m_referenceCameraName);
     }
   } else {
-    std::stringstream ss;
-    ss << "This method requires 2 cameras but there are " << m_mapOfTrackers.size() << " cameras!";
-    throw vpException(vpTrackingException::fatalError, ss.str());
+    throw vpException(vpTrackingException::fatalError, "Require two cameras! There are %d cameras!", m_mapOfTrackers.size());
   }
 }
 
@@ -2798,9 +3011,7 @@ void vpMbGenericTracker::setPose(const std::map<std::string, const vpImage<unsig
       vpHomogeneousMatrix cCurrentMo = it_camTrans->second * cMo;
       m_mapOfTrackers[*it]->setPose(*it_img->second, cCurrentMo);
     } else {
-      std::stringstream ss;
-      ss << "Missing image or missing camera transformation matrix! Cannot set pose for camera: " << (*it) << "!";
-      throw vpException(vpTrackingException::fatalError, ss.str());
+      throw vpException(vpTrackingException::fatalError, "Missing image or missing camera transformation matrix! Cannot set pose for camera: %s!", *it);
     }
   }
 }
@@ -2937,9 +3148,7 @@ void vpMbGenericTracker::track(const vpImage<unsigned char>& I1, const vpImage<u
     mapOfImages[it->first] = &I2;
     track(mapOfImages);
   } else {
-    std::stringstream ss;
-    ss << "Require two cameras! There are " << m_mapOfTrackers.size() << " cameras!";
-    throw vpException(vpTrackingException::fatalError, ss.str().c_str());
+    throw vpException(vpTrackingException::fatalError, "Require two cameras! There are %d cameras!", m_mapOfTrackers.size());
   }
 }
 
@@ -3013,9 +3222,7 @@ vpMbGenericTracker::TrackerWrapper::TrackerWrapper(const int trackerType) :
                          | KLT_TRACKER
                        #endif
                          )) == 0 ) {
-    std::stringstream ss;
-    ss << "Bad value for tracker type: " << m_trackerType << "!";
-    throw vpException(vpTrackingException::badValue, ss.str());
+    throw vpException(vpTrackingException::badValue, "Bad value for tracker type: %d!", m_trackerType);
   }
 
   m_lambda = 1.0;
@@ -3028,7 +3235,7 @@ vpMbGenericTracker::TrackerWrapper::TrackerWrapper(const int trackerType) :
 
 vpMbGenericTracker::TrackerWrapper::~TrackerWrapper() { }
 
-// Implemented only for debug to use TrackerWrapper as vpMbEdgeTracker
+// Implemented only for debugging purposes: use TrackerWrapper as a standalone tracker
 void vpMbGenericTracker::TrackerWrapper::computeVVS(const vpImage<unsigned char> &I) {
   computeVVSInit(I);
 
@@ -3803,9 +4010,7 @@ void vpMbGenericTracker::TrackerWrapper::setTrackerType(const int type) {
                 | KLT_TRACKER
               #endif
                 )) == 0 ) {
-    std::stringstream ss;
-    ss << "Bad value for tracker type: " << type << "!";
-    throw vpException(vpTrackingException::badValue, ss.str());
+    throw vpException(vpTrackingException::badValue, "bad value for tracker type: !", type);
   }
 
   m_trackerType = type;

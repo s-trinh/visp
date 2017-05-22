@@ -311,7 +311,7 @@ vpMbKltTracker::resetTracker()
 
   maskBorder = 5;
   threshold_outlier = 0.5;
-  percentGood = 0.7;
+  percentGood = 0.6;
 
   m_lambda = 0.8;
   m_maxIter = 200;
