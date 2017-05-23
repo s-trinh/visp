@@ -625,6 +625,8 @@ main(int argc, const char ** argv)
             mapOfSubImages["Camera2"] = &I2;
 
             dynamic_cast<vpMbGenericTracker*>(tracker)->display(mapOfSubImages, mapOfCameraPoses, mapOfCameraParams, vpColor::red, 3);
+
+            vpDisplay::displayText(I3, 20, 20, "The model is not displayed intentionally.", vpColor::red);
           } else {
             dynamic_cast<vpMbGenericTracker*>(tracker)->display(mapOfImages, mapOfCameraPoses, mapOfCameraParams, vpColor::red, 3);
           }

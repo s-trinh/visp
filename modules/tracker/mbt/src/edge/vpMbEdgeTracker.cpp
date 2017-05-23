@@ -1026,7 +1026,7 @@ vpMbEdgeTracker::testTracking()
         << percentageGdPt
         << " using vpMbTracker::setGoodMovingEdgesRatioThreshold()";
     throw vpTrackingException(vpTrackingException::fatalError, oss.str());
-  }      
+  }
 }
 
 /*!
@@ -1060,8 +1060,8 @@ vpMbEdgeTracker::track(const vpImage<unsigned char> &I)
         }
         catch(...)
         {
-          vpTRACE("Error in moving edge tracking");
-          throw ;
+          std::cerr << "Error in moving edge tracking" << std::endl;
+          throw;
         }
 
         // initialize the vector that contains the error and the matrix that contains

@@ -390,7 +390,7 @@ void vpMbGenericTracker::computeVVSInteractionMatrixAndResidu() {
 }
 
 void vpMbGenericTracker::computeVVSInteractionMatrixAndResidu(std::map<std::string, const vpImage<unsigned char> *> &mapOfImages,
-                                                             std::map<std::string, vpVelocityTwistMatrix> &mapOfVelocityTwist) {
+                                                              std::map<std::string, vpVelocityTwistMatrix> &mapOfVelocityTwist) {
   unsigned int start_index = 0;
 
   for (std::map<std::string, TrackerWrapper*>::const_iterator it = m_mapOfTrackers.begin(); it != m_mapOfTrackers.end(); ++it) {
@@ -2482,10 +2482,10 @@ void vpMbGenericTracker::setFarClippingDistance(const std::map<std::string, doub
   \param mapOfFeatureFactors : Map of feature factors.
 */
 void vpMbGenericTracker::setFeatureFactors(const std::map<vpTrackerType, double> &mapOfFeatureFactors) {
-  for (std::map<vpTrackerType, double>::iterator it = m_mapOfFeatureFactors.begin(); it != m_mapOfFeatureFactors.end(); ++it) {
-    std::map<vpTrackerType, double>::const_iterator it_factor = mapOfFeatureFactors.find(it->first);
-    if (it_factor != mapOfFeatureFactors.end()) {
-      it->second = it_factor->second;
+  for (std::map<vpTrackerType, double>::const_iterator it = mapOfFeatureFactors.begin(); it != mapOfFeatureFactors.end(); ++it) {
+    std::map<vpTrackerType, double>::iterator it_factor = m_mapOfFeatureFactors.find(it->first);
+    if (it_factor != m_mapOfFeatureFactors.end()) {
+      it_factor->second = it->second;
     }
   }
 }
@@ -3109,7 +3109,32 @@ void vpMbGenericTracker::setUseKltTracking(const std::string &name, const bool &
 #endif
 
 void vpMbGenericTracker::testTracking() {
+  //Currently testTracking is used only with Edge features
+  for (std::map<std::string, TrackerWrapper*>::const_iterator it = m_mapOfTrackers.begin(); it != m_mapOfTrackers.end(); ++it) {
+    TrackerWrapper *tracker = it->second;
+    if (tracker->m_trackerType != EDGE_TRACKER) {
+      return;
+    }
+  }
 
+  //Only Edge trackers
+  bool fail = true;
+  std::stringstream ss;
+  for (std::map<std::string, TrackerWrapper*>::const_iterator it = m_mapOfTrackers.begin(); it != m_mapOfTrackers.end(); ++it) {
+    TrackerWrapper *tracker = it->second;
+
+    try {
+      tracker->testTracking();
+      fail = false;
+      break;
+    } catch (vpException &e) {
+      ss << "(Camera " << it->first << ") " << e.what() << "\n";
+    }
+  }
+
+  if (fail) {
+    throw vpTrackingException(vpTrackingException::fatalError, ss.str());
+  }
 }
 
 /*!
@@ -3190,7 +3215,7 @@ void vpMbGenericTracker::track(std::map<std::string, const vpImage<unsigned char
     throw; // throw the original exception
   }
 
-  //TODO: testTracking somewhere/needed?
+  testTracking();
 
   for (std::map<std::string, TrackerWrapper*>::const_iterator it = m_mapOfTrackers.begin(); it != m_mapOfTrackers.end(); ++it) {
     TrackerWrapper *tracker = it->second;
