@@ -1,0 +1,137 @@
+#ifndef __vpMbtFaceDepthDense_h_
+#define __vpMbtFaceDepthDense_h_
+
+#include <iostream>
+
+#include <visp3/core/vpConfig.h>
+#ifdef VISP_HAVE_PCL
+#  include <pcl/point_cloud.h>
+#  include <pcl/point_types.h>
+#endif
+
+#include <visp3/core/vpPlane.h>
+#include <visp3/mbt/vpMbTracker.h>
+#include <visp3/mbt/vpMbtDistanceLine.h>
+
+
+class VISP_EXPORT vpMbtFaceDepthDense {
+public:
+  //! Camera intrinsic parameters
+  vpCameraParameters m_cam;
+  //! Flags specifying which clipping to used
+  unsigned int m_clippingFlag;
+  //! Distance for near clipping
+  double m_distFarClip;
+  //! Distance for near clipping
+  double m_distNearClip;
+  //! Pointer to the list of faces
+  vpMbHiddenFaces<vpMbtPolygon> *m_hiddenFace;
+  //! Plane equation described in the object frame
+  vpPlane m_planeObject;
+  //! Polygon defining the face
+  vpMbtPolygon *m_polygon;
+  //! Scan line visibility
+  bool m_useScanLine;
+
+
+  vpMbtFaceDepthDense();
+  virtual ~vpMbtFaceDepthDense();
+
+  void addLine(vpPoint &p1, vpPoint &p2, vpMbHiddenFaces<vpMbtPolygon> * const faces, int polygon = -1, std::string name = "");
+
+#ifdef VISP_HAVE_PCL
+  bool computeDesiredFeatures(const vpHomogeneousMatrix &cMo, const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &point_cloud,
+                              const unsigned int stepX, const unsigned int stepY);
+#endif
+  bool computeDesiredFeatures(const vpHomogeneousMatrix &cMo, const unsigned int width, const unsigned int height,
+                              const std::vector<vpColVector> &point_cloud, const unsigned int stepX, const unsigned int stepY);
+
+  void computeInteractionMatrixAndResidu(const vpHomogeneousMatrix &cMo, vpMatrix &L, vpColVector &error);
+
+  void computeVisibility();
+  void computeVisibilityDisplay();
+
+  void display(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam, const vpColor col,
+               const unsigned int thickness=1, const bool displayFullModel = false);
+  void display(const vpImage<vpRGBa> &I, const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam, const vpColor col,
+               const unsigned int thickness=1, const bool displayFullModel = false);
+
+  void displayFeature(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam, const double scale=0.05,
+                      const unsigned int thickness=1);
+  void displayFeature(const vpImage<vpRGBa> &I, const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam, const double scale=0.05,
+                      const unsigned int thickness=1);
+
+  inline size_t getNbFeatures() const {
+    return m_pointCloudFace.size() / 3;
+  }
+
+  inline bool isVisible() const {
+    return m_polygon->isvisible;
+  }
+
+  void setCameraParameters(const vpCameraParameters &camera);
+
+  void setScanLineVisibilityTest(const bool v);
+
+
+private:
+  class PolygonLine {
+  public:
+    //! The first extremity
+    vpPoint *m_p1;
+    //! The second extremity
+    vpPoint *m_p2;
+    //! Polygon describing the line
+    vpMbtPolygon m_poly;
+    //! The first extremity clipped in the image frame
+    vpImagePoint m_imPt1;
+    //! The second extremity clipped in the image frame
+    vpImagePoint m_imPt2;
+
+    PolygonLine() : m_p1(NULL), m_p2(NULL), m_poly(), m_imPt1(), m_imPt2() { }
+
+    PolygonLine(const PolygonLine &polyLine) {
+      m_poly = polyLine.m_poly;
+      m_p1 = &m_poly.p[0];
+      m_p2 = &m_poly.p[1];
+      m_imPt1 = polyLine.m_imPt1;
+      m_imPt2 = polyLine.m_imPt2;
+    }
+
+    PolygonLine& operator=(PolygonLine other) {
+      swap(*this, other);
+
+      return *this;
+    }
+
+    void swap(PolygonLine &first, PolygonLine &second) {
+      using std::swap;
+      swap(first.m_p1, second.m_p1);
+      swap(first.m_p2, second.m_p2);
+      swap(first.m_poly, second.m_poly);
+      swap(first.m_imPt1, second.m_imPt1);
+      swap(first.m_imPt2, second.m_imPt2);
+    }
+  };
+
+
+protected:
+  //! Flag to define if the face should be tracked or not
+  bool m_isTracked;
+  //! Visibility flag
+  bool m_isVisible;
+  std::vector<vpMbtDistanceLine*> m_listOfFaceLines;
+  //! Plane equation described in the camera frame and updated with the current pose
+  vpPlane m_planeCamera;
+  //! List of depth points inside the face
+  std::vector<double> m_pointCloudFace;
+  //! Polygon lines used for scan-line visibility
+  std::vector<PolygonLine> m_polygonLines;
+
+
+protected:
+  void computeROI(const vpHomogeneousMatrix &cMo, const unsigned int width, const unsigned int height, std::vector<vpImagePoint> &roiPts);
+
+  bool samePoint(const vpPoint &P1, const vpPoint &P2) const;
+};
+#endif

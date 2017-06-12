@@ -2430,10 +2430,11 @@ vpMbTracker::computeJTR(const vpMatrix& interaction, const vpColVector& error, v
 {
   if(interaction.getRows() != error.getRows() || interaction.getCols() != 6 ){
     throw vpMatrixException(vpMatrixException::incorrectMatrixSizeError,
-              "Incorrect matrices size in computeJTR.");
+                            "Incorrect matrices size in computeJTR.");
   }
 
   JTR.resize(6);
+#if 0
   const unsigned int N = interaction.getRows();
 
   for (unsigned int i = 0; i < 6; i += 1){
@@ -2443,6 +2444,13 @@ vpMbTracker::computeJTR(const vpMatrix& interaction, const vpColVector& error, v
     }
     JTR[i] = ssum;
   }
+#else
+  for (unsigned int i = 0; i < interaction.getRows(); i++) {
+    for (unsigned int j = 0; j < interaction.getCols(); j++) {
+      JTR[j] += interaction[i][j] * error[i];
+    }
+  }
+#endif
 }
 
 void
@@ -2493,11 +2501,12 @@ vpMbTracker::computeVVSPoseEstimation(const bool isoJoIdentity_, const unsigned 
         case vpMbTracker::GAUSS_NEWTON_OPT:
         default:
           v = -m_lambda * LTL.pseudoInverse(LTL.getRows()*std::numeric_limits<double>::epsilon()) * LTR;
+          break;
       }
   } else {
       vpVelocityTwistMatrix cVo;
       cVo.buildFrom(cMo);
-      vpMatrix LVJ = (L*cVo*oJo);
+      vpMatrix LVJ = (L * (cVo*oJo));
       vpMatrix LVJTLVJ = (LVJ).AtA();
       vpColVector LVJTR;
       computeJTR(LVJ, R, LVJTR);
@@ -2521,11 +2530,9 @@ vpMbTracker::computeVVSPoseEstimation(const bool isoJoIdentity_, const unsigned 
           }
         case vpMbTracker::GAUSS_NEWTON_OPT:
         default:
-          {
-            v = -m_lambda*LVJTLVJ.pseudoInverse(LVJTLVJ.getRows()*std::numeric_limits<double>::epsilon())*LVJTR;
-            v = cVo * v;
-            break;
-          }
+          v = -m_lambda*LVJTLVJ.pseudoInverse(LVJTLVJ.getRows()*std::numeric_limits<double>::epsilon())*LVJTR;
+          v = cVo * v;
+          break;
       }
   }
 }
