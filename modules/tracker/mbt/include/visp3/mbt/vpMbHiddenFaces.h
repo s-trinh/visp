@@ -335,12 +335,14 @@ void swap(vpMbHiddenFaces<PolygonType> &first, vpMbHiddenFaces<PolygonType> &sec
   swap(first.Lpol, second.Lpol);
   swap(first.nbVisiblePolygon, second.nbVisiblePolygon);
   swap(first.scanlineRender, second.scanlineRender);
+#ifdef VISP_HAVE_OGRE
   swap(first.ogreInitialised, second.ogreInitialised);
   swap(first.nbRayAttempts, second.nbRayAttempts);
   swap(first.ratioVisibleRay, second.ratioVisibleRay);
   swap(first.ogreShowConfigDialog, second.ogreShowConfigDialog);
   swap(first.ogre, second.ogre);
   swap(first.ogreBackground, second.ogreBackground);
+#endif
 }
 
 /*!

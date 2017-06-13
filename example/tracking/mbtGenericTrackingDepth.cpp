@@ -228,7 +228,6 @@ namespace {
       std::cerr << "Cannot read: " << filename_image << std::endl;
       return false;
     }
-
     vpImageIo::read(I, filename_image);
 
     //Read raw depth
@@ -432,8 +431,13 @@ int main(int argc, const char ** argv) {
     std::string modelFile, modelFile_depth;
     if (!opt_modelFile.empty())
       modelFile = opt_modelFile;
-    else
+    else {
+#if defined(VISP_HAVE_COIN3D) && (COIN_MAJOR_VERSION == 2 || COIN_MAJOR_VERSION == 3 || COIN_MAJOR_VERSION == 4)
       modelFile = vpIoTools::createFilePath(!opt_ipath.empty() ? opt_ipath : env_ipath, "ViSP-images/mbt-depth/castel/chateau_gantry.wrl");
+#else
+      modelFile = vpIoTools::createFilePath(!opt_ipath.empty() ? opt_ipath : env_ipath, "ViSP-images/mbt-depth/castel/chateau.cao");
+#endif
+    }
 
     if (!opt_modelFile_depth.empty())
       modelFile_depth = modelFile_depth;
@@ -443,7 +447,15 @@ int main(int argc, const char ** argv) {
     std::string vrml_ext = ".wrl";
     bool use_vrml = (modelFile.compare(modelFile.length() - vrml_ext.length(), vrml_ext.length(), vrml_ext) == 0) ||
                     (modelFile_depth.compare(modelFile_depth.length() - vrml_ext.length(), vrml_ext.length(), vrml_ext) == 0);
-    std::cout << "use_vrml: " << use_vrml << std::endl;
+
+    if (use_vrml) {
+#if defined(VISP_HAVE_COIN3D) && (COIN_MAJOR_VERSION == 2 || COIN_MAJOR_VERSION == 3 || COIN_MAJOR_VERSION == 4)
+      std::cout << "use_vrml: " << use_vrml << std::endl;
+#else
+      std::cout << "Error: vrml model file is only supported if ViSP is build with Coin3D 3rd party" << std::endl;
+      return EXIT_FAILURE;
+#endif
+    }
 
     if (!opt_initFile.empty())
       initFile = opt_initFile;

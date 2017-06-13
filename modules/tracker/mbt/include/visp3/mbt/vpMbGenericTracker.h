@@ -425,6 +425,8 @@ private:
 
     virtual void track(const vpImage<unsigned char>& I);
 #ifdef VISP_HAVE_PCL
+    using vpMbDepthNormalTracker::track;
+    using vpMbDepthDenseTracker::track;
     virtual void track(const vpImage<unsigned char> * const ptr_I=NULL, const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &point_cloud=nullptr);
 #endif
 
@@ -434,6 +436,7 @@ private:
     virtual void computeVVSInit();
     virtual void computeVVSInit(const vpImage<unsigned char> * const ptr_I);
     virtual void computeVVSInteractionMatrixAndResidu();
+    using vpMbEdgeTracker::computeVVSInteractionMatrixAndResidu;
     virtual void computeVVSInteractionMatrixAndResidu(const vpImage<unsigned char> * const ptr_I);
     using vpMbTracker::computeVVSWeights;
     virtual void computeVVSWeights();
