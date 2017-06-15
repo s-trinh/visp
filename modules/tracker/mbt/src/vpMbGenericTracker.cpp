@@ -4528,6 +4528,10 @@ void vpMbGenericTracker::TrackerWrapper::setCameraParameters(const vpCameraParam
   vpMbDepthDenseTracker::setCameraParameters(cam);
 }
 
+void vpMbGenericTracker::TrackerWrapper::setClipping(const unsigned int &flags) {
+  vpMbEdgeTracker::setClipping(flags);
+}
+
 void vpMbGenericTracker::TrackerWrapper::setDepthDenseSamplingStep(const unsigned int stepX, const unsigned int stepY) {
   vpMbDepthDenseTracker::setDepthDenseSamplingStep(stepX, stepY);
 }

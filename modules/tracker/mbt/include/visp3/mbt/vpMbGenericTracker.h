@@ -411,6 +411,8 @@ private:
     virtual void setDepthNormalSamplingStep(const unsigned int stepX, const unsigned int stepY);
 //    virtual void setDepthNormalUseRobust(const bool use);
 
+    virtual void setClipping(const unsigned int &flags);
+
     virtual void setOgreVisibilityTest(const bool &v);
 
     virtual void setPose(const vpImage<unsigned char> &I, const vpHomogeneousMatrix& cdMo);
