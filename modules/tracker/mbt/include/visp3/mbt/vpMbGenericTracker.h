@@ -430,7 +430,6 @@ private:
     virtual void track(const vpImage<unsigned char> * const ptr_I=NULL, const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &point_cloud=nullptr);
 #endif
 
-
   protected:
     virtual void computeVVS(const vpImage<unsigned char> * const ptr_I);
     virtual void computeVVSInit();

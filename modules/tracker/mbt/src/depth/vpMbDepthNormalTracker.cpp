@@ -145,7 +145,7 @@ void vpMbDepthNormalTracker::computeVVS() {
 
 
   computeVVSInit();
-  unsigned int nb_features = (unsigned int) 3*m_depthNormalListOfDesiredFeatures.size();
+  unsigned int nb_features = (unsigned int) ( 3*m_depthNormalListOfDesiredFeatures.size() );
 
   vpColVector error_prev(nb_features);
   vpMatrix LTL;
@@ -294,7 +294,7 @@ void vpMbDepthNormalTracker::computeVVSInit() {
 }
 
 void vpMbDepthNormalTracker::computeVVSInteractionMatrixAndResidu() {
-  size_t cpt = 0;
+  unsigned int cpt = 0;
   for (std::vector<vpMbtFaceDepthNormal*>::const_iterator it = m_depthNormalListOfActiveFaces.begin(); it != m_depthNormalListOfActiveFaces.end(); ++it) {
     vpMatrix L_face;
     vpColVector features_face;

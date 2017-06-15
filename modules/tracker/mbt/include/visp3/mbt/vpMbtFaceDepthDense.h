@@ -70,7 +70,6 @@ public:
   //! Scan line visibility
   bool m_useScanLine;
 
-
   vpMbtFaceDepthDense();
   virtual ~vpMbtFaceDepthDense();
 
@@ -98,8 +97,8 @@ public:
   void displayFeature(const vpImage<vpRGBa> &I, const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam, const double scale=0.05,
                       const unsigned int thickness=1);
 
-  inline size_t getNbFeatures() const {
-    return m_pointCloudFace.size() / 3;
+  inline unsigned int getNbFeatures() const {
+    return (unsigned int) (m_pointCloudFace.size() / 3);
   }
 
   inline bool isVisible() const {

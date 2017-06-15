@@ -260,17 +260,17 @@ namespace {
     pointcloud.resize((size_t) width*height);
 
     //Only for Creative SR300
-    const float depth_scale = 0.000124986647;
+    const float depth_scale = 0.000124986647f;
     rs_intrinsics depth_intrinsic;
-    depth_intrinsic.ppx = 311.484558;
-    depth_intrinsic.ppy = 246.283234;
-    depth_intrinsic.fx = 476.053619;
-    depth_intrinsic.fy = 476.053497;
-    depth_intrinsic.coeffs[0] = 0.165056542;
-    depth_intrinsic.coeffs[1] = -0.0508309528;
-    depth_intrinsic.coeffs[2] = 0.00435937941;
-    depth_intrinsic.coeffs[3] = 0.00541406544;
-    depth_intrinsic.coeffs[4] = 0.250085592;
+    depth_intrinsic.ppx = 311.484558f;
+    depth_intrinsic.ppy = 246.283234f;
+    depth_intrinsic.fx = 476.053619f;
+    depth_intrinsic.fy = 476.053497f;
+    depth_intrinsic.coeffs[0] = 0.165056542f;
+    depth_intrinsic.coeffs[1] = -0.0508309528f;
+    depth_intrinsic.coeffs[2] = 0.00435937941f;
+    depth_intrinsic.coeffs[3] = 0.00541406544f;
+    depth_intrinsic.coeffs[4] = 0.250085592f;
 
     for (unsigned int i = 0; i < height; i++) {
       for (unsigned int j = 0; j < width; j++) {

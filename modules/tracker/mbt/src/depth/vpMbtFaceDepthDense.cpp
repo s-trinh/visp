@@ -117,7 +117,7 @@ void vpMbtFaceDepthDense::addLine(vpPoint &P1, vpPoint &P2, vpMbHiddenFaces<vpMb
     l->hiddenface = faces;
     l->useScanLine = m_useScanLine;
 
-    l->setIndex(m_listOfFaceLines.size());
+    l->setIndex((unsigned int)( m_listOfFaceLines.size() ));
     l->setName(name);
 
     if(m_clippingFlag != vpPolygon3D::NO_CLIPPING)
@@ -366,7 +366,7 @@ void vpMbtFaceDepthDense::computeInteractionMatrixAndResidu(const vpHomogeneousM
     error[idx] = D + (normal.t()*pt);
   }
 #else
-  size_t cpt = 0;
+  unsigned int cpt = 0;
   if (getNbFeatures() >= 2) {
     double *ptr_point_cloud = &m_pointCloudFace[0];
     double *ptr_L = L.data;
