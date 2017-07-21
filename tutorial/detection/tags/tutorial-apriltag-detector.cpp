@@ -10,25 +10,20 @@
 
 #include <visp3/sensor/vpRealSense.h>
 
+int main(int argc, const char** argv) {
+  bool poseFromHomography = false;
+  double tagSize = 0.02;
+  bool displayPose = false;
 
-int main(int argc, const char** argv)
-{
-  vpMatrix M(3,2);
-  M[0][0] = 1;   M[0][1] = 6;
-  M[1][0] = 2;   M[1][1] = 8;
-  M[2][0] = 0.5; M[2][1] = 9;
-  vpColVector w;
-  vpMatrix V, Sigma, U = M;
-  U.svd(w, V);
-  // Construct the diagonal matrix from the singular values
-  Sigma.diag(w);
-  // Reconstruct the initial matrix using the decomposition
-  vpMatrix Mrec =  U * Sigma * V.t();
-
-  std::cout << "M:\n" << M << std::endl;
-  std::cout << "U:\n" << U << std::endl;
-  std::cout << "Mrec:\n" << Mrec << std::endl;
-
+  for (int i = 1; i < argc; i++) {
+    if (std::string(argv[i]) == "--pose_homography") {
+      poseFromHomography = true;
+    } else if (std::string(argv[i]) == "--tag_size" && i+1 < argc) {
+      tagSize = atof(argv[i+1]);
+    } else if (std::string(argv[i]) == "--display_pose") {
+      displayPose = true;
+    }
+  }
 
   //! [Macro defined]
 #if defined(VISP_HAVE_APRILTAG) && (defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_OPENCV))
@@ -53,12 +48,11 @@ int main(int argc, const char** argv)
 
     vpCameraParameters cam = realsense.getCameraParameters(rs::stream::color);
     std::cout << "cam:\n" << cam << std::endl;
-    double tagSize = 0.02;
     //! [Create base detector]
     vpDetectorBase *detector = new vpDetectorAprilTag;
     //! [Create base detector]
 
-    bool poseFromHomography = false;
+    std::vector<double> time_vec;
     while (true) {
       realsense.acquire((unsigned char *) I_color.bitmap, NULL, NULL, NULL);
       vpImageConvert::convert(I_color, I);
@@ -66,53 +60,58 @@ int main(int argc, const char** argv)
       vpDisplay::display(I);
 
       std::vector<vpHomogeneousMatrix> cMo_vec;
-      if (poseFromHomography) {
-        dynamic_cast<vpDetectorAprilTag*>(detector)->detect(I, tagSize, cam, cMo_vec);
+      dynamic_cast<vpDetectorAprilTag*>(detector)->setPoseFromHomography(poseFromHomography);
+
+      double t = vpTime::measureTimeMs();
+      dynamic_cast<vpDetectorAprilTag*>(detector)->detect(I, tagSize, cam, cMo_vec);
+      t = vpTime::measureTimeMs() - t;
+      time_vec.push_back(t);
+
+      std::stringstream ss;
+      ss << "Detection time: " << t << " ms for " << detector->getNbObjects() << " tags";
+      vpDisplay::displayText(I, 20, 20, ss.str(), vpColor::red);
+
+      if (displayPose) {
+        for (size_t i = 0; i < cMo_vec.size() ; i++) {
+  //        std::cout << "cMo:\n" << cMo_vec[i] << std::endl;
+          vpDisplay::displayFrame(I, cMo_vec[i], cam, tagSize, vpColor::none, 3);
+        }
       } else {
-        std::vector<std::vector<vpPoint> > pts_vec;
-        dynamic_cast<vpDetectorAprilTag*>(detector)->detect(I, tagSize, cam, pts_vec);
-
-        for (size_t i = 0; i < pts_vec.size(); i++) {
-          vpPose pose;
-          pose.addPoints(pts_vec[i]);
-
-          vpHomogeneousMatrix cMo;
-          if (pose.computePose(vpPose::DEMENTHON_VIRTUAL_VS, cMo)) {
-//            vpMatrix R(3,3), U;
-//            for (unsigned int i = 0; i < 3; i++) {
-//              for (unsigned int j = 0; j < 3; j++) {
-//                R[i][j] = cMo[i][j];
-//              }
-//            }
-//            U = R;
-
-//            vpColVector w;
-//            vpMatrix V;
-//            U.svd(w, V);
-//            R = U*V.t();
-
-//            for (unsigned int i = 0; i < 3; i++) {
-//              for (unsigned int j = 0; j < 3; j++) {
-//                cMo[i][j] = R[i][j];
-//              }
-//            }
-
-            cMo_vec.push_back(cMo);
+        for(size_t i=0; i < detector->getNbObjects(); i++) {
+          //! [Parse detected codes]
+          //! [Get location]
+          std::vector<vpImagePoint> p = detector->getPolygon(i);
+          vpRect bbox = detector->getBBox(i);
+          //! [Get location]
+          vpDisplay::displayRectangle(I, bbox, vpColor::green);
+          //! [Get message]
+          vpDisplay::displayText(I, (int)(bbox.getTop()-10), (int)bbox.getLeft(),
+                                 "Message: \"" + detector->getMessage(i) + "\"",
+                                 vpColor::red);
+          //! [Get message]
+          for(size_t j=0; j < p.size(); j++) {
+            vpDisplay::displayCross(I, p[j], 14, vpColor::red, 3);
+            std::ostringstream number;
+            number << j;
+            vpDisplay::displayText(I, p[j]+vpImagePoint(15,5), number.str(), vpColor::blue);
           }
         }
       }
 
-      for (size_t i = 0; i < cMo_vec.size(); i++) {
-//        std::cout << "cMo:\n" << cMo_vec[i] << std::endl;
-        vpDisplay::displayFrame(I, cMo_vec[i], cam, tagSize, vpColor::none, 3);
-      }
-
       vpDisplay::flush(I);
+
+      vpImage<vpRGBa> O;
+      vpDisplay::getImage(I, O);
+      vpImageIo::write(O, "AprilTag_test.jpg");
+
 
       if (vpDisplay::getClick(I, false)) {
         break;
       }
     }
+
+    std::cout << "Mean / Median / Std detection time: " << vpMath::getMean(time_vec) << " ms ; " << vpMath::getMedian(time_vec)
+              << " ms ; " << vpMath::getStdev(time_vec) << " ms" << std::endl;
 
 
 

@@ -28,83 +28,20 @@
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  * Description:
- * Base class for bar code detection.
- *
- * Authors:
- * Fabien Spindler
+ * Base class for April Tag detection.
  *
  *****************************************************************************/
-
 #ifndef __vpDetectorAprilTag_h__
 #define __vpDetectorAprilTag_h__
 
 #include <visp3/core/vpConfig.h>
 
 #ifdef VISP_HAVE_APRILTAG
-
 #include <visp3/detection/vpDetectorBase.h>
 #include <visp3/core/vpImage.h>
 #include <visp3/core/vpCameraParameters.h>
 #include <visp3/core/vpHomogeneousMatrix.h>
 
-/*!
-  \class vpDetectorQRCode
-  \ingroup group_detection_barcode
-  Base class for bar code detector. This class is a wrapper over libzbar
-  available from http://zbar.sourceforge.net. Installation instructions are provided
-  here https://visp.inria.fr/3rd_zbar.
-
-  The detect() function allows to detect multiple QR codes in an image. Once detected,
-  for each QR code it is possible to retrieve the location of the corners using getPolygon(),
-  the encoded message using getMessage(), the bounding box using getBBox() and the center
-  of gravity using getCog().
-
-  The following sample code shows how to use this class to detect QR codes in an image.
-  \code
-#include <visp3/detection/vpDetectorQRCode.h>
-#include <visp3/io/vpImageIo.h>
-
-int main()
-{
-#ifdef VISP_HAVE_ZBAR
-  vpImage<unsigned char> I;
-  vpImageIo::read(I, "bar-code.pgm");
-
-  vpDetectorQRCode detector;
-
-  bool status = detector.detect(I);
-  if (status) {
-    for(size_t i=0; i < detector.getNbObjects(); i++) {
-      std::cout << "Bar code " << i << ":" << std::endl;
-      std::vector<vpImagePoint> p = detector.getPolygon(i);
-      for(size_t j=0; j < p.size(); j++)
-        std::cout << "  Point " << j << ": " << p[j] << std::endl;
-      std::cout << "  Message: \"" << detector.getMessage(i) << "\"" << std::endl;
-    }
-  }
-#endif
-}
-  \endcode
-
-  The previous example may produce results like:
-  \code
-Bar code 0:
-  Point 0: 48, 212
-  Point 1: 57, 84
-  Point 2: 188, 92
-  Point 3: 183, 220
-  Message: "qrcode 2"
-Bar code 1:
-  Point 0: 26, 550
-  Point 1: 35, 409
-  Point 2: 174, 414
-  Point 3: 167, 555
-  Message: "qrcode 1"
-  \endcode
-
-  Other examples are also provided in tutorial-barcode-detector.cpp and
-  tutorial-barcode-detector-live.cpp
- */
 class VISP_EXPORT vpDetectorAprilTag : public vpDetectorBase {
 
 public:
@@ -118,14 +55,28 @@ public:
 
   vpDetectorAprilTag(const vpAprilTagFamily &tagFamily=TAG_36h11);
   virtual ~vpDetectorAprilTag();
+
   bool detect(const vpImage<unsigned char> &I);
   void detect(const vpImage<unsigned char> &I, const double tagSize, const vpCameraParameters &cam, std::vector<vpHomogeneousMatrix> &cMo_vec);
-  void detect(const vpImage<unsigned char> &I, const double tagSize, const vpCameraParameters &cam, std::vector<std::vector<vpPoint> > &pts_vec);
+
+  inline bool getPoseFromHomography() const {
+    return m_poseFromHomography;
+  }
+
+  inline void setPoseFromHomography(const bool use) {
+    m_poseFromHomography = use;
+  }
 
 protected:
+  bool m_poseFromHomography;
   vpAprilTagFamily m_tagFamily;
-//  apriltag_family_t *m_tf;
-//  apriltag_detector_t *m_td;
+
+private:
+  vpDetectorAprilTag(const vpDetectorAprilTag&);              // noncopyable
+  vpDetectorAprilTag& operator=(const vpDetectorAprilTag&);   //
+
+  class Impl;
+  Impl *m_impl;
 };
 
 #endif
