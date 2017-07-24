@@ -9,7 +9,7 @@ set(tutorial_cpp
   tutorial-apriltag-detector-live.cpp
 )
 
-set(tutorial_data "${CMAKE_CURRENT_SOURCE_DIR}/tag36h11_800_600.JPG")
+set(tutorial_data "${CMAKE_CURRENT_SOURCE_DIR}/AprilTag.pgm")
 
 foreach(cpp ${tutorial_cpp})
   visp_add_target(${cpp})
