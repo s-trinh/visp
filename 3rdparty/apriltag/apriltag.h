@@ -135,7 +135,7 @@ struct apriltag_detector
     // detection of quads can be done on a lower-resolution image,
     // improving speed at a cost of pose accuracy and a slight
     // decrease in detection rate. Decoding the binary payload is
-    // still done at full resolution. .
+    // still done at full resolution.
     float quad_decimate;
 
     // What Gaussian blur should be applied to the segmented image

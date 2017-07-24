@@ -63,11 +63,20 @@ public:
     return m_poseFromHomography;
   }
 
-  inline void setPoseFromHomography(const bool use) {
-    m_poseFromHomography = use;
+  void setAprilTagNbThreads(const int nThreads);
+  void setAprilTagPoseFromHomography(const bool use);
+  void setAprilTagQuadDecimate(const float quadDecimate);
+  void setAprilTagQuadSigma(const float quadSigma);
+  void setAprilTagRefineDecode(const bool refineDecode);
+  void setAprilTagRefineEdges(const bool refineEdges);
+  void setAprilTagRefinePose(const bool refinePose);
+
+  inline void setDisplayTag(const bool display) {
+    m_displayTag = display;
   }
 
 protected:
+  bool m_displayTag;
   bool m_poseFromHomography;
   vpAprilTagFamily m_tagFamily;
 
@@ -75,6 +84,7 @@ private:
   vpDetectorAprilTag(const vpDetectorAprilTag&);              // noncopyable
   vpDetectorAprilTag& operator=(const vpDetectorAprilTag&);   //
 
+  //PIMPL idiom
   class Impl;
   Impl *m_impl;
 };

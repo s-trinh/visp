@@ -49,6 +49,7 @@
 #include <visp3/core/vpPixelMeterConversion.h>
 #include <visp3/vision/vpPose.h>
 
+
 class vpDetectorAprilTag::Impl {
 public:
   Impl(const vpAprilTagFamily &tagFamily) : m_cam(), m_poseFromHomography(false), m_tagFamily(tagFamily), m_tagPoses(), m_tagSize(1.0), m_td(NULL), m_tf(NULL) {
@@ -111,7 +112,8 @@ public:
     }
   }
 
-  bool detect(const vpImage<unsigned char> &I, std::vector<std::vector<vpImagePoint> > &polygons, std::vector<std::string> &messages, const bool computePose) {
+  bool detect(const vpImage<unsigned char> &I, std::vector<std::vector<vpImagePoint> > &polygons, std::vector<std::string> &messages,
+              const bool computePose, const bool displayTag) {
     m_tagPoses.clear();
 
     image_u8_t im = { .width = (int32_t) I.getWidth(),
@@ -166,12 +168,19 @@ public:
       ss << tag_family_name << " id: " << det->id;
       messages[i] = ss.str();
 
+      if (displayTag) {
+        vpDisplay::displayLine(I, det->p[0][1], det->p[0][0], det->p[1][1], det->p[1][0], vpColor::red, 2);
+        vpDisplay::displayLine(I, det->p[0][1], det->p[0][0], det->p[3][1], det->p[3][0], vpColor::green, 2);
+        vpDisplay::displayLine(I, det->p[1][1], det->p[1][0], det->p[2][1], det->p[2][0], vpColor::blue, 2);
+        vpDisplay::displayLine(I, det->p[2][1], det->p[2][0], det->p[3][1], det->p[3][0], vpColor::yellow, 2);
+      }
+
       if (computePose) {
         if (m_poseFromHomography) {
           double fx = m_cam.get_px(), fy = m_cam.get_py();
           double cx = m_cam.get_u0(), cy = m_cam.get_v0();
 
-          matd_t *M = homography_to_pose(det->H, fx, fy, cx, cy, m_tagSize, 0);
+          matd_t *M = homography_to_pose(det->H, fx, fy, cx, cy, m_tagSize/2);
 
           vpHomogeneousMatrix cMo;
           for (int i = 0; i < 3; i++) {
@@ -250,6 +259,30 @@ public:
     m_cam = cam;
   }
 
+  void setNbThreads(const int nThreads) {
+    m_td->nthreads = nThreads;
+  }
+
+  void setQuadDecimate(const float quadDecimate) {
+    m_td->quad_decimate = quadDecimate;
+  }
+
+  void setQuadSigma(const float quadSigma) {
+    m_td->quad_sigma = quadSigma;
+  }
+
+  void setRefineDecode(const bool refineDecode) {
+    m_td->refine_decode = refineDecode ? 1 : 0;
+  }
+
+  void setRefineEdges(const bool refineEdges) {
+    m_td->refine_edges = refineEdges ? 1 : 0;
+  }
+
+  void setRefinePose(const bool refinePose) {
+    m_td->refine_pose = refinePose ? 1 : 0;
+  }
+
   void setTagSize(const double tagSize) {
     m_tagSize = tagSize;
   }
@@ -271,7 +304,8 @@ protected:
 /*!
    Default constructor.
 */
-vpDetectorAprilTag::vpDetectorAprilTag(const vpAprilTagFamily &tagFamily) : m_poseFromHomography(false), m_tagFamily(tagFamily), m_impl(new Impl(tagFamily)) {
+vpDetectorAprilTag::vpDetectorAprilTag(const vpAprilTagFamily &tagFamily)
+  : m_displayTag(false), m_poseFromHomography(false), m_tagFamily(tagFamily), m_impl(new Impl(tagFamily)) {
 }
 
 vpDetectorAprilTag::~vpDetectorAprilTag() {
@@ -288,12 +322,20 @@ bool vpDetectorAprilTag::detect(const vpImage<unsigned char> &I) {
   m_polygon.clear();
   m_nb_objects = 0;
 
-  bool detected =  m_impl->detect(I, m_polygon, m_message, false);
+  bool detected =  m_impl->detect(I, m_polygon, m_message, false, m_displayTag);
   m_nb_objects = m_message.size();
 
   return detected;
 }
 
+/*!
+  Detect AprilTag tags in the image and compute the corresponding tag poses.
+
+  \param I : Input image.
+  \param tagSize : Tag size in meter.
+  \param cam : Camera intrinsic parameters.
+  \param cMo_vec : List of tag poses.
+*/
 void vpDetectorAprilTag::detect(const vpImage<unsigned char> &I, const double tagSize, const vpCameraParameters &cam, std::vector<vpHomogeneousMatrix> &cMo_vec) {
   m_message.clear();
   m_polygon.clear();
@@ -301,9 +343,107 @@ void vpDetectorAprilTag::detect(const vpImage<unsigned char> &I, const double ta
 
   m_impl->setTagSize(tagSize);
   m_impl->setCameraParameters(cam);
-  m_impl->detect(I, m_polygon, m_message, true);
+  m_impl->detect(I, m_polygon, m_message, true, m_displayTag);
   m_nb_objects = m_message.size();
   m_impl->getTagPoses(cMo_vec);
+}
+
+/*!
+  Set the number of threads for April Tag detection (default is 1).
+
+  \param nThreads : Number of thread.
+*/
+void vpDetectorAprilTag::setAprilTagNbThreads(const int nThreads) {
+  if (nThreads > 0)
+    m_impl->setNbThreads(nThreads);
+}
+
+/*!
+  If true, the homography from the tag detection is used to compute the pose (default is false).
+  Otherwise, a classical PnP method is used.
+  As the homography is already computed to detect the April Tag, this method should be faster.
+
+  \param use : If true, pose is computed from the homography, otherwise use a PnP method.
+*/
+void vpDetectorAprilTag::setAprilTagPoseFromHomography(const bool use) {
+  m_poseFromHomography = use;
+  m_impl->setUsePoseFromHomography(m_poseFromHomography);
+}
+
+/*!
+  From the AprilTag code:
+  detection of quads can be done on a lower-resolution image,
+  improving speed at a cost of pose accuracy and a slight
+  decrease in detection rate. Decoding the binary payload is
+  still done at full resolution.
+  Default is 1.0, increase this value to reduce the computation time.
+
+  \param quadDecimate : Value for quad_decimate.
+*/
+void vpDetectorAprilTag::setAprilTagQuadDecimate(const float quadDecimate) {
+  m_impl->setQuadDecimate(quadDecimate);
+}
+
+/*!
+  From the AprilTag code:
+  What Gaussian blur should be applied to the segmented image
+  (used for quad detection?)  Parameter is the standard deviation
+  in pixels.  Very noisy images benefit from non-zero values
+  (e.g. 0.8).
+  Default is 0.0.
+
+  \param quadSigma : Value for quad_sigma.
+*/
+void vpDetectorAprilTag::setAprilTagQuadSigma(const float quadSigma) {
+  m_impl->setQuadSigma(quadSigma);
+}
+
+/*!
+  From the AprilTag code:
+  when non-zero, detections are refined in a way intended to
+  increase the number of detected tags. Especially effective for
+  very small tags near the resolution threshold (e.g. 10px on a
+  side).
+  Default is 0.
+
+  \param refineDecode : If true, set refine_decode to 1.
+*/
+void vpDetectorAprilTag::setAprilTagRefineDecode(const bool refineDecode) {
+  m_impl->setRefineDecode(refineDecode);
+}
+
+/*!
+  From the AprilTag code:
+  When non-zero, the edges of the each quad are adjusted to "snap
+  to" strong gradients nearby. This is useful when decimation is
+  employed, as it can increase the quality of the initial quad
+  estimate substantially. Generally recommended to be on (1).
+  Very computationally inexpensive. Option is ignored if
+  quad_decimate = 1.
+  Default is 1.
+
+  \param refineEdges : If true, set refine_edges to 1.
+*/
+void vpDetectorAprilTag::setAprilTagRefineEdges(const bool refineEdges) {
+  m_impl->setRefineEdges(refineEdges);
+}
+
+/*!
+  From the AprilTag code:
+  when non-zero, detections are refined in a way intended to
+  increase the accuracy of the extracted pose. This is done by
+  maximizing the contrast around the black and white border of
+  the tag. This generally increases the number of successfully
+  detected tags, though not as effectively (or quickly) as
+  refine_decode.
+  This option must be enabled in order for "goodness" to be
+  computed.
+  Default is 0.
+
+  \param refinePose : If true, set refine_pose to 1.
+*/
+void vpDetectorAprilTag::setAprilTagRefinePose(const bool refinePose) {
+  m_impl->setRefinePose(refinePose);
 }
 #elif !defined(VISP_BUILD_SHARED_LIBS)
 // Work arround to avoid warning: libvisp_core.a(vpDetectorAprilTag.cpp.o) has no symbols

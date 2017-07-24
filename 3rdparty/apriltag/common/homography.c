@@ -259,7 +259,7 @@ matd_t *homography_compute(zarray_t *correspondences, int flags)
 // And that the homography is equal to the projection matrix times the
 // model matrix, recover the model matrix (which is returned). Note
 // that the third column of the model matrix is missing in the
-// expresison below, reflecting the fact that the homography assumes
+// expression below, reflecting the fact that the homography assumes
 // all points are at z=0 (i.e., planar) and that the element of z is
 // thus omitted.  (3x1 instead of 4x1).
 //
@@ -278,7 +278,7 @@ matd_t *homography_compute(zarray_t *correspondences, int flags)
 // R21 = H21
 // TZ  = H22
 
-matd_t *homography_to_pose(const matd_t *H, double fx, double fy, double cx, double cy, double markerScale, int negativeZ)
+matd_t *homography_to_pose(const matd_t *H, double fx, double fy, double cx, double cy, double markerScale)
 {
     // Note that every variable that we compute is proportional to the scale factor of H.
     double R20 = MATD_EL(H, 2, 0);
@@ -299,7 +299,7 @@ matd_t *homography_to_pose(const matd_t *H, double fx, double fy, double cx, dou
 
     // get sign of S by requiring the tag to be in front the camera;
     // we assume camera looks in the -Z direction.
-    if (TZ > 0 && negativeZ)
+    if (TZ > 0)
         s *= -1;
 
     R20 *= s;
@@ -323,9 +323,9 @@ matd_t *homography_to_pose(const matd_t *H, double fx, double fy, double cx, dou
         // "proper", but probably increases the reprojection error. An
         // iterative alignment step would be superior.
 
-        matd_t *R = matd_create_data(3, 3, (double[]) { R00, R01, R02,
-                                                       R10, R11, R12,
-                                                       R20, R21, R22 });
+        matd_t *R = matd_create_data(3, 3, (double[]) { R00, -R01, R02,
+                                                        R10, -R11, R12,
+                                                        R20, -R21, R22 });
 
         matd_svd_t svd = matd_svd(R);
         matd_destroy(R);

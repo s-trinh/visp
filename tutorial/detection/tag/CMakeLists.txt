@@ -2,10 +2,12 @@ project(tutorial-apriltag)
 
 cmake_minimum_required(VERSION 2.6)
 
-find_package(VISP REQUIRED visp_core visp_detection visp_io visp_gui visp_sensor visp_vision)
+find_package(VISP REQUIRED visp_core visp_detection visp_io visp_gui visp_sensor)
 
 set(tutorial_cpp
-  tutorial-apriltag-detector.cpp)
+  tutorial-apriltag-detector.cpp
+  tutorial-apriltag-detector-live.cpp
+)
 
 set(tutorial_data "${CMAKE_CURRENT_SOURCE_DIR}/tag36h11_800_600.JPG")
 
