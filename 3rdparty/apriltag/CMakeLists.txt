@@ -2,12 +2,25 @@ project(${APRILTAG_LIBRARY})
 
 vp_include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-file(GLOB lib_srcs *.c common/*.c)
-file(GLOB lib_hdrs *.h common/*.h)
+file(GLOB lib_srcs *.c common/*.c ../pthreads-w32-2-9-1-release/pthreads-win32/*.c)
+file(GLOB lib_hdrs *.h common/*.h common/sys/*.h ../pthreads-w32-2-9-1-release/pthreads-win32/*.h)
+
+message("AprilTag lib_srcs: " ${lib_srcs})
+message("AprilTag lib_hdrs: " ${lib_hdrs})
 
 vp_list_filterout(lib_srcs common/unionfind.c) # has no symbols
 
+if(MSVC)
+  add_definitions(/DPTW32_RC_MSC)
+  set(PTHREADS_COMPILER V)
+elseif(CMAKE_COMPILER_IS_GNUCXX)
+  set(PTHREADS_COMPILER G)
+else()
+  message("WARNING: pthreads-win32 doesn't recognize your compiler!")
+endif()
+
 add_library(${APRILTAG_LIBRARY} STATIC ${lib_srcs} ${lib_hdrs})
+target_link_libraries (${APRILTAG_LIBRARY} ${PTHREADS_LIBRARY})
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C99_C_FLAGS}")
 if(CMAKE_COMPILER_IS_GNUCXX AND UNIX)

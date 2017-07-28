@@ -74,10 +74,18 @@ static inline void swap_default(zmaxheap_t *heap, int a, int b)
     heap->values[a] = heap->values[b];
     heap->values[b] = t;
 
+#ifdef _MSC_VER
+    char *tmp = malloc(heap->el_sz*sizeof *tmp);
+#else
     char tmp[heap->el_sz];
+#endif
     memcpy(tmp, &heap->data[a*heap->el_sz], heap->el_sz);
     memcpy(&heap->data[a*heap->el_sz], &heap->data[b*heap->el_sz], heap->el_sz);
     memcpy(&heap->data[b*heap->el_sz], tmp, heap->el_sz);
+
+#ifdef _MSC_VER
+    free(tmp);
+#endif
 }
 
 static inline void swap_pointer(zmaxheap_t *heap, int a, int b)

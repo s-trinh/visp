@@ -55,12 +55,25 @@ endif()
 if(WITH_APRILTAG)
   # April Tag is private
   include_directories(${APRILTAG_INCLUDE_DIRS})
+  message("APRILTAG_INCLUDE_DIRS: " ${APRILTAG_INCLUDE_DIRS})
 
   # Add specific build flag to turn off warnings coming from apriltag 3rd party
   vp_set_source_file_compile_flag(src/tag/vpDetectorAprilTag.cpp -Wno-unused-parameter)
 endif()
+if(WITH_PTHREAD)
+  # pthreads is private
+  include_directories(${PTHREADS_INCLUDE_DIRS})
+  message("PTHREADS_INCLUDE_DIRS: " ${PTHREADS_INCLUDE_DIRS})
+endif()
 
-vp_add_module(detection visp_core visp_vision PRIVATE_OPTIONAL ${APRILTAG_LIBRARIES})
+if(WIN32 AND MSVC)
+  message("PTHREADS_LIBRARIES: " ${PTHREADS_LIBRARIES})
+  message("APRILTAG_LIBRARIES: " ${APRILTAG_LIBRARIES})
+  #vp_add_module(detection visp_core visp_vision PRIVATE_OPTIONAL ${PTHREADS_LIBRARIES} ${APRILTAG_LIBRARIES})
+  vp_add_module(detection visp_core visp_vision PRIVATE_OPTIONAL ${APRILTAG_LIBRARIES})
+else()
+  vp_add_module(detection visp_core visp_vision PRIVATE_OPTIONAL ${APRILTAG_LIBRARIES})
+endif()
 vp_glob_module_sources()
 vp_module_include_directories(${opt_incs})
 vp_create_module(${opt_libs})

@@ -44,7 +44,7 @@ extern "C" {
 #include "common/zarray.h"
 #include "common/workerpool.h"
 #include "common/timeprofile.h"
-#include <pthread.h>
+#include "../pthreads-w32-2-9-1-release/pthreads-win32/pthread.h"
 
 #define APRILTAG_TASKS_PER_THREAD_TARGET 10
 
