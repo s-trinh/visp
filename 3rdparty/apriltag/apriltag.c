@@ -38,11 +38,6 @@ either expressed or implied, of the Regents of The University of Michigan.
 #include <string.h>
 #include <stdio.h>
 #include <inttypes.h>
-#ifdef _MSC_VER
-#include "common/time.h"
-#else
-#include <sys/time.h>
-#endif
 
 #include "common/image_u8.h"
 #include "common/image_u8x3.h"
@@ -1102,7 +1097,6 @@ int prefer_smaller(int pref, double q0, double q1)
 
 zarray_t *apriltag_detector_detect(apriltag_detector_t *td, image_u8_t *im_orig)
 {
-  printf("apriltag_detector_detect\n");
     if (zarray_size(td->tag_families) == 0) {
         zarray_t *s = zarray_create(sizeof(apriltag_detection_t*));
         printf("apriltag.c: No tag families enabled.");
@@ -1117,22 +1111,17 @@ zarray_t *apriltag_detector_detect(apriltag_detector_t *td, image_u8_t *im_orig)
     timeprofile_clear(td->tp);
     timeprofile_stamp(td->tp, "init");
 
-    printf("Step1\n");
-
     ///////////////////////////////////////////////////////////
     // Step 1. Detect quads according to requested image decimation
     // and blurring parameters.
-    int64_t begin = utime_now(), time;
     image_u8_t *quad_im = im_orig;
     if (td->quad_decimate > 1) {
-      printf("td->quad_decimate > 1\n");
         quad_im = image_u8_decimate(im_orig, td->quad_decimate);
 
         timeprofile_stamp(td->tp, "decimate");
     }
 
     if (td->quad_sigma != 0) {
-      printf("td->quad_sigma != 0\n");
         // compute a reasonable kernel width by figuring that the
         // kernel should go out 2 std devs.
         //
@@ -1149,14 +1138,11 @@ zarray_t *apriltag_detector_detect(apriltag_detector_t *td, image_u8_t *im_orig)
             ksz++;
 
         if (ksz > 1) {
-          printf("ksz > 1\n");
 
             if (td->quad_sigma > 0) {
-              printf("td->quad_sigma > 0\n");
                 // Apply a blur
                 image_u8_gaussian_blur(quad_im, sigma, ksz);
             } else {
-              printf("td->quad_sigma > 0 else\n");
                 // SHARPEN the image by subtracting the low frequency components.
                 image_u8_t *orig = image_u8_copy(quad_im);
                 image_u8_gaussian_blur(quad_im, sigma, ksz);
@@ -1186,15 +1172,11 @@ zarray_t *apriltag_detector_detect(apriltag_detector_t *td, image_u8_t *im_orig)
         image_u8_write_pnm(quad_im, "debug_preprocess.pnm");
 
 //    zarray_t *quads = apriltag_quad_gradient(td, im_orig);
-    printf("Run: apriltag_quad_thresh(td, quad_im)\n");
     zarray_t *quads = apriltag_quad_thresh(td, quad_im);
-    time = utime_now() - begin;
-    printf("apriltag_quad_thresh(td, quad_im): %" PRId64 "\n", time);
 
     // adjust centers of pixels so that they correspond to the
     // original full-resolution image.
     if (td->quad_decimate > 1) {
-      printf("td->quad_decimate > 1\n");
         for (int i = 0; i < zarray_size(quads); i++) {
             struct quad *q;
             zarray_get_volatile(quads, i, &q);
@@ -1212,9 +1194,6 @@ zarray_t *apriltag_detector_detect(apriltag_detector_t *td, image_u8_t *im_orig)
     zarray_t *detections = zarray_create(sizeof(apriltag_detection_t*));
 
     td->nquads = zarray_size(quads);
-
-    time = utime_now() - begin;
-    printf("Step1: %" PRId64 "\n", time);
 
     timeprofile_stamp(td->tp, "quads");
 
@@ -1244,7 +1223,6 @@ zarray_t *apriltag_detector_detect(apriltag_detector_t *td, image_u8_t *im_orig)
 
     ////////////////////////////////////////////////////////////////
     // Step 2. Decode tags from each quad.
-    begin = utime_now();
     if (1) {
         image_u8_t *im_samples = td->debug ? image_u8_copy(im_orig) : NULL;
 
@@ -1282,8 +1260,6 @@ zarray_t *apriltag_detector_detect(apriltag_detector_t *td, image_u8_t *im_orig)
             image_u8_destroy(im_samples);
         }
     }
-    time = utime_now() - begin;
-    printf("Step2: %" PRId64 "\n", time);
 
     if (td->debug) {
         image_u8_t *im_quads = image_u8_copy(im_orig);
@@ -1315,7 +1291,6 @@ zarray_t *apriltag_detector_detect(apriltag_detector_t *td, image_u8_t *im_orig)
     ////////////////////////////////////////////////////////////////
     // Step 3. Reconcile detections--- don't report the same tag more
     // than once. (Allow non-overlapping duplicate detections.)
-    begin = utime_now();
     if (1) {
         zarray_t *poly0 = g2d_polygon_create_zeros(4);
         zarray_t *poly1 = g2d_polygon_create_zeros(4);
@@ -1384,8 +1359,6 @@ zarray_t *apriltag_detector_detect(apriltag_detector_t *td, image_u8_t *im_orig)
         zarray_destroy(poly0);
         zarray_destroy(poly1);
     }
-    time = utime_now() - begin;
-    printf("Step3: %" PRId64 "\n", time);
 
     timeprofile_stamp(td->tp, "reconcile");
 
