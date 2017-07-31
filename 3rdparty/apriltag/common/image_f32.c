@@ -43,7 +43,7 @@ either expressed or implied, of the Regents of The University of Michigan.
 
 #ifndef HUGE
 //# define HUGE 3.40282347e+38F
-#include <limits.h>
+#include <float.h>
 #endif
 
 
@@ -184,7 +184,7 @@ void image_f32_gaussian_blur(image_f32_t *im, double sigma, int ksz)
 void image_f32_normalize(image_f32_t *im)
 {
 #ifndef HUGE
-  float min = FLT_MAX, max = FLT_MIN;
+  float min = FLT_MAX, max = -FLT_MAX;
 #else
     float min = HUGE, max = -HUGE;
 #endif

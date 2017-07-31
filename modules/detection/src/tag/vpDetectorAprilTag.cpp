@@ -116,6 +116,9 @@ public:
               const bool computePose, const bool displayTag) {
     m_tagPoses.clear();
 
+    //TODO: debug
+    //m_td->debug = 1;
+
 #ifdef _MSC_VER
     image_u8_t im{ (int32_t)I.getWidth() , (int32_t)I.getHeight() , (int32_t)I.getWidth() , I.bitmap };
 #else
@@ -126,12 +129,20 @@ public:
                     };
 #endif
 
+    std::cout << "Call: apriltag_detector_detect(m_td, &im)" << std::endl;
     zarray_t *detections = apriltag_detector_detect(m_td, &im);
     int nb_detections = zarray_size(detections);
     bool detected = nb_detections > 0;
 
     polygons.resize( (size_t) nb_detections);
     messages.resize( (size_t) nb_detections);
+
+    //TODO: debug
+    for (int i = 0; i < zarray_size(m_td->tp->stamps); i++) {
+      timeprofile_entry stamp;
+      zarray_get(m_td->tp->stamps, i, &stamp);
+      std::cout << stamp.name << "[" << i << "]=" << stamp.utime << " stamp" << std::endl;
+    }
 
     std::string tag_family_name = "";
     switch (m_tagFamily) {

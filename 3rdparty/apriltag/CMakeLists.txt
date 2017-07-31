@@ -22,7 +22,9 @@ vp_list_filterout(lib_srcs common/unionfind.c) # has no symbols
 # endif()
 
 add_library(${APRILTAG_LIBRARY} STATIC ${lib_srcs} ${lib_hdrs})
-target_link_libraries (${APRILTAG_LIBRARY} ${PTHREADS_LIBRARY})
+if(WIN32 AND MSVC)
+  target_link_libraries (${APRILTAG_LIBRARY} ${PTHREADS_LIBRARY})
+endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C99_C_FLAGS}")
 if(CMAKE_COMPILER_IS_GNUCXX AND UNIX)
