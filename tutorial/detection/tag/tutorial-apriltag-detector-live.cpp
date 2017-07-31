@@ -35,7 +35,7 @@ int main(int argc, const char** argv) {
     } else if (std::string(argv[i]) == "--input" && i+1 < argc) {
       opt_device = atoi(argv[i+1]);
     } else if (std::string(argv[i]) == "--quad_decimate" && i+1 < argc) {
-      quad_decimate = atof(argv[i+1]);
+      quad_decimate = (float) atof(argv[i+1]);
     } else if (std::string(argv[i]) == "--nthreads" && i+1 < argc) {
       nThreads = atoi(argv[i+1]);
     } else if (std::string(argv[i]) == "--intrinsic" && i+1 < argc) {

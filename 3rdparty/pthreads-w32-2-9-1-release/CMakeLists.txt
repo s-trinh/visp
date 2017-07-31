@@ -1,6 +1,3 @@
-#cmake_minimum_required(VERSION 2.8.10)
-
-#project(pthreads-win32)
 project(${PTHREADS_LIBRARY})
 
 set(PTHREADS_MAJOR_VERSION 2 PARENT_SCOPE)
@@ -8,74 +5,6 @@ set(PTHREADS_MINOR_VERSION 9 PARENT_SCOPE)
 set(PTHREADS_PATCH_VERSION 1 PARENT_SCOPE)
 
 set(PTHREADS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/pthreads-win32)
-
-
-
-# vp_include_directories(${PTHREADS_SOURCE_DIR})
-
-# file(GLOB lib_srcs ${CMAKE_CURRENT_SOURCE_DIR}/pthreads-win32/*.c)
-# file(GLOB lib_hdrs ${CMAKE_CURRENT_SOURCE_DIR}/pthreads-win32/*.h)
-
-# message("lib_srcs: " ${lib_srcs})
-# message("lib_hdrs: " ${lib_hdrs})
-
-# if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-  # add_definitions( -DPTW32_ARCH="x64" )
-# else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-  # add_definitions( -DPTW32_ARCH="x86" )
-# endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-
-# if(MSVC)
-  # add_definitions(/DPTW32_RC_MSC)
-  # set(PTHREADS_COMPILER V)
-# elseif(CMAKE_COMPILER_IS_GNUCXX)
-  # set(PTHREADS_COMPILER G)
-# else()
-  # message("WARNING: pthreads-win32 doesn't recognize your compiler!")
-# endif()
-
-# if(PTHREADS_BUILD_CPP)
-	# set(PTHREADS_EXCEPTION_SCHEME CE)
-	# add_definitions(/__CLEANUP_CXX)
-	# message("Building pthreads-win32 with C++ exception handling.")
-# elseif(PTHREADS_BUILD_SEH)
-	# set(PTHREADS_EXCEPTION_SCHEME SE)
-	# add_definitions(/__CLEANUP_SEH)
-	# message("Building pthreads-win32 with Microsoft SEH exception handling.")
-# else()
-	##defaults to C - setjmp/longjmp
-	# set(PTHREADS_EXCEPTION_SCHEME C)
-	# message("Building pthreads-win32 with C setjmp/longjmp (default/recommended exception scheme).")
-# endif()
-
-# set(PTHREADS_COMPATIBILITY_VERSION 2)
-# set(PTHREADS_LIBRARY "pthreads${PTHREADS_COMPILER}${PTHREADS_EXCEPTION_SCHEME}${PTHREADS_COMPATIBILITY_VERSION}")
-# message("Library name of pthreads-win32: ${PTHREADS_LIBRARY}.")
-# set(CMAKE_DEBUG_POSTFIX d)
-
-# add_library(${PTHREADS_LIBRARY} STATIC ${lib_srcs} ${lib_hdrs})
-
-# if(CMAKE_COMPILER_IS_GNUCXX AND UNIX)
-  # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-# endif()
-
-# if(ENABLE_SOLUTION_FOLDERS)
-  # set_target_properties(${PTHREADS_LIBRARY} PROPERTIES FOLDER "3rdparty")
-# endif()
-
-# set_target_properties(${PTHREADS_LIBRARY}
-  # PROPERTIES OUTPUT_NAME ${PTHREADS_LIBRARY}
-  # DEBUG_POSTFIX "${VISP_DEBUG_POSTFIX}"
-  # COMPILE_PDB_NAME ${PTHREADS_LIBRARY}
-  # COMPILE_PDB_NAME_DEBUG "${PTHREADS_LIBRARY}${VISP_DEBUG_POSTFIX}"
-  # ARCHIVE_OUTPUT_DIRECTORY ${VISP_3P_LIBRARY_OUTPUT_PATH}
-  # )
-
-# if(NOT BUILD_SHARED_LIBS)
-  # vp_install_target(${PTHREADS_LIBRARY} EXPORT VISPModules ARCHIVE DESTINATION ${VISP_3P_LIB_INSTALL_PATH} COMPONENT dev)
-# endif()
-
-
 
 set(PTHREAD_API
 	${PTHREADS_SOURCE_DIR}/pthread.h
@@ -289,11 +218,6 @@ else()
 	message("Building pthreads-win32 with C setjmp/longjmp (default/recommended exception scheme).")
 endif()
 
-set(PTHREADS_COMPATIBILITY_VERSION 2)
-# set(PTHREADS_LIBRARY "pthreads${PTHREADS_COMPILER}${PTHREADS_EXCEPTION_SCHEME}${PTHREADS_COMPATIBILITY_VERSION}")
-# message("Library name of pthreads-win32: ${PTHREADS_LIBRARY}.")
-# set(CMAKE_DEBUG_POSTFIX d)
-
 add_definitions(/DHAVE_PTW32_CONFIG_H)
 
 include_directories(${PTHREADS_SOURCE_DIR})
@@ -319,18 +243,3 @@ set_target_properties(${PTHREADS_LIBRARY}
 if(NOT BUILD_SHARED_LIBS)
   vp_install_target(${PTHREADS_LIBRARY} EXPORT VISPModules ARCHIVE DESTINATION ${VISP_3P_LIB_INSTALL_PATH} COMPONENT dev)
 endif()
-
-
-# set(PTHREADS_INSTALL YES)
-# set(PTHREADS_BINDIR bin)
-# set(PTHREADS_BINCOMPONENT runtime)
-# set(PTHREADS_LIBDIR lib)
-# set(PTHREADS_LIBCOMPONENT dev)
-# set(PTHREADS_INCLUDEDIR include)
-# set(PTHREADS_INCLUDECOMPONENT dev)
-
-# install(TARGETS ${PTHREADS_LIBRARY}
-	# RUNTIME DESTINATION ${PTHREADS_BINDIR} COMPONENT ${PTHREADS_BINCOMPONENT}
-	# LIBRARY DESTINATION ${PTHREADS_LIBDIR} COMPONENT ${PTHREADS_LIBCOMPONENT}
-	# ARCHIVE DESTINATION ${PTHREADS_LIBDIR} COMPONENT ${PTHREADS_LIBCOMPONENT}
-	# PUBLIC_HEADER DESTINATION ${PTHREADS_INCLUDEDIR} COMPONENT ${PTHREADS_INCLUDECOMPONENT})
