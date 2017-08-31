@@ -170,51 +170,57 @@ void vpMbtTukeyEstimator<double>::MEstimator(const std::vector<double> &residues
 
   psiTukey(sigma, m_normres, weights);
 }
+
+template <typename T>
+void vpMbtTukeyEstimator<T>::MEstimator_impl(const std::vector<T> &/*residues*/, std::vector<T> &/*weights*/, const T /*NoiseThreshold*/) {
+
+}
+
 #else
 template <>
-void vpMbtTukeyEstimator<double>::MEstimator(const std::vector<double> &residues, std::vector<double> &weights, const double NoiseThreshold) {
-
+void vpMbtTukeyEstimator<float>::MEstimator(const std::vector<float> &residues, std::vector<float> &weights, const float NoiseThreshold) {
+  MEstimator_impl(residues, weights, NoiseThreshold);
 }
 
 template <>
-void vpMbtTukeyEstimator<float>::MEstimator(const std::vector<float> &residues, std::vector<float> &weights, const float NoiseThreshold) {
-
+void vpMbtTukeyEstimator<double>::MEstimator(const std::vector<double> &residues, std::vector<double> &weights, const double NoiseThreshold) {
+  MEstimator_impl(residues, weights, NoiseThreshold);
 }
 
-//template <typename T>
-//void vpMbtTukeyEstimator<T>::MEstimator(const std::vector<T> &residues, std::vector<T> &weights, const T NoiseThreshold) {
-//  if (residues.empty()) {
-//    return;
-//  }
+template <typename T>
+void vpMbtTukeyEstimator<T>::MEstimator_impl(const std::vector<T> &residues, std::vector<T> &weights, const T NoiseThreshold) {
+  if (residues.empty()) {
+    return;
+  }
 
-//  m_residues = residues;
+  m_residues = residues;
 
-//  T med = getMedian(m_residues);
-//  m_normres.resize(residues.size());
+  T med = getMedian(m_residues);
+  m_normres.resize(residues.size());
 
-//#if HAVE_TRANSFORM
-//  std::transform(residues.begin(), residues.end(), m_normres.begin(),
-//                 std::bind(AbsDiff<T>(), std::placeholders::_1, med));
-//#else
-//  for (size_t i = 0; i < m_residues.size(); i++) {
-//    m_normres[i] = (std::fabs(residues[i]- med));
-//  }
-//#endif
+#if HAVE_TRANSFORM
+  std::transform(residues.begin(), residues.end(), m_normres.begin(),
+                 std::bind(AbsDiff<T>(), std::placeholders::_1, med));
+#else
+  for (size_t i = 0; i < m_residues.size(); i++) {
+    m_normres[i] = (std::fabs(residues[i]- med));
+  }
+#endif
 
-//  m_residues = m_normres;
-//  T normmedian = getMedian(m_residues);
+  m_residues = m_normres;
+  T normmedian = getMedian(m_residues);
 
-//  // 1.48 keeps scale estimate consistent for a normal probability dist.
-//  T sigma = static_cast<T>(1.4826*normmedian); // median Absolute Deviation
+  // 1.48 keeps scale estimate consistent for a normal probability dist.
+  T sigma = static_cast<T>(1.4826*normmedian); // median Absolute Deviation
 
-//  // Set a minimum threshold for sigma
-//  // (when sigma reaches the level of noise in the image)
-//  if (sigma < NoiseThreshold) {
-//    sigma = NoiseThreshold;
-//  }
+  // Set a minimum threshold for sigma
+  // (when sigma reaches the level of noise in the image)
+  if (sigma < NoiseThreshold) {
+    sigma = NoiseThreshold;
+  }
 
-//  psiTukey(sigma, m_normres, weights);
-//}
+  psiTukey(sigma, m_normres, weights);
+}
 #endif
 
 template <typename T>

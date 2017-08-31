@@ -48,10 +48,11 @@ public:
   void MEstimator(const std::vector<T> &residues, std::vector<T> &weights, const T NoiseThreshold);
   void MEstimator(const vpColVector &residues, vpColVector &weights, const double NoiseThreshold);
 
+private:
+  void MEstimator_impl(const std::vector<T> &residues, std::vector<T> &weights, const T NoiseThreshold);
   void psiTukey(const T sig, std::vector<T> &x, std::vector<T> &weights);
   void psiTukey(const T sig, std::vector<T> &x, vpColVector &weights);
 
-private:
   std::vector<T> m_normres;
   std::vector<T> m_residues;
 };
