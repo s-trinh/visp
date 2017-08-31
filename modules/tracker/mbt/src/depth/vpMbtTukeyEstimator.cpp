@@ -48,19 +48,19 @@
 #  include <functional>
 #endif
 
-//#if defined __SSE2__ || defined _M_X64 || (defined _M_IX86_FP && _M_IX86_FP >= 2)
-//#  include <emmintrin.h>
-//#  define VISP_HAVE_SSE2 1
+#if defined __SSE2__ || defined _M_X64 || (defined _M_IX86_FP && _M_IX86_FP >= 2)
+#  include <emmintrin.h>
+#  define VISP_HAVE_SSE2 1
 
-//#  if defined __SSE3__ || (defined _MSC_VER && _MSC_VER >= 1500)
-//#    include <pmmintrin.h>
-//#    define VISP_HAVE_SSE3 1
-//#  endif
-//#  if defined __SSSE3__  || (defined _MSC_VER && _MSC_VER >= 1500)
-//#    include <tmmintrin.h>
-//#    define VISP_HAVE_SSSE3 1
-//#  endif
-//#endif
+#  if defined __SSE3__ || (defined _MSC_VER && _MSC_VER >= 1500)
+#    include <pmmintrin.h>
+#    define VISP_HAVE_SSE3 1
+#  endif
+#  if defined __SSSE3__  || (defined _MSC_VER && _MSC_VER >= 1500)
+#    include <tmmintrin.h>
+#    define VISP_HAVE_SSSE3 1
+#  endif
+#endif
 
 #define USE_ORIGINAL_TUKEY_CODE 1
 
@@ -173,7 +173,7 @@ void vpMbtTukeyEstimator<double>::MEstimator(const std::vector<double> &residues
 
 template <typename T>
 void vpMbtTukeyEstimator<T>::MEstimator_impl(const std::vector<T> &/*residues*/, std::vector<T> &/*weights*/, const T /*NoiseThreshold*/) {
-
+  //unused
 }
 
 #else
