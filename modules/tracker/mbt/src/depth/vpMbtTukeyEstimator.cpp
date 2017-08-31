@@ -172,7 +172,7 @@ void vpMbtTukeyEstimator<double>::MEstimator(const std::vector<double> &residues
 }
 #else
 template <typename T>
-void vpMbtTukeyEstimator<T>::MEstimator(const std::vector<T> &residues, std::vector<T> &weights, const T NoiseThreshold) {
+inline void vpMbtTukeyEstimator<T>::MEstimator(const std::vector<T> &residues, std::vector<T> &weights, const T NoiseThreshold) {
   if (residues.empty()) {
     return;
   }
