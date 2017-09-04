@@ -78,7 +78,7 @@ vpMbEdgeTracker::vpMbEdgeTracker()
   angleDisappears = vpMath::rad(89);
 
   scales[0] = true;
-  
+
 #ifdef VISP_HAVE_OGRE
   faces.getOgreContext()->setWindowName("MBT Edge");
 #endif
@@ -128,9 +128,9 @@ vpMbEdgeTracker::~vpMbEdgeTracker()
   cleanPyramid(Ipyramid);
 }
 
-/*! 
+/*!
   Set the moving edge parameters.
-  
+
   \param p_me : an instance of vpMe containing all the desired parameters
 */
 void
@@ -160,11 +160,11 @@ vpMbEdgeTracker::setMovingEdge(const vpMe &p_me)
 
 /*!
   Compute the visual servoing loop to get the pose of the feature set.
-  
-  \exception vpTrackingException::notEnoughPointError if the number of detected 
-  feature is equal to zero. 
-  
-  \param _I : The current image. 
+
+  \exception vpTrackingException::notEnoughPointError if the number of detected
+  feature is equal to zero.
+
+  \param _I : The current image.
   \param lvl : The level in the pyramid scale.
  */
 void
@@ -330,6 +330,15 @@ vpMbEdgeTracker::computeVVSFirstPhase(const vpImage<unsigned char>& _I, const un
       std::list<vpMeSite>::const_iterator itListLine;
 
       unsigned int indexFeature = 0;
+
+      //TODO: debug issue
+      if (l->meline.size() != l->nbFeature.size()) {
+        std::cerr << "computeVVSFirstPhase: l->meline.size() != l->nbFeature.size() ; meline="
+                  << l->meline.size() << " ; nbFeature=" << l->nbFeature.size() << std::endl;
+        for (size_t i = 0; i < l->nbFeature.size(); i++) {
+          std::cerr << "l->nbFeature[" << i << "]=" << l->nbFeature[i] << std::endl;
+        }
+      }
 
       for(unsigned int a = 0 ; a < l->meline.size() ; a++)
       {
@@ -607,6 +616,11 @@ vpMbEdgeTracker::computeVVSFirstPhaseFactor(const vpImage<unsigned char>& I, con
           fac = 0.1;
           break;
         }
+      }
+
+      //TODO: debug issue
+      if (l->meline.size() != l->nbFeature.size()) {
+        std::cerr << "computeVVSFirstPhaseFactor: l->meline.size() != l->nbFeature.size()" << std::endl;
       }
 
       unsigned int indexFeature = 0;
@@ -953,8 +967,8 @@ vpMbEdgeTracker::computeProjectionError(const vpImage<unsigned char>& _I)
 
 /*!
   Check if the tracking failed.
-  
-  \throw vpTrackingException::fatalError if the test fails. 
+
+  \throw vpTrackingException::fatalError if the test fails.
 */
 void
 vpMbEdgeTracker::testTracking()
@@ -962,7 +976,7 @@ vpMbEdgeTracker::testTracking()
   int nbExpectedPoint = 0;
   int nbGoodPoint = 0;
   int nbBadPoint = 0;
-  
+
   for(std::list<vpMbtDistanceLine*>::const_iterator it=lines[scaleLevel].begin(); it!=lines[scaleLevel].end(); ++it){
     vpMbtDistanceLine *l = *it;
     if (l->isVisible() && l->isTracked())
@@ -1026,21 +1040,21 @@ vpMbEdgeTracker::testTracking()
         << percentageGdPt
         << " using vpMbTracker::setGoodMovingEdgesRatioThreshold()";
     throw vpTrackingException(vpTrackingException::fatalError, oss.str());
-  }      
+  }
 }
 
 /*!
   Compute each state of the tracking procedure for all the feature sets.
-  
+
   If the tracking is considered as failed an exception is thrown.
-  
+
   \param I : The image.
  */
 void
 vpMbEdgeTracker::track(const vpImage<unsigned char> &I)
-{ 
+{
   initPyramid(I, Ipyramid);
-  
+
 //  for (int lvl = ((int)scales.size()-1); lvl >= 0; lvl -= 1)
   unsigned int lvl = (unsigned int)scales.size();
   do{
@@ -1055,7 +1069,7 @@ vpMbEdgeTracker::track(const vpImage<unsigned char> &I)
         downScale(lvl);
 
         try
-        {  
+        {
           trackMovingEdge(*Ipyramid[lvl]);
         }
         catch(...)
@@ -1073,7 +1087,7 @@ vpMbEdgeTracker::track(const vpImage<unsigned char> &I)
           if (l->isVisible()){
             l->initInteractionMatrixError();
           }
-        }  
+        }
 
         for(std::list<vpMbtDistanceCylinder*>::const_iterator it=cylinders[lvl].begin(); it!=cylinders[lvl].end(); ++it){
           cy = *it;
@@ -1142,13 +1156,13 @@ vpMbEdgeTracker::track(const vpImage<unsigned char> &I)
       }
     }
   } while(lvl != 0);
-  
+
   cleanPyramid(Ipyramid);
 }
 
 /*!
  Initialize the tracking.
- 
+
  \param I : The image.
 */
 void vpMbEdgeTracker::init(const vpImage<unsigned char>& I)
@@ -1157,25 +1171,25 @@ void vpMbEdgeTracker::init(const vpImage<unsigned char>& I)
     throw vpException(vpException::fatalError, "model not initialized");
   }
 
-	bool a = false;
+ bool a = false;
 
-#ifdef VISP_HAVE_OGRE 
+#ifdef VISP_HAVE_OGRE
   if(useOgre){
     if(!faces.isOgreInitialised()){
       faces.setBackgroundSizeOgre(I.getHeight(), I.getWidth());
       faces.setOgreShowConfigDialog(ogreShowConfigDialog);
       faces.initOgre(cam);
-	  // Turn off Ogre config dialog display for the next call to this function
-	  // since settings are saved in the ogre.cfg file and used during the next
-	  // call 
-	  ogreShowConfigDialog = false;
+   // Turn off Ogre config dialog display for the next call to this function
+   // since settings are saved in the ogre.cfg file and used during the next
+   // call
+   ogreShowConfigDialog = false;
     }
   }
 #endif
-  
+
   if(clippingFlag > 2)
     cam.computeFov(I.getWidth(), I.getHeight());
-  
+
   initPyramid(I, Ipyramid);
   visibleFace(I, cMo, a);
   unsigned int i = (unsigned int)scales.size();
@@ -1198,14 +1212,14 @@ void vpMbEdgeTracker::init(const vpImage<unsigned char>& I)
       upScale(i);
     }
   } while(i != 0);
-  
+
   cleanPyramid(Ipyramid);
 }
 
 /*!
   Set the pose to be used in entry of the next call to the track() function.
   This pose will be just used once.
-  
+
   \param I : image corresponding to the desired pose.
   \param cdMo : Pose to affect.
 */
@@ -1228,7 +1242,7 @@ vpMbEdgeTracker::setPose( const vpImage<unsigned char> &I, const vpHomogeneousMa
 
   \sa loadConfigFile(const char*), vpXmlParser::cleanup()
 */
-void 
+void
 vpMbEdgeTracker::loadConfigFile(const std::string& configFile)
 {
   vpMbEdgeTracker::loadConfigFile(configFile.c_str());
@@ -1242,7 +1256,7 @@ vpMbEdgeTracker::loadConfigFile(const std::string& configFile)
   vpXmlParser::cleanup() before the exit().
 
   \throw vpException::ioError if the file has not been properly parsed (file not
-  found or wrong format for the data). 
+  found or wrong format for the data).
 
   \param configFile : full name of the xml file.
 
@@ -1288,7 +1302,7 @@ vpMbEdgeTracker::loadConfigFile(const char* configFile)
 {
 #ifdef VISP_HAVE_XML2
   vpMbtXmlParser xmlp;
-  
+
   xmlp.setCameraParameters(cam);
   xmlp.setAngleAppear(vpMath::deg(angleAppears));
   xmlp.setAngleDisappear(vpMath::deg(angleDisappears));
@@ -1301,23 +1315,23 @@ vpMbEdgeTracker::loadConfigFile(const char* configFile)
   catch(...){
     throw vpException(vpException::ioError, "Cannot open XML file \"%s\"", configFile);
   }
-  
+
   vpCameraParameters camera;
   vpMe meParser;
   xmlp.getCameraParameters(camera);
   xmlp.getMe(meParser);
-  
+
   setCameraParameters(camera);
   setMovingEdge(meParser);
   angleAppears = vpMath::rad(xmlp.getAngleAppear());
   angleDisappears = vpMath::rad(xmlp.getAngleDisappear());
-  
+
   if(xmlp.hasNearClippingDistance())
     setNearClippingDistance(xmlp.getNearClippingDistance());
-  
+
   if(xmlp.hasFarClippingDistance())
     setFarClippingDistance(xmlp.getFarClippingDistance());
-  
+
   if(xmlp.getFovClipping())
     setClipping(clippingFlag | vpPolygon3D::FOV_CLIPPING);
 
@@ -1447,13 +1461,13 @@ vpMbEdgeTracker::displayFeaturesOnImage(const vpImage<unsigned char>& I, const u
 /*!
   Initialize the moving edge thanks to a given pose of the camera.
   The 3D model is projected into the image to create moving edges along the lines.
-  
+
   \param I : The image.
   \param _cMo : The pose of the camera used to initialize the moving edges.
 */
 void
 vpMbEdgeTracker::initMovingEdge(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &_cMo)
-{  
+{
   vpMbtDistanceLine *l;
 
   for(std::list<vpMbtDistanceLine*>::const_iterator it=lines[scaleLevel].begin(); it!=lines[scaleLevel].end(); ++it){
@@ -1484,10 +1498,18 @@ vpMbEdgeTracker::initMovingEdge(const vpImage<unsigned char> &I, const vpHomogen
       l->setVisible(false);
       for(unsigned int a = 0 ; a < l->meline.size() ; a++){
         if (l->meline[a] != NULL) delete l->meline[a];
-        l->nbFeature[a] = 0;
+
+        //TODO: try to fix bug
+        if (l->nbFeature.empty()) {
+          std::cerr << "l->nbFeature.empty()!!!!!!!!!!!!!!!!!" << std::endl;
+          std::cerr << "l->meline=" << l->meline.size() << std::endl;
+        }
+        if (a < l->nbFeature.size())
+          l->nbFeature[a] = 0;
       }
       l->nbFeatureTotal = 0;
       l->meline.clear();
+      l->nbFeature.clear();
     }
   }
 
@@ -1564,7 +1586,7 @@ vpMbEdgeTracker::initMovingEdge(const vpImage<unsigned char> &I, const vpHomogen
 
 /*!
   Track the moving edges in the image.
-  
+
   \param I : the image.
 */
 void
@@ -1604,7 +1626,7 @@ vpMbEdgeTracker::trackMovingEdge(const vpImage<unsigned char> &I)
 
 /*!
   Update the moving edges at the end of the virtual visual servoing.
-  
+
   \param I : the image.
 */
 void
@@ -1797,9 +1819,9 @@ vpMbEdgeTracker::updateMovingEdgeWeights() {
 
 /*!
   Reinitialize the lines if it is required.
-  
+
   A line is reinitialized if the 2D line do not match enough with the projected 3D line.
-  
+
   \param I : the image.
   \param _cMo : the pose of the used to re-initialize the moving edges
 */
@@ -1878,9 +1900,9 @@ vpMbEdgeTracker::resetMovingEdge(){
 
 /*!
   Check if two vpPoints are similar.
-  
+
   To be similar : \f$ (X_1 - X_2)^2 + (Y_1 - Y_2)^2 + (Z_1 - Z_2)^2 < epsilon \f$.
-  
+
   \param P1 : The first point to compare
   \param P2 : The second point to compare
 */
@@ -1900,13 +1922,13 @@ vpMbEdgeTracker::samePoint(const vpPoint &P1, const vpPoint &P2) const
 
 /*!
   Add a line belonging to the \f$ index \f$ the polygon to the list of lines. It is defined by its two extremities.
-  
+
   If the line already exists, the ploygone's index is added to the list of polygon to which it belongs.
-  
+
   \param P1 : The first extremity of the line.
   \param P2 : The second extremity of the line.
   \param polygon : The index of the polygon to which the line belongs.
-  \param name : the optional name of the line 
+  \param name : the optional name of the line
 */
 void
 vpMbEdgeTracker::addLine(vpPoint &P1, vpPoint &P2, int polygon, std::string name)
@@ -1914,7 +1936,7 @@ vpMbEdgeTracker::addLine(vpPoint &P1, vpPoint &P2, int polygon, std::string name
   //suppress line already in the model
   bool already_here = false;
   vpMbtDistanceLine *l;
-  
+
   for (unsigned int i = 0; i < scales.size(); i += 1){
     if(scales[i]){
       downScale(i);
@@ -1940,16 +1962,16 @@ vpMbEdgeTracker::addLine(vpPoint &P1, vpPoint &P2, int polygon, std::string name
 
         l->setIndex(nline);
         l->setName(name);
-        
+
         if(clippingFlag != vpPolygon3D::NO_CLIPPING)
           l->getPolygon().setClipping(clippingFlag);
-        
+
         if((clippingFlag & vpPolygon3D::NEAR_CLIPPING) == vpPolygon3D::NEAR_CLIPPING)
           l->getPolygon().setNearClippingDistance(distNearClip);
-        
+
         if((clippingFlag & vpPolygon3D::FAR_CLIPPING) == vpPolygon3D::FAR_CLIPPING)
           l->getPolygon().setFarClippingDistance(distFarClip);
-        
+
         nline +=1;
         lines[i].push_back(l);
       }
@@ -1959,15 +1981,15 @@ vpMbEdgeTracker::addLine(vpPoint &P1, vpPoint &P2, int polygon, std::string name
 }
 
 /*!
-  Remove a line using its name. 
-  
-  \param name : The name of the line to remove. 
+  Remove a line using its name.
+
+  \param name : The name of the line to remove.
 */
 void
 vpMbEdgeTracker::removeLine(const std::string& name)
 {
   vpMbtDistanceLine *l;
-  
+
   for(unsigned int i=0; i<scales.size(); i++){
     if(scales[i]){
       for(std::list<vpMbtDistanceLine*>::iterator it=lines[i].begin(); it!=lines[i].end(); ++it){
@@ -2128,7 +2150,7 @@ vpMbEdgeTracker::removeCircle(const std::string& name)
 
 /*!
   Add a polygon to the list of polygons.
-  
+
   \param p : The polygon to add.
 */
 void
@@ -2144,10 +2166,10 @@ vpMbEdgeTracker::addPolygon(vpMbtPolygon &p)
 
 /*!
   Detect the visible faces in the image and says if a new one appeared.
-  
-  \warning If in one iteration one face appears and one disappears, then the 
-  function will not detect the new face. 
-  
+
+  \warning If in one iteration one face appears and one disappears, then the
+  function will not detect the new face.
+
   \param _I : Image to test if a face is entirely in the image.
   \param _cMo : The pose of the camera used to project the 3D model into the image.
   \param newvisibleline : This parameter is set to true if a new face appeared.
@@ -2169,7 +2191,7 @@ vpMbEdgeTracker::visibleFace(const vpImage<unsigned char> & _I,
 #else
     n = faces.setVisible(_I, cam, _cMo,  angleAppears, angleDisappears, changed);
 #endif
-  } 
+  }
 
   if (n > nbvisiblepolygone)
   {
@@ -2307,8 +2329,8 @@ vpMbEdgeTracker::initCylinder(const vpPoint& p1, const vpPoint &p2, const double
 
 /*!
   Reset the tracker. The model is removed and the pose is set to identity.
-  The tracker needs to be initialized with a new model and a new pose. 
-  
+  The tracker needs to be initialized with a new model and a new pose.
+
 */
 void
 vpMbEdgeTracker::resetTracker()
@@ -2350,14 +2372,14 @@ vpMbEdgeTracker::resetTracker()
 #ifdef VISP_HAVE_OGRE
   useOgre = false;
 #endif
-  
+
   m_computeInteraction = true;
   nline = 0;
   ncylinder = 0;
   m_lambda = 1.0;
   nbvisiblepolygone = 0;
   percentageGdPt = 0.4;
-  
+
   angleAppears = vpMath::rad(89);
   angleDisappears = vpMath::rad(89);
   clippingFlag = vpPolygon3D::NO_CLIPPING;
@@ -2385,8 +2407,8 @@ vpMbEdgeTracker::reInitModel(const vpImage<unsigned char>& I, const std::string 
 }
 
 /*!
-  Re-initialize the model used by the tracker.  
-  
+  Re-initialize the model used by the tracker.
+
   \param I : The image containing the object to initialize.
   \param cad_name : Path to the file containing the 3D model description.
   \param cMo_ : The new vpHomogeneousMatrix between the camera and the new model
@@ -2442,22 +2464,22 @@ vpMbEdgeTracker::reInitModel(const vpImage<unsigned char>& I, const char* cad_na
 }
 
 /*!
-  Return the number of good points (vpMeSite) tracked. A good point is a 
+  Return the number of good points (vpMeSite) tracked. A good point is a
   vpMeSite with its flag "state" equal to 0. Only these points are used
   during the virtual visual servoing stage.
-  
+
   \exception vpException::dimensionError if level does not represent a used
   level.
-  
-  \return the number of good points. 
+
+  \return the number of good points.
 */
-unsigned int 
+unsigned int
 vpMbEdgeTracker::getNbPoints(const unsigned int level) const
 {
   if((level > scales.size()) || !scales[level]){
     throw vpException(vpException::dimensionError, "Cannot get the number of points for level %d: level is not used", level);
   }
-  
+
   unsigned int nbGoodPoints = 0;
   vpMbtDistanceLine *l;
   for(std::list<vpMbtDistanceLine*>::const_iterator it=lines[level].begin(); it!=lines[level].end(); ++it){
@@ -2504,24 +2526,24 @@ vpMbEdgeTracker::getNbPoints(const unsigned int level) const
 /*!
   Set the scales to use to realize the tracking. The vector of boolean activates
   or not the scales to set for the object tracking. The first element of the list
-  correspond to the tracking on the full image, the second element corresponds 
-  to the tracking on an image subsampled by two. 
-  
-  Using multi scale tracking allows to track the object with greater moves. It 
+  correspond to the tracking on the full image, the second element corresponds
+  to the tracking on an image subsampled by two.
+
+  Using multi scale tracking allows to track the object with greater moves. It
   requires the computation of a pyramid of images, but the total tracking can be
   faster than a tracking based only on the full scale. The pose is computed from
-  the smallest image to the biggest. This may be dangerous if the object to 
-  track is small in the image, because the subsampled scale(s) will have only 
-  few points to compute the pose (it could result in a loss of precision). 
-  
+  the smallest image to the biggest. This may be dangerous if the object to
+  track is small in the image, because the subsampled scale(s) will have only
+  few points to compute the pose (it could result in a loss of precision).
+
   \warning This method must be used before the tracker has been initialized (
-  before the call of the loadConfigFile() or loadModel() methods). 
-  
-  \warning At least one level must be activated. 
-  
+  before the call of the loadConfigFile() or loadModel() methods).
+
+  \warning At least one level must be activated.
+
   \param scale : The vector describing the levels to use.
 */
-void 
+void
 vpMbEdgeTracker::setScales(const std::vector<bool>& scale)
 {
   unsigned int nbActivatedLevels = 0;
@@ -2562,17 +2584,17 @@ vpMbEdgeTracker::setScales(const std::vector<bool>& scale)
 
 /*!
   Set the far distance for clipping.
-  
+
   \param dist : Far clipping value.
 */
 void
-vpMbEdgeTracker::setFarClippingDistance(const double &dist) 
-{ 
+vpMbEdgeTracker::setFarClippingDistance(const double &dist)
+{
   if( (clippingFlag & vpPolygon3D::NEAR_CLIPPING) == vpPolygon3D::NEAR_CLIPPING && dist <= distNearClip)
     std::cerr << "Far clipping value cannot be inferior than near clipping value. Far clipping won't be considered." << std::endl;
   else if ( dist < 0 )
     std::cerr << "Far clipping value cannot be inferior than 0. Far clipping won't be considered." << std::endl;
-  else{  
+  else{
     vpMbTracker::setFarClippingDistance(dist);
     vpMbtDistanceLine *l;
 
@@ -2583,18 +2605,18 @@ vpMbEdgeTracker::setFarClippingDistance(const double &dist)
           l->getPolygon().setFarClippingDistance(distFarClip);
         }
       }
-    }  
+    }
   }
 }
 
 /*!
   Set the near distance for clipping.
-  
+
   \param dist : Near clipping value.
 */
 void
-vpMbEdgeTracker::setNearClippingDistance(const double &dist) 
-{ 
+vpMbEdgeTracker::setNearClippingDistance(const double &dist)
+{
   if( (clippingFlag & vpPolygon3D::FAR_CLIPPING) == vpPolygon3D::FAR_CLIPPING && dist >= distFarClip)
     std::cerr << "Near clipping value cannot be superior than far clipping value. Near clipping won't be considered." << std::endl;
   else if ( dist < 0 )
@@ -2616,16 +2638,16 @@ vpMbEdgeTracker::setNearClippingDistance(const double &dist)
 
 /*!
   Specify which clipping to use.
-  
+
   \sa vpMbtPolygonClipping
-  
+
   \param flags : New clipping flags.
 */
 void
-vpMbEdgeTracker::setClipping(const unsigned int &flags) 
-{ 
+vpMbEdgeTracker::setClipping(const unsigned int &flags)
+{
   vpMbTracker::setClipping(flags);
-  
+
   vpMbtDistanceLine *l;
 
   for (unsigned int i = 0; i < scales.size(); i += 1){
@@ -2639,31 +2661,31 @@ vpMbEdgeTracker::setClipping(const unsigned int &flags)
 }
 
 /*!
-  Compute the pyramid of image associated to the image in parameter. The scales 
-  computed are the ones corresponding to the scales  attribute of the class. If 
-  OpenCV is detected, the functions used to computed a smoothed pyramid come 
-  from OpenCV, otherwise a simple subsampling (no smoothing, no interpolation) 
-  is realized. 
-  
+  Compute the pyramid of image associated to the image in parameter. The scales
+  computed are the ones corresponding to the scales  attribute of the class. If
+  OpenCV is detected, the functions used to computed a smoothed pyramid come
+  from OpenCV, otherwise a simple subsampling (no smoothing, no interpolation)
+  is realized.
+
   \warning The pyramid contains pointers to vpImage. To properly deallocate the
   pyramid. All the element but the first (which is a pointer to the input image)
-  must be freed. A proper cleaning is implemented in the cleanPyramid() method. 
-  
+  must be freed. A proper cleaning is implemented in the cleanPyramid() method.
+
   \param _I : The input image.
   \param _pyramid : The pyramid of image to build from the input image.
 */
-void 
+void
 vpMbEdgeTracker::initPyramid(const vpImage<unsigned char>& _I, std::vector< const vpImage<unsigned char>* >& _pyramid)
 {
   _pyramid.resize(scales.size());
-  
+
   if(scales[0]){
     _pyramid[0] = &_I;
   }
   else{
     _pyramid[0] = NULL;
   }
-  
+
   for(unsigned int i=1; i<_pyramid.size(); i += 1){
     if(scales[i]){
       unsigned int cScale = static_cast<unsigned int>(pow(2., (int)i));
@@ -2674,16 +2696,16 @@ vpMbEdgeTracker::initPyramid(const vpImage<unsigned char>& _I, std::vector< cons
       IplImage* vpI = cvCreateImage(cvSize((int)(_I.getWidth() / cScale), (int)(_I.getHeight() / cScale)), IPL_DEPTH_8U, 1);
       cvResize(vpI0, vpI, CV_INTER_NN);
       vpImageConvert::convert(vpI, *I);
-      cvReleaseImage(&vpI);  
+      cvReleaseImage(&vpI);
       vpI0->imageData = NULL;
-      cvReleaseImageHeader(&vpI0);    
+      cvReleaseImageHeader(&vpI0);
 #else
       for (unsigned int k = 0, ii = 0; k < I->getHeight(); k += 1, ii += cScale){
         for (unsigned int l = 0, jj = 0; l < I->getWidth(); l += 1, jj += cScale){
           (*I)[k][l] = _I[ii][jj];
         }
       }
-#endif   
+#endif
       _pyramid[i] = I;
     }
     else{
@@ -2694,11 +2716,11 @@ vpMbEdgeTracker::initPyramid(const vpImage<unsigned char>& _I, std::vector< cons
 
 /*!
   Clean the pyramid of image allocated with the initPyramid() method. The vector
-  has a size equal to zero at the end of the method. 
-  
+  has a size equal to zero at the end of the method.
+
   \param _pyramid : The pyramid of image to clean.
 */
-void 
+void
 vpMbEdgeTracker::cleanPyramid(std::vector< const vpImage<unsigned char>* >& _pyramid)
 {
   if(_pyramid.size() > 0){
@@ -2786,18 +2808,18 @@ vpMbEdgeTracker::getLcircle(std::list<vpMbtDistanceCircle *>& circlesList, const
 
 /*!
   Modify the camera parameters to have them corresponding to the current scale.
-  The new parameters are divided by \f$ 2^{\_scale} \f$. 
-  
-  \param _scale : Scale to use. 
+  The new parameters are divided by \f$ 2^{\_scale} \f$.
+
+  \param _scale : Scale to use.
 */
-void 
+void
 vpMbEdgeTracker::downScale(const unsigned int _scale)
 {
   const double ratio = pow(2., (int)_scale);
   scaleLevel = _scale;
-  
+
   vpMatrix K = cam.get_K();
-  
+
   K[0][0] /= ratio;
   K[1][1] /= ratio;
   K[0][2] /= ratio;
@@ -2808,18 +2830,18 @@ vpMbEdgeTracker::downScale(const unsigned int _scale)
 
 /*!
   Modify the camera parameters to have them corresponding to the current scale.
-  The new parameters are multiplied by \f$ 2^{\_scale} \f$. 
-  
-  \param _scale : Scale to use. 
+  The new parameters are multiplied by \f$ 2^{\_scale} \f$.
+
+  \param _scale : Scale to use.
 */
-void 
+void
 vpMbEdgeTracker::upScale(const unsigned int _scale)
 {
   const double ratio = pow(2., (int)_scale);
   scaleLevel = 0;
-  
+
   vpMatrix K = cam.get_K();
-  
+
   K[0][0] *= ratio;
   K[1][1] *= ratio;
   K[0][2] *= ratio;
@@ -2830,19 +2852,19 @@ vpMbEdgeTracker::upScale(const unsigned int _scale)
 }
 
 /*!
-  Re initialize the moving edges associated to a given level. This method is 
-  used to re-initialize the level if the tracking failed on this level but 
-  succeeded on the other one. 
-  
+  Re initialize the moving edges associated to a given level. This method is
+  used to re-initialize the level if the tracking failed on this level but
+  succeeded on the other one.
+
   \param _lvl : The level to re-initialize.
 */
-void 
+void
 vpMbEdgeTracker::reInitLevel(const unsigned int _lvl)
 {
   unsigned int scaleLevel_1 = scaleLevel;
   scaleLevel = _lvl;
 
-  vpMbtDistanceLine *l;  
+  vpMbtDistanceLine *l;
   for(std::list<vpMbtDistanceLine*>::const_iterator it=lines[scaleLevel].begin(); it!=lines[scaleLevel].end(); ++it){
     if((*it)->isTracked()){
       l = *it;
@@ -2857,7 +2879,7 @@ vpMbEdgeTracker::reInitLevel(const unsigned int _lvl)
       cy->reinitMovingEdge(*Ipyramid[_lvl], cMo);
     }
   }
-  
+
   vpMbtDistanceCircle *ci;
   for(std::list<vpMbtDistanceCircle*>::const_iterator it=circles[scaleLevel].begin(); it!=circles[scaleLevel].end(); ++it){
     if((*it)->isTracked()){
