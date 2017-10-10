@@ -64,9 +64,8 @@ before_build:
   - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set PATH=C:\MinGW\bin;%PATH%
   # setup visp
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set VISP_DLL_DIR=C:\projects\visp\build\install\%platform%\vc14\bin
-  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set VISP_DLL_DIR=C:\projects\visp\build\install\x64\mingw\bin
+  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set VISP_DLL_DIR=C:\projects\visp\build\install\%platform%\mingw\bin
   - cmd: SET PATH=%VISP_DLL_DIR%;%PATH%
-  
   # setup opencv
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set OpenCV_DIR=C:\tools\opencv\build
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set OpenCV_DLL_DIR=%OpenCV_DIR%\%platform%\vc14\bin
@@ -83,5 +82,7 @@ build_script:
   - cd C:\projects\visp\build
   - cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=%configuration% ..\visp
   - cmake --build . --config %configuration% --target install
+  - dir C:\projects\visp\build
+  - dir C:\projects\visp\build\install
   - dir %VISP_DLL_DIR%
   - ctest -VV
