@@ -12,7 +12,7 @@ configuration:
 
 environment:
   matrix:
-    - CMAKE_GENERATOR: Visual Studio 14 Win64
+    - CMAKE_GENERATOR: Visual Studio 14 2015 Win64
       BUILD_NAME: vs2015
 
     - CMAKE_GENERATOR: MinGW Makefiles
@@ -43,9 +43,11 @@ clone_folder: C:\projects\visp\visp
 
 before_build:
   - cmd: SET ARCH=x64
+  # Workaround for CMake not wanting sh.exe on PATH for MinGW
+  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set PATH=%PATH:C:\Program Files (x86)\Git\bin;=%
+  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set PATH=C:\MinGW\bin;%PATH%
   # setup visp
-  - echo %CMAKE_GENERATOR%
-  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 Win64" set VISP_DLL_DIR=C:\projects\visp\build\install\%ARCH%\vc14\bin
+  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set VISP_DLL_DIR=C:\projects\visp\build\install\%ARCH%\vc14\bin
   - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set VISP_DLL_DIR=C:\projects\visp\build\install\x64\mingw\bin
   - cmd: SET PATH=%VISP_DLL_DIR%;%PATH%
   
