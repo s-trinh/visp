@@ -52,7 +52,7 @@ install:
       7z x %VISP_OPENCV_MINGW_FILE% -y -o "C:\projects\deps" >NUL
 
 cache:
-  - %VISP_OPENCV_MINGW_FILE% -> appveyor.yml
+  - opencv-3.3.0-MinGW-build-package.7z -> appveyor.yml
 
 # visp clone directory
 clone_folder: C:\projects\visp\visp
