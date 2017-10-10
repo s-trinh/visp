@@ -61,7 +61,7 @@ build_script:
   - echo %PATH%
   - dir C:\projects\deps
   - dir C:\tools
-  - dir C:\tools\opencv\build\%platform%\vc14\bin
+  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" dir C:\tools\opencv\build\%platform%\vc14\bin
   - md C:\projects\visp\build
   - cd C:\projects\visp\build
   - cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=%configuration% ..\visp
