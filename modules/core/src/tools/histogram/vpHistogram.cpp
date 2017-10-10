@@ -62,12 +62,18 @@ namespace {
     unsigned int *m_histogram;
     const vpImage<unsigned char> *m_I;
 
-    Histogram_Param_t() : m_start_index(0), m_end_index(0), m_lut(), m_histogram(NULL), m_I(NULL) {
+    Histogram_Param_t() : m_start_index(0), m_end_index(0), m_histogram(NULL), m_I(NULL) {
+      for(int i = 0; i < 256; i++) {
+        m_lut[i] = 0;
+      }
     }
 
     Histogram_Param_t(const unsigned int start_index, const unsigned int end_index,
         const vpImage<unsigned char> * const I) :
-      m_start_index(start_index), m_end_index(end_index), m_lut(), m_histogram(NULL), m_I(I) {
+      m_start_index(start_index), m_end_index(end_index), m_histogram(NULL), m_I(I) {
+      for(int i = 0; i < 256; i++) {
+        m_lut[i] = 0;
+      }
     }
 
     ~Histogram_Param_t() {

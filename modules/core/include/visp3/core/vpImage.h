@@ -335,12 +335,18 @@ namespace {
     unsigned char m_lut[256];
     unsigned char *m_bitmap;
 
-    ImageLut_Param_t() : m_start_index(0), m_end_index(0), m_lut(), m_bitmap(NULL) {
+    ImageLut_Param_t() : m_start_index(0), m_end_index(0), m_bitmap(NULL) {
+      for(int i = 0; i < 256; i++) {
+        m_lut[i] = 0;
+      }
     }
 
     ImageLut_Param_t(const unsigned int start_index, const unsigned int end_index,
         unsigned char *bitmap) :
-      m_start_index(start_index), m_end_index(end_index), m_lut(), m_bitmap(bitmap) {
+      m_start_index(start_index), m_end_index(end_index), m_bitmap(bitmap) {
+      for(int i = 0; i < 256; i++) {
+        m_lut[i] = 0;
+      }
     }
   };
 
