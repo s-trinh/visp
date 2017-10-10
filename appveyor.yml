@@ -12,8 +12,8 @@ configuration:
 
 environment:
   matrix:
-    - CMAKE_GENERATOR: Visual Studio 14 2015 Win64
-      BUILD_NAME: vs2015
+    #- CMAKE_GENERATOR: Visual Studio 14 2015 Win64
+    #  BUILD_NAME: vs2015
 
     - CMAKE_GENERATOR: MinGW Makefiles
       BUILD_NAME: mingw
@@ -36,35 +36,34 @@ install:
   - set VISP_INPUT_IMAGE_PATH=C:\projects\deps
 
   # opencv
-  - cmd: choco install OpenCV
+  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" choco install OpenCV
 
 # visp clone directory
 clone_folder: C:\projects\visp\visp
 
 before_build:
-  - cmd: SET ARCH=x64
   # Workaround for CMake not wanting sh.exe on PATH for MinGW
   - echo Before MinGW workaround %PATH%
   - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
   - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set PATH=C:\MinGW\bin;%PATH%
   - echo After MinGW workaround %PATH%
   # setup visp
-  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set VISP_DLL_DIR=C:\projects\visp\build\install\%ARCH%\vc14\bin
+  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set VISP_DLL_DIR=C:\projects\visp\build\install\%platform%\vc14\bin
   - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set VISP_DLL_DIR=C:\projects\visp\build\install\x64\mingw\bin
   - cmd: SET PATH=%VISP_DLL_DIR%;%PATH%
   
   # setup opencv
-  - cmd: SET OpenCV_DIR=C:\tools\opencv\build
-  - cmd: SET OpenCV_DLL_DIR=%OpenCV_DIR%\%ARCH%\vc14\bin
-  - cmd: SET PATH=%OPENCV_DLL_DIR%;%PATH%
+  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set OpenCV_DIR=C:\tools\opencv\build
+  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set OpenCV_DLL_DIR=%OpenCV_DIR%\%platform%\vc14\bin
+  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set PATH=%OPENCV_DLL_DIR%;%PATH%
 
 build_script:
   - echo %PATH%
   - dir C:\projects\deps
   - dir C:\tools
-  - dir C:\tools\opencv\build\%ARCH%\vc14\bin
+  - dir C:\tools\opencv\build\%platform%\vc14\bin
   - md C:\projects\visp\build
   - cd C:\projects\visp\build
-  - cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=Release ..\visp
-  - cmake --build . --config Release --target install
-  - ctest
+  - cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=%configuration% ..\visp
+  - cmake --build . --config %configuration% --target install
+  - ctest -V
