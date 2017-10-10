@@ -11,6 +11,10 @@ configuration:
   - Release
 
 environment:
+  VISP_OPENCV_MINGW_FILE: opencv-3.3.0-MinGW-build-package.7z
+  VISP_OPENCV_MINGW_DIR: opencv-3.3.0-MinGW-build-package
+  VISP_OPENCV_MINGW_PKG: https://github.com/s-trinh/visp-dependencies/blob/master/opencv-3.3.0-MinGW-build-package.7z?raw=true
+  
   matrix:
     #- CMAKE_GENERATOR: Visual Studio 14 2015 Win64
     #  BUILD_NAME: vs2015
@@ -37,16 +41,26 @@ install:
 
   # opencv
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" choco install OpenCV
+  - ps: >-
+      if (!(Test-Path ${env:VISP_OPENCV_MINGW_FILE})) {
+          echo "Downloading OpenCV MinGW from ${env:VISP_OPENCV_MINGW_PKG} ..."
+          appveyor DownloadFile "${env:VISP_OPENCV_MINGW_PKG}" -FileName ${env:VISP_OPENCV_MINGW_FILE} -Timeout 1200000
+      }
+
+  - cmd: >-
+      echo "Extracting OpenCV MinGW to C:\projects\deps ..."
+      7z x %VISP_OPENCV_MINGW_FILE% -y -o "C:\projects\deps" >NUL
+
+cache:
+  - %VISP_OPENCV_MINGW_FILE% -> appveyor.yml
 
 # visp clone directory
 clone_folder: C:\projects\visp\visp
 
 before_build:
   # Workaround for CMake not wanting sh.exe on PATH for MinGW
-  - echo Before MinGW workaround %PATH%
   - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
   - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set PATH=C:\MinGW\bin;%PATH%
-  - echo After MinGW workaround %PATH%
   # setup visp
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set VISP_DLL_DIR=C:\projects\visp\build\install\%platform%\vc14\bin
   - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set VISP_DLL_DIR=C:\projects\visp\build\install\x64\mingw\bin
@@ -55,15 +69,18 @@ before_build:
   # setup opencv
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set OpenCV_DIR=C:\tools\opencv\build
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set OpenCV_DLL_DIR=%OpenCV_DIR%\%platform%\vc14\bin
-  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set PATH=%OPENCV_DLL_DIR%;%PATH%
+  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set OpenCV_DIR=C:\projects\deps\%VISP_OPENCV_MINGW_DIR%\install
+  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set OpenCV_DLL_DIR=%OpenCV_DIR%\%platform%\mingw\bin
+  - set PATH=%OPENCV_DLL_DIR%;%PATH%
 
 build_script:
   - echo %PATH%
   - dir C:\projects\deps
   - dir C:\tools
-  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" dir C:\tools\opencv\build\%platform%\vc14\bin
+  - dir %OpenCV_DLL_DIR%
   - md C:\projects\visp\build
   - cd C:\projects\visp\build
   - cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=%configuration% ..\visp
   - cmake --build . --config %configuration% --target install
-  - ctest -V
+  - dir %VISP_DLL_DIR%
+  - ctest -VV
