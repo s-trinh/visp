@@ -12,7 +12,7 @@ configuration:
 
 environment:
   VISP_OPENCV_MINGW_FILE: opencv-3.3.0-MinGW-build-package.7z
-  VISP_OPENCV_MINGW_DIR: opencv-3.3.0-MinGW-build-package
+  VISP_OPENCV_MINGW_DIR: opencv-3.3.0-build-package
   VISP_OPENCV_MINGW_PKG: https://github.com/s-trinh/visp-dependencies/blob/master/opencv-3.3.0-MinGW-build-package.7z?raw=true
   
   matrix:
@@ -50,7 +50,7 @@ install:
   - cmd: >-
       echo "Extracting OpenCV MinGW to C:\projects\deps ..."
 
-      7z x %VISP_OPENCV_MINGW_FILE% -y -o"C:\projects\deps"
+      7z x %VISP_OPENCV_MINGW_FILE% -y -o"C:\projects\deps" >NUL
 
 cache:
   - opencv-3.3.0-MinGW-build-package.7z -> appveyor.yml
