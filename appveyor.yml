@@ -44,8 +44,9 @@ clone_folder: C:\projects\visp\visp
 before_build:
   - cmd: SET ARCH=x64
   # setup visp
-  - if %CMAKE_GENERATOR%=="Visual Studio 14 Win64" set VISP_DLL_DIR=C:\projects\visp\build\install\%ARCH%\vc14\bin
-  - if %CMAKE_GENERATOR%=="MinGW Makefiles" set VISP_DLL_DIR=C:\projects\visp\build\install\x64\mingw\bin
+  - echo %CMAKE_GENERATOR%
+  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 Win64" set VISP_DLL_DIR=C:\projects\visp\build\install\%ARCH%\vc14\bin
+  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set VISP_DLL_DIR=C:\projects\visp\build\install\x64\mingw\bin
   - cmd: SET PATH=%VISP_DLL_DIR%;%PATH%
   
   # setup opencv
