@@ -380,12 +380,11 @@ vpIoTools::checkDirectory(const char *dirname )
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   if ( stat( _dirname.c_str(), &stbuf ) != 0 )
 #elif defined(_WIN32) && defined(__MINGW32__)
-  int res_stat = stat(_dirname.c_str(), &stbuf);
-  std::cout << "checkDirectory: " << _dirname << " ; res_stat=" << res_stat << " ; errno=" << errno << std::endl;
-  if (_dirname.at(_dirname.size() - 1) == vpIoTools::separator)
-    res_stat = stat(_dirname.substr(0, _dirname.size()-1).c_str(), &stbuf);
-  std::cout << "checkDirectory: " << _dirname.substr(0, _dirname.size()-1) << " ; res_stat=" << res_stat << " ; errno=" << errno << std::endl;
-  if (res_stat != 0)
+  //Remove trailing separator character if any
+  //Issue observed on AppVeyor: Windows 6.3.9600 AMD64 ; C:/MinGW/bin/g++.exe  (ver 5.3.0)
+  if (!_dirname.empty() && _dirname.at(_dirname.size() - 1) == vpIoTools::separator)
+    _dirname = _dirname.substr(0, _dirname.size()-1);
+  if (stat(_dirname.c_str(), &stbuf) != 0)
 #elif defined(_WIN32)
   if ( _stat( _dirname.c_str(), &stbuf ) != 0 )
 #endif
@@ -393,8 +392,6 @@ vpIoTools::checkDirectory(const char *dirname )
     return false;
   }
 #if defined(_WIN32) || (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__)))
-  std::cout << "stbuf.st_mode=" << stbuf.st_mode << std::endl;
-  std::cout << "(stbuf.st_mode & S_IFDIR)=" << (stbuf.st_mode & S_IFDIR) << std::endl;
   if ( (stbuf.st_mode & S_IFDIR) == 0 )
 #endif
   {
@@ -403,7 +400,6 @@ vpIoTools::checkDirectory(const char *dirname )
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   if ( (stbuf.st_mode & S_IWUSR) == 0 )
 #elif defined(_WIN32)
-  std::cout << "(stbuf.st_mode & S_IWRITE)=" << (stbuf.st_mode & S_IWRITE) << std::endl;
   if ( (stbuf.st_mode & S_IWRITE) == 0 )
 #endif
   {
@@ -459,15 +455,10 @@ vpIoTools::mkdir_p(const char *path, const int mode)
       if (mkdir(_path, (mode_t)mode) != 0)
 #elif defined(_WIN32)
       (void)mode; //var not used
-      std::cout << "checkDirectory: " << _path << std::endl;
-      bool res_checkDirectory = checkDirectory(_path);
-      std::cout << "res_checkDirectory=" << res_checkDirectory << std::endl;
-      if (!res_checkDirectory)
+      if (!checkDirectory(_path))
 #endif
       {
-        int res_mkdir = _mkdir(_path);
-        std::cout << "_mkdir=" << res_mkdir << std::endl;
-        if (res_mkdir != 0) {
+        if (_mkdir(_path) != 0) {
           if (errno != EEXIST)
             return -1;
         }
@@ -505,7 +496,6 @@ vpIoTools::mkdir_p(const char *path, const int mode)
 void
 vpIoTools::makeDirectory(const char *dirname )
 {
-  std::cout << "vpIoTools::makeDirectory(const char *dirname )" << std::endl;
 #if ( (!defined(__unix__) && !defined(__unix) && (!defined(__APPLE__) || !defined(__MACH__))) ) && !defined(_WIN32)
   std::cerr << "Unsupported platform for vpIoTools::makeDirectory()!" << std::endl;
   return;
@@ -520,15 +510,12 @@ vpIoTools::makeDirectory(const char *dirname )
 #endif
 
   if ( dirname == NULL || dirname[0] == '\0' ) {
-    std::cout << "dirname == NULL || dirname[0] ==" << std::endl;
     vpERROR_TRACE( "invalid directory name\n");
     throw(vpIoException(vpIoException::invalidDirectoryName,
                         "invalid directory name")) ;
   }
 
-  std::cout << "Before path=" << dirname << std::endl;
   std::string _dirname = path(dirname);
-  std::cout << "After path=" << _dirname << std::endl;
 
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   if ( stat( _dirname.c_str(), &stbuf ) != 0 )
@@ -538,9 +525,7 @@ vpIoTools::makeDirectory(const char *dirname )
   if ( _stat( _dirname.c_str(), &stbuf ) != 0 )
 #endif
   {
-    std::cout << "stat(_dirname.c_str(), &stbuf) != 0" << std::endl;
     if ( vpIoTools::mkdir_p( _dirname.c_str(), 0755 ) != 0 ) {
-      std::cout << "vpIoException::cantCreateDirectory 1" << std::endl;
       vpERROR_TRACE("unable to create directory '%s'\n",  dirname );
       throw(vpIoException(vpIoException::cantCreateDirectory,
                           "unable to create directory")) ;
@@ -549,9 +534,7 @@ vpIoTools::makeDirectory(const char *dirname )
     vpDEBUG_TRACE(2,"has created directory '%s'\n", dirname );
   }
 
-  std::cout << "Before FinalcheckDirectory: " << dirname << std::endl;
   if (checkDirectory( dirname ) == false) {
-    std::cout << "vpIoException::cantCreateDirectory 2" << std::endl;
     vpERROR_TRACE("unable to create directory '%s'\n",  dirname );
     throw(vpIoException(vpIoException::cantCreateDirectory,
                         "unable to create directory")) ;

@@ -818,9 +818,13 @@ void vpMatrix::multMatrixVector(const vpMatrix &A, const vpColVector &v, vpColVe
 */
 void vpMatrix::mult2Matrices(const vpMatrix &A, const vpMatrix &B, vpMatrix &C)
 {
+  std::cout << "void vpMatrix::mult2Matrices(const vpMatrix &A, const vpMatrix &B, vpMatrix &C)" << std::endl;
+  std::cout << "A.rowNum=" << A.rowNum << " ; C.rowNum=" << C.rowNum << " ; B.colNum=" << B.colNum << " ; C.colNum=" << C.colNum << std::endl;
   if ((A.rowNum != C.rowNum) || (B.colNum != C.colNum)) C.resize(A.rowNum, B.colNum, false, false);
+  std::cout << "C.resize(A.rowNum, B.colNum, false, false)" << std::endl;
 
   if (A.colNum != B.rowNum) {
+    std::cout << "A.colNum != B.rowNum" << std::endl;
     throw(vpException(vpException::dimensionError,
                       "Cannot multiply (%dx%d) matrix by (%dx%d) matrix",
                       A.getRows(), A.getCols(), B.getRows(), B.getCols()));
@@ -953,7 +957,9 @@ void vpMatrix::mult2Matrices(const vpMatrix &A, const vpColVector &B, vpColVecto
 */
 vpMatrix vpMatrix::operator*(const vpMatrix &B) const
 {
+  std::cout << "vpMatrix vpMatrix::operator*(const vpMatrix &B)" << std::endl;
   vpMatrix C;
+  std::cout << "vpMatrix C;" << std::endl;
 
   vpMatrix::mult2Matrices(*this,B,C);
 

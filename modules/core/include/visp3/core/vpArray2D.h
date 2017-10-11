@@ -176,6 +176,7 @@ public:
   void resize(const unsigned int nrows, const unsigned int ncols,
               const bool flagNullify=true, const bool recopy_=true)
   {
+    std::cout << "void resize(), nrows=" << nrows << " ; ncols=" << ncols << std::endl;
     if ((nrows == rowNum) && (ncols == colNum)) {
       if (flagNullify && this->data != NULL) {
         memset(this->data, 0, this->dsize*sizeof(Type));
@@ -184,6 +185,7 @@ public:
     else {
       bool recopy = !flagNullify && recopy_; //priority to flagNullify
       const bool recopyNeeded = ( ncols != this->colNum && this->colNum > 0 && ncols > 0 && (!flagNullify || recopy) );
+      std::cout << "recopy=" << recopy << " ; recopyNeeded=" << recopyNeeded << std::endl;
       Type * copyTmp = NULL;
       unsigned int rowTmp = 0, colTmp=0;
 
@@ -199,12 +201,14 @@ public:
       this->dsize = nrows*ncols;
       this->data = (Type*)realloc(this->data, this->dsize*sizeof(Type));
       if ((NULL == this->data) && (0 != this->dsize)) {
+        std::cout << "data throw(vpException(vpException::memoryAllocationError" << std::endl;
         if (copyTmp != NULL) delete [] copyTmp;
         throw(vpException(vpException::memoryAllocationError,
           "Memory allocation error when allocating 2D array data"));
       }
 
       this->rowPtrs = (Type**)realloc (this->rowPtrs, nrows*sizeof(Type*));
+        std::cout << "rowPtrs throw(vpException(vpException::memoryAllocationError" << std::endl;
       if ((NULL == this->rowPtrs) && (0 != this->dsize)) {
         if (copyTmp != NULL) delete [] copyTmp;
         throw(vpException(vpException::memoryAllocationError,
