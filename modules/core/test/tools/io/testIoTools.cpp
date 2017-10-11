@@ -486,6 +486,9 @@ main(int argc, const char ** argv)
     std::cerr << "Exception: " << e.what() << std::endl;
     return EXIT_FAILURE;
   }
+  catch (...) {
+    std::cout << "Catch a non expected exception." << std::endl;
+  }
 
 
   //Test isSamePathname()

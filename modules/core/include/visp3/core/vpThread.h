@@ -75,11 +75,7 @@ public:
     if (m_isCreated)
       throw vpException(vpException::fatalError, "The thread is already created");
 #if defined(VISP_HAVE_PTHREAD)
-    //TODO: debug
-    std::cout << "Before pthread_create(&m_handle, NULL, fn, args)" << std::endl;
     int err = pthread_create(&m_handle, NULL, fn, args);
-    std::cout << "After pthread_create(&m_handle, NULL, fn, args), err=" << err
-              << " ; EAGAIN=" << EAGAIN << " ; EINVAL=" << EINVAL << " ; EPERM=" << EPERM << std::endl;
     if (err != 0) {
       throw vpException(vpException::cannotUseConstructorError,
                         "Can't create thread : %s", strerror(err));

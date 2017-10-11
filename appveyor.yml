@@ -72,6 +72,9 @@ before_build:
   - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set OpenCV_DIR=C:\projects\deps\%VISP_OPENCV_MINGW_DIR%\install
   - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set OpenCV_DLL_DIR=%OpenCV_DIR%\%platform%\mingw\bin
   - set PATH=%OPENCV_DLL_DIR%;%PATH%
+  # Disable threading with MinGW
+  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set APPVEYOR_THREADING=true
+  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set APPVEYOR_THREADING=false
 
 build_script:
   - echo %PATH%
@@ -82,5 +85,4 @@ build_script:
   - cd C:\projects\visp\build
   - cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=%configuration% ..\visp
   - cmake --build . --config %configuration% --target install
-  - dir C:\temp
   - ctest -VV -I 25,25,,25,41,44,83,111,132
