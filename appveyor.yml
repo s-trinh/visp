@@ -12,7 +12,7 @@ configuration:
 
 environment:
   VISP_OPENCV_MINGW_FILE: opencv-3.3.0-MinGW-build-package.7z
-  VISP_OPENCV_MINGW_DIR: opencv-3.3.0-build-package
+  VISP_OPENCV_MINGW_DIR: opencv-3.3.0-MinGW-build-package
   VISP_OPENCV_MINGW_PKG: https://github.com/s-trinh/visp-dependencies/blob/master/opencv-3.3.0-MinGW-build-package.7z?raw=true
   
   matrix:
@@ -85,4 +85,4 @@ build_script:
   - cd C:\projects\visp\build
   - cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=%configuration% ..\visp
   - cmake --build . --config %configuration% --target install
-  - ctest -VV -I 25,25,,25,41,44,83,111,132
+  - ctest -E testMatrixException

@@ -48,15 +48,6 @@
 
 int main()
 {
-  //Trivial try catch exception
-  try {
-    std::cout << "Throwing an integer exception...\n";
-    throw 42;
-  }
-  catch (int i) {
-    std::cout << " the integer exception was caught, with value: " << i << '\n';
-  }
-
   vpMatrix M ;
   vpMatrix M1(2,3) ;
   vpMatrix M2(3,3) ;
@@ -70,9 +61,6 @@ int main()
   catch (const vpException &e) {
     std::cout << "Catch an exception: " << e << std::endl;
   }
-  catch (...) {
-    std::cout << "Catch a non expected exception." << std::endl;
-  }
 
   std::cout << "** test matrix exception during addition" << std::endl;
 
@@ -81,9 +69,6 @@ int main()
   }
   catch (const vpException &e)  {
     std::cout << "Catch an exception: " << e << std::endl;
-  }
-  catch (...) {
-    std::cout << "Catch a non expected exception." << std::endl;
   }
 
   return 0;
