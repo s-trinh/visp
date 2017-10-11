@@ -143,9 +143,7 @@ namespace {
 int main() {
   unsigned int nb_threads = 4;
   unsigned int size = 1000007;
-  std::cout << "Before srand" << std::endl;
   srand((unsigned int) time(NULL));
-  std::cout << "After srand" << std::endl;
 
   vpColVector v1(size), v2(size);
   for (unsigned int i = 0; i < size; i++) {
