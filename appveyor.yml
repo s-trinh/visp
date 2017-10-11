@@ -85,4 +85,9 @@ build_script:
   - dir C:\projects\visp\build
   - dir C:\projects\visp\build\install
   - dir %VISP_DLL_DIR%
-  - ctest -VV
+  - ctest -VV -I 25,1
+  - ctest -VV -I 41,1
+  - ctest -VV -I 44,1
+  - ctest -VV -I 83,1
+  - ctest -VV -I 111,1
+  - ctest -VV -I 132,1

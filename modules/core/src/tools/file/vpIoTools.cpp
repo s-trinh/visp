@@ -365,6 +365,8 @@ vpIoTools::checkDirectory(const char *dirname )
 {
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   struct stat stbuf;
+#elif defined(_WIN32) && defined(__MINGW32__)
+  struct stat stbuf;
 #elif defined(_WIN32)
   struct _stat stbuf;
 #endif
@@ -377,6 +379,8 @@ vpIoTools::checkDirectory(const char *dirname )
 
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   if ( stat( _dirname.c_str(), &stbuf ) != 0 )
+#elif defined(_WIN32) && defined(__MINGW32__)
+  if (stat(_dirname.c_str(), &stbuf) != 0)
 #elif defined(_WIN32)
   if ( _stat( _dirname.c_str(), &stbuf ) != 0 )
 #endif
@@ -493,6 +497,8 @@ vpIoTools::makeDirectory(const char *dirname )
 
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   struct stat stbuf;
+#elif defined(_WIN32) && defined(__MINGW32__)
+  struct stat stbuf;
 #elif defined(_WIN32)
   struct _stat stbuf;
 #endif
@@ -507,6 +513,8 @@ vpIoTools::makeDirectory(const char *dirname )
 
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   if ( stat( _dirname.c_str(), &stbuf ) != 0 )
+#elif defined(_WIN32) && defined(__MINGW32__)
+  if (stat(_dirname.c_str(), &stbuf) != 0)
 #elif defined(_WIN32)
   if ( _stat( _dirname.c_str(), &stbuf ) != 0 )
 #endif
