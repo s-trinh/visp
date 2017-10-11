@@ -380,7 +380,9 @@ vpIoTools::checkDirectory(const char *dirname )
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   if ( stat( _dirname.c_str(), &stbuf ) != 0 )
 #elif defined(_WIN32) && defined(__MINGW32__)
-  if (stat(_dirname.c_str(), &stbuf) != 0)
+  int res_stat = stat(_dirname.c_str(), &stbuf);
+  std::cout << "checkDirectory: " << _dirname << " ; res_stat=" << res_stat << std::endl;
+  if (res_stat != 0)
 #elif defined(_WIN32)
   if ( _stat( _dirname.c_str(), &stbuf ) != 0 )
 #endif
@@ -388,6 +390,8 @@ vpIoTools::checkDirectory(const char *dirname )
     return false;
   }
 #if defined(_WIN32) || (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__)))
+  std::cout << "stbuf.st_mode=" << stbuf.st_mode << std::endl;
+  std::cout << "(stbuf.st_mode & S_IFDIR)=" << (stbuf.st_mode & S_IFDIR) << std::endl;
   if ( (stbuf.st_mode & S_IFDIR) == 0 )
 #endif
   {
@@ -396,6 +400,7 @@ vpIoTools::checkDirectory(const char *dirname )
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   if ( (stbuf.st_mode & S_IWUSR) == 0 )
 #elif defined(_WIN32)
+  std::cout << "(stbuf.st_mode & S_IWRITE)=" << (stbuf.st_mode & S_IWRITE) << std::endl;
   if ( (stbuf.st_mode & S_IWRITE) == 0 )
 #endif
   {
@@ -541,7 +546,7 @@ vpIoTools::makeDirectory(const char *dirname )
     vpDEBUG_TRACE(2,"has created directory '%s'\n", dirname );
   }
 
-  std::cout << "Before FinalcheckDirectory" << std::endl;
+  std::cout << "Before FinalcheckDirectory: " << dirname << std::endl;
   if (checkDirectory( dirname ) == false) {
     std::cout << "vpIoException::cantCreateDirectory 2" << std::endl;
     vpERROR_TRACE("unable to create directory '%s'\n",  dirname );
