@@ -82,7 +82,5 @@ build_script:
   - cd C:\projects\visp\build
   - cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=%configuration% ..\visp
   - cmake --build . --config %configuration% --target install
-  - dir C:\projects\visp\build
-  - dir C:\projects\visp\build\install
-  - dir %VISP_DLL_DIR%
+  - dir C:\temp
   - ctest -VV -I 25,25,,25,41,44,83,111,132

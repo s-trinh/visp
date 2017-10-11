@@ -58,7 +58,7 @@ int main()
   try {
     M = M1*M3 ;
   }
-  catch (vpException &e) {
+  catch (const vpException &e) {
     std::cout << "Catch an exception: " << e << std::endl;
   }
 
@@ -67,7 +67,8 @@ int main()
   try {
     M = M1+M3 ;
   }
-  catch (vpException &e)  {
+  catch (const vpException &e)  {
     std::cout << "Catch an exception: " << e << std::endl;
   }
+  return 0;
 }

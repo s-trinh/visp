@@ -143,7 +143,9 @@ namespace {
 int main() {
   unsigned int nb_threads = 4;
   unsigned int size = 1000007;
+  std::cout << "Before srand" << std::endl;
   srand((unsigned int) time(NULL));
+  std::cout << "After srand" << std::endl;
 
   vpColVector v1(size), v2(size);
   for (unsigned int i = 0; i < size; i++) {
@@ -162,6 +164,7 @@ int main() {
       functors[i] = ArithmFunctor(v1, v2, i*split, size);
     }
 
+    std::cout << "Create thread: " << i << std::endl;
     threads[i].create((vpThread::Fn) arithmThread, (vpThread::Args) &functors[i]);
   }
   //! [functor-thread-example threadCreation]
@@ -169,6 +172,7 @@ int main() {
   //! [functor-thread-example getResults]
   vpColVector res_add, res_mul;
   for (size_t i = 0; i < nb_threads; i++) {
+    std::cout << "Join thread: " << i << std::endl;
     threads[i].join();
 
     insert(res_add, functors[i].getVectorAdd());
