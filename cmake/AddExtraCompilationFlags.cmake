@@ -143,6 +143,11 @@ if(DEFINED WINRT_8_1)
   add_extra_compiler_option(/ZW) # do not use with 8.0
 endif()
 
+#test
+if(MINGW AND X86 AND (USE_PTHREAD OR WITH_PTHREAD))
+  add_extra_compiler_option(-mthreads)
+endif()
+
 # Add user supplied extra options (optimization, etc...)
 vp_list_unique(VISP_EXTRA_C_FLAGS)
 vp_list_unique(VISP_EXTRA_CXX_FLAGS)
