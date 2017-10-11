@@ -381,7 +381,10 @@ vpIoTools::checkDirectory(const char *dirname )
   if ( stat( _dirname.c_str(), &stbuf ) != 0 )
 #elif defined(_WIN32) && defined(__MINGW32__)
   int res_stat = stat(_dirname.c_str(), &stbuf);
-  std::cout << "checkDirectory: " << _dirname << " ; res_stat=" << res_stat << std::endl;
+  std::cout << "checkDirectory: " << _dirname << " ; res_stat=" << res_stat << " ; errno=" << errno << std::endl;
+  if (_dirname.at(_dirname.size() - 1) == vpIoTools::separator)
+    res_stat = stat(_dirname.substr(0, _dirname.size()-1).c_str(), &stbuf);
+  std::cout << "checkDirectory: " << _dirname.substr(0, _dirname.size()-1) << " ; res_stat=" << res_stat << " ; errno=" << errno << std::endl;
   if (res_stat != 0)
 #elif defined(_WIN32)
   if ( _stat( _dirname.c_str(), &stbuf ) != 0 )

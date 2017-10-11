@@ -48,6 +48,15 @@
 
 int main()
 {
+  try {
+    std::cout << "Test throw exception:" << std::endl;
+    throw(vpException(vpException::dimensionError,
+                      "Cannot multiply a (%dx%d) matrix by a (%dx%d) translation vector",
+                      5, 5, 5, 5));
+  } catch (const vpException &e) {
+    std::cout << "Catch test exception: " << e.what() << std::endl;
+  }
+  
   vpMatrix M ;
   vpMatrix M1(2,3) ;
   vpMatrix M2(3,3) ;

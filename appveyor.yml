@@ -86,4 +86,4 @@ build_script:
   - cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=%configuration% ..\visp
   - cmake --build . --config %configuration% --target install
   #- ctest -E testMatrixException
-  - ctest -VV -I 41,41,,41
+  - ctest -VV -I 25,25,,25,41
