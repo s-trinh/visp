@@ -440,21 +440,26 @@ main(int argc, const char ** argv)
   std::cout << "Test vpIoTools::getFileExtension (Unix-like platform) - passed: " << nbOk << "/" << (nbOk+nbFail) << std::endl;
 #endif
 
-  std::string appveyor_threading = vpIoTools::getenv("APPVEYOR_THREADING");
-  if (appveyor_threading == "true") {
+  /*std::string appveyor_threading = vpIoTools::getenv("APPVEYOR_THREADING");
+  if (appveyor_threading == "true")*/ {
     //Test makeDirectory()
     try {
       std::string username = "", directory_filename = "";
+      std::cout << "Before vpIoTools::getUserName" << std::endl;
       vpIoTools::getUserName(username);
+      std::cout << "After vpIoTools::getUserName" << std::endl;
 #if defined(_WIN32)
       directory_filename = "C:/temp/" + username + "/test_directory1/test directory 2/";
 #elif (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__)))
       directory_filename = "/tmp/" + username + "/test_directory1/test directory 2/";
 #endif
+      std::cout << "Before vpIoTools::makeDirectory(directory_filename);" << std::endl;
       vpIoTools::makeDirectory(directory_filename);
+      std::cout << "After vpIoTools::makeDirectory(directory_filename);" << std::endl;
       vpIoTools::makeDirectory(directory_filename);
+      std::cout << "Before vpIoTools::checkDirectory" << std::endl;
       std::cout << "Create directories: " << directory_filename << " ; check: "
-        << vpIoTools::checkDirectory(directory_filename) << std::endl;
+                << vpIoTools::checkDirectory(directory_filename) << std::endl;
 
 #if defined(_WIN32)
       directory_filename = "C:/temp/" + username + "/test_directory1/test directory 3";
@@ -463,7 +468,7 @@ main(int argc, const char ** argv)
 #endif
       vpIoTools::makeDirectory(directory_filename);
       std::cout << "Create directories: " << directory_filename << " ; check: "
-        << vpIoTools::checkDirectory(directory_filename) << std::endl;
+                << vpIoTools::checkDirectory(directory_filename) << std::endl;
 
 #if defined(_WIN32)
       directory_filename = "C:\\temp/" + username + "\\test_directory1\\test directory 4";
@@ -473,7 +478,7 @@ main(int argc, const char ** argv)
       vpIoTools::makeDirectory(directory_filename);
       vpIoTools::makeDirectory(directory_filename);
       std::cout << "Create directories: " << directory_filename << " ; check: "
-        << vpIoTools::checkDirectory(directory_filename) << std::endl;
+                << vpIoTools::checkDirectory(directory_filename) << std::endl;
 
 #if defined(_WIN32)
       directory_filename = "C:\\temp/" + username + "\\test_directory1\\test directory 5 . dir/test directory 6";
@@ -482,7 +487,7 @@ main(int argc, const char ** argv)
 #endif
       vpIoTools::makeDirectory(directory_filename);
       std::cout << "Create directories: " << directory_filename << " ; check: "
-        << vpIoTools::checkDirectory(directory_filename) << std::endl;
+                << vpIoTools::checkDirectory(directory_filename) << std::endl;
     }
     catch (const vpException &e) {
       std::cerr << "Exception: " << e.what() << std::endl;
