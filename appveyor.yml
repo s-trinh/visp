@@ -43,17 +43,15 @@ install:
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" choco install OpenCV
   - ps: >-
       if (${env:CMAKE_GENERATOR} -imatch "MinGW Makefiles" -and !(Test-Path ${env:VISP_OPENCV_MINGW_FILE})) {
-          echo "Downloading OpenCV MinGW from ${env:VISP_OPENCV_MINGW_PKG} ..."
-          appveyor DownloadFile "${env:VISP_OPENCV_MINGW_PKG}" -FileName ${env:VISP_OPENCV_MINGW_FILE} -Timeout 1200000
+        echo "Downloading OpenCV MinGW from ${env:VISP_OPENCV_MINGW_PKG} ..."
+        appveyor DownloadFile "${env:VISP_OPENCV_MINGW_PKG}" -FileName ${env:VISP_OPENCV_MINGW_FILE} -Timeout 1200000
       }
 
-  - cmd: >-
-      if "%CMAKE_GENERATOR%"=="MinGW Makefiles" (
-
-      echo "Extracting OpenCV MinGW to C:\projects\deps ..."
-
-      7z x %VISP_OPENCV_MINGW_FILE% -y -o"C:\projects\deps" >NUL
-      )
+  - ps: >-
+      if (${env:CMAKE_GENERATOR} -imatch "MinGW Makefiles") {
+        echo "Extracting OpenCV MinGW to C:\projects\deps ..."
+        7z x %VISP_OPENCV_MINGW_FILE% -y -o"C:\projects\deps" >NUL
+      }
 
 cache:
   - opencv-3.3.0-MinGW-build-package.7z -> appveyor.yml
