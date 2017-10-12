@@ -26,7 +26,7 @@ environment:
 init:
   - cmake --version
   - msbuild /version
-  - mingw32-make --version
+  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" mingw32-make --version
 
 install:
   # Create temp dir to collect test outputs
