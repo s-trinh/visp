@@ -48,9 +48,12 @@ install:
       }
 
   - cmd: >-
+      if "%CMAKE_GENERATOR%"=="MinGW Makefiles" (
+
       echo "Extracting OpenCV MinGW to C:\projects\deps ..."
 
       7z x %VISP_OPENCV_MINGW_FILE% -y -o"C:\projects\deps" >NUL
+      )
 
 cache:
   - opencv-3.3.0-MinGW-build-package.7z -> appveyor.yml
