@@ -16,8 +16,8 @@ environment:
   VISP_OPENCV_MINGW_PKG: https://github.com/s-trinh/visp-dependencies/blob/master/opencv-3.3.0-MinGW-build-package.7z?raw=true
   
   matrix:
-    - CMAKE_GENERATOR: Visual Studio 14 2015 Win64
-      BUILD_NAME: vs2015
+    #- CMAKE_GENERATOR: Visual Studio 14 2015 Win64
+    #  BUILD_NAME: vs2015
 
     - CMAKE_GENERATOR: MinGW Makefiles
       BUILD_NAME: mingw
@@ -71,7 +71,7 @@ before_build:
   # setup opencv
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set OpenCV_DIR=C:\tools\opencv\build
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set OpenCV_DLL_DIR=%OpenCV_DIR%\%platform%\vc14\bin
-  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set OpenCV_DIR=C:\projects\deps\%VISP_OPENCV_MINGW_DIR%\install\%platform%\mingw\lib
+  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set OpenCV_DIR=C:\projects\deps\%VISP_OPENCV_MINGW_DIR%\install
   - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set OpenCV_DLL_DIR=C:\projects\deps\%VISP_OPENCV_MINGW_DIR%\install\%platform%\mingw\bin
   - set PATH=%OPENCV_DLL_DIR%;%PATH%
   # Disable pthreads threading with MinGW
@@ -86,9 +86,9 @@ build_script:
   - md C:\projects\visp\build
   - cd C:\projects\visp\build
   - cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=%configuration% ..\visp
-  #- cmake --build . --config %configuration% --target install
-  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" msbuild INSTALL.vcxproj /p:Platform=%platform% /p:Configuration=%configuration%
-  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" ctest
-  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" mingw32-make install
+  - cmake --build . --config %configuration% --target install
+  #- if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" msbuild INSTALL.vcxproj /p:Platform=%platform% /p:Configuration=%configuration%
+  #- if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" ctest
+  #- if "%CMAKE_GENERATOR%"=="MinGW Makefiles" mingw32-make install
   # Exclude testMatrixException, not able to fix the issue observed on AppVeyor
-  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" ctest -E testMatrixException
+  #- if "%CMAKE_GENERATOR%"=="MinGW Makefiles" ctest -E testMatrixException
