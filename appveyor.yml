@@ -24,8 +24,9 @@ environment:
 
 # scripts that are called at very beginning, before repo cloning
 init:
-  - cmd: cmake --version
-  - cmd: msbuild /version
+  - cmake --version
+  - msbuild /version
+  - mingw32-make --version
 
 install:
   # Create temp dir to collect test outputs
@@ -50,7 +51,7 @@ install:
   - ps: >-
       if (${env:CMAKE_GENERATOR} -imatch "MinGW Makefiles") {
         echo "Extracting OpenCV MinGW to C:\projects\deps ..."
-        7z x %VISP_OPENCV_MINGW_FILE% -y -o"C:\projects\deps"
+        7z x ${env:VISP_OPENCV_MINGW_FILE} -y -o"C:\projects\deps"
       }
 
 cache:
@@ -86,7 +87,7 @@ build_script:
   - cd C:\projects\visp\build
   - cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=%configuration% ..\visp
   #- cmake --build . --config %configuration% --target install
-  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" msbuild VISP.sln /p:Platform=%platform% /p:Configuration=%configuration% /t:Install
+  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" msbuild VISP.sln /p:Platform=%platform% /p:Configuration=%configuration% /t:INSTALL
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" ctest
   - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" mingw32-make install
   # Exclude testMatrixException, not able to fix the issue observed on AppVeyor
