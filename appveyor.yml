@@ -4,8 +4,8 @@ version: "3.1.0-{build}"
 os: Visual Studio 2015
 
 # to add several platforms to build matrix
-#platform:
-#  - x86
+platform:
+  - x86
 
 #configuration:
 #  - Release
@@ -18,13 +18,9 @@ environment:
   matrix:
     #- CMAKE_GENERATOR: Visual Studio 14 2015 Win64
     #  BUILD_NAME: vs2015
-    #  configuration: Release
-    #  platform: x64
 
     - CMAKE_GENERATOR: MinGW Makefiles
       BUILD_NAME: mingw
-      configuration: Release
-      platform: x86
 
 # scripts that are called at very beginning, before repo cloning
 init:
@@ -66,7 +62,8 @@ clone_folder: C:\projects\visp\visp
 before_build:
   # Workaround for CMake not wanting sh.exe on PATH for MinGW
   - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
-  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set PATH=C:\MinGW\bin;%PATH%
+  #- if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set PATH=C:\MinGW\bin;%PATH%
+  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set PATH=C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1;%PATH%
   - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" mingw32-make --version
   # Setup ViSP
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set VISP_DLL_DIR=C:\projects\visp\build\install\%platform%\vc14\bin
