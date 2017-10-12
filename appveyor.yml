@@ -4,11 +4,11 @@ version: "3.1.0-{build}"
 os: Visual Studio 2015
 
 # to add several platforms to build matrix
-platform:
-  - x32
+#platform:
+#  - x86
 
-configuration:
-  - Release
+#configuration:
+#  - Release
 
 environment:
   VISP_OPENCV_MINGW_FILE: opencv-3.3.0-MinGW-build-package.7z
@@ -18,9 +18,13 @@ environment:
   matrix:
     #- CMAKE_GENERATOR: Visual Studio 14 2015 Win64
     #  BUILD_NAME: vs2015
+    #  configuration: Release
+    #  platform: x64
 
     - CMAKE_GENERATOR: MinGW Makefiles
       BUILD_NAME: mingw
+      configuration: Release
+      platform: x86
 
 # scripts that are called at very beginning, before repo cloning
 init:
