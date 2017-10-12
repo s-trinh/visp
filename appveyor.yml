@@ -5,7 +5,7 @@ os: Visual Studio 2015
 
 # to add several platforms to build matrix
 platform:
-  - Win64
+  - x64
 
 configuration:
   - Release
@@ -65,14 +65,14 @@ before_build:
   - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set PATH=C:\MinGW\bin;%PATH%
   - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" mingw32-make --version
   # setup visp
-  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set VISP_DLL_DIR=C:\projects\visp\build\install\x64\vc14\bin
-  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set VISP_DLL_DIR=C:\projects\visp\build\install\x64\mingw\bin
+  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set VISP_DLL_DIR=C:\projects\visp\build\install\%platform%\vc14\bin
+  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set VISP_DLL_DIR=C:\projects\visp\build\install\x86\mingw\bin
   - SET PATH=%VISP_DLL_DIR%;%PATH%
   # setup opencv
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set OpenCV_DIR=C:\tools\opencv\build
-  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set OpenCV_DLL_DIR=%OpenCV_DIR%\x64\vc14\bin
+  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set OpenCV_DLL_DIR=%OpenCV_DIR%\%platform%\vc14\bin
   - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set OpenCV_DIR=C:\projects\deps\%VISP_OPENCV_MINGW_DIR%\install
-  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set OpenCV_DLL_DIR=C:\projects\deps\%VISP_OPENCV_MINGW_DIR%\install\x64\mingw\bin
+  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set OpenCV_DLL_DIR=%OpenCV_DIR%\x86\mingw\bin
   - set PATH=%OPENCV_DLL_DIR%;%PATH%
   # Disable pthreads threading with MinGW
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set APPVEYOR_THREADING=true
