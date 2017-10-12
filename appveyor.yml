@@ -87,7 +87,8 @@ build_script:
   - dir %OpenCV_DLL_DIR%
   - md C:\projects\visp\build
   - cd C:\projects\visp\build
-  - cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=%configuration% ..\visp
+  #- cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=%configuration% ..\visp
+  - cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=%configuration% -DBUILD_DEMOS:BOOL=OFF -DBUILD_EXAMPLES:BOOL=OFF -DBUILD_TUTORIALS:BOOL=OFF ..\visp
   - cmake --build . --config %configuration% --target install
   - dir C:\projects\visp\build\install
   - dir %VISP_DLL_DIR%
