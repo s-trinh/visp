@@ -42,7 +42,7 @@ install:
   # opencv
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" choco install OpenCV
   - ps: >-
-      if (!(Test-Path ${env:VISP_OPENCV_MINGW_FILE})) {
+      if (${env:CMAKE_GENERATOR} -imatch "MinGW Makefiles" -and !(Test-Path ${env:VISP_OPENCV_MINGW_FILE})) {
           echo "Downloading OpenCV MinGW from ${env:VISP_OPENCV_MINGW_PKG} ..."
           appveyor DownloadFile "${env:VISP_OPENCV_MINGW_PKG}" -FileName ${env:VISP_OPENCV_MINGW_FILE} -Timeout 1200000
       }
@@ -69,8 +69,8 @@ before_build:
   # setup opencv
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set OpenCV_DIR=C:\tools\opencv\build
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set OpenCV_DLL_DIR=%OpenCV_DIR%\%platform%\vc14\bin
-  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set OpenCV_DIR=C:\projects\deps\%VISP_OPENCV_MINGW_DIR%\install
-  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set OpenCV_DLL_DIR=%OpenCV_DIR%\%platform%\mingw\bin
+  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set OpenCV_DIR=C:\projects\deps\%VISP_OPENCV_MINGW_DIR%\install\%platform%\mingw\lib
+  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set OpenCV_DLL_DIR=C:\projects\deps\%VISP_OPENCV_MINGW_DIR%\install\%platform%\mingw\bin
   - set PATH=%OPENCV_DLL_DIR%;%PATH%
   # Disable pthreads threading with MinGW
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set APPVEYOR_THREADING=true
@@ -84,7 +84,7 @@ build_script:
   - md C:\projects\visp\build
   - cd C:\projects\visp\build
   - cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=%configuration% ..\visp
-  - cmake --build . --config %configuration% --target install
-  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" ctest
+  #- cmake --build . --config %configuration% --target install
+  #- if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" ctest
   # Exclude testMatrixException, not able to fix the issue observed on AppVeyor
-  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" ctest -E testMatrixException
+  #- if "%CMAKE_GENERATOR%"=="MinGW Makefiles" ctest -E testMatrixException

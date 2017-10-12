@@ -455,13 +455,11 @@ vpIoTools::mkdir_p(const char *path, const int mode)
       if (mkdir(_path, (mode_t)mode) != 0)
 #elif defined(_WIN32)
       (void)mode; //var not used
-      if (!checkDirectory(_path))
+      if (!checkDirectory(_path) && _mkdir(_path) != 0)
 #endif
       {
-        if (_mkdir(_path) != 0) {
-          if (errno != EEXIST)
-            return -1;
-        }
+        if (errno != EEXIST)
+          return -1;
       }
       *p = sep;
     }
