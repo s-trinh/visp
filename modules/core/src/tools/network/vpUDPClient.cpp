@@ -78,7 +78,11 @@ void vpUDPClient::init(const std::string &hostname, const int port) {
 
   /* socket: create the socket */
   m_socketFileDescriptor = socket(AF_INET, SOCK_DGRAM, 0);
+#if defined(_WIN32)
+  if (m_socketFileDescriptor == INVALID_SOCKET)
+#else
   if (m_socketFileDescriptor < 0)
+#endif
     throw vpException(vpException::fatalError, "Error opening UDP socket for the client!");
 
   /* build the server's Internet address */
