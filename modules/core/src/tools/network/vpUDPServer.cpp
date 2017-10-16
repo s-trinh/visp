@@ -43,14 +43,18 @@
 #ifndef DWORD
 #define DWORD int
 #endif
-#ifndef InetNtop
-#define InetNtop inet_ntop
-#endif
 #ifndef WSAGetLastError
 #define WSAGetLastError() strerror(errno)
 #endif
 #else
+#if defined(__MINGW32__)
+#define _WIN32_WINNT _WIN32_WINNT_VISTA //0x0600
+#endif
 #include <Ws2tcpip.h>
+#endif
+
+#ifndef InetNtop
+#define InetNtop inet_ntop //Unix and MinGW
 #endif
 
 #include <visp3/core/vpUDPServer.h>
@@ -95,7 +99,11 @@ void vpUDPServer::init(const std::string &hostname, const int port) {
 
   /* socket: create the socket */
   m_socketFileDescriptor = socket(AF_INET, SOCK_DGRAM, 0);
+#if defined(_WIN32)
+  if (m_socketFileDescriptor == INVALID_SOCKET)
+#else
   if (m_socketFileDescriptor < 0)
+#endif
     throw vpException(vpException::fatalError, "Error opening UDP socket for the server!");
 
   /* setsockopt: Handy debugging trick that lets
