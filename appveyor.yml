@@ -60,7 +60,7 @@ cache:
 clone_folder: C:\projects\visp\visp
 
 before_build:
-  # Use MinGW-w64
+  # Use MinGW-w64 in C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1
   - cd C:\
   - ren MinGW MinGW-w32
   # Workaround for CMake not wanting sh.exe on PATH for MinGW
