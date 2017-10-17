@@ -19,8 +19,8 @@ environment:
     - CMAKE_GENERATOR: MinGW Makefiles
       BUILD_NAME: mingw
 
-    #- CMAKE_GENERATOR: Visual Studio 14 2015 Win64
-    #  BUILD_NAME: vs2015
+    - CMAKE_GENERATOR: Visual Studio 14 2015 Win64
+      BUILD_NAME: vs2015
 
 # Scripts that are called at very beginning, before repo cloning
 init:
@@ -70,7 +70,7 @@ before_build:
   - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" mingw32-make --version
   # Setup ViSP
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set VISP_DLL_DIR=C:\projects\visp\build\install\%platform%\vc14\bin
-  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set VISP_DLL_DIR=C:\projects\visp\build\install\x86\mingw\bin
+  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" set VISP_DLL_DIR=C:\projects\visp\build\install\%platform%\mingw\bin
   - SET PATH=%VISP_DLL_DIR%;%PATH%
   # Setup OpenCV
   - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" set OpenCV_DIR=C:\tools\opencv\build
@@ -89,14 +89,10 @@ build_script:
   - dir %OpenCV_DLL_DIR%
   - md C:\projects\visp\build
   - cd C:\projects\visp\build
-  #- cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=%configuration% ..\visp
-  - cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=%configuration% -DBUILD_EXAMPLES:BOOL=OFF -DBUILD_DEMOS:BOOL=OFF -DBUILD_TUTORIALS:BOOL=OFF ..\visp
+  - cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=%configuration% ..\visp
   - cmake --build . --config %configuration% --target install
   - dir C:\projects\visp\build\install
   - dir %VISP_DLL_DIR%
-  #- if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" ctest
+  - if "%CMAKE_GENERATOR%"=="Visual Studio 14 2015 Win64" ctest
   # Issue with exception on MinGW AppVeyor
-  #- if "%CMAKE_GENERATOR%"=="MinGW Makefiles" ctest -E testMatrixException
-
-on_finish:
-  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+  - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" ctest -E testMatrixException
