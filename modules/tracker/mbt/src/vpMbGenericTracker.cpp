@@ -2067,12 +2067,12 @@ CAO model files which include other CAO model files.
   \note All the trackers will use the same model in case of stereo / multiple
 cameras configuration.
 */
-void vpMbGenericTracker::loadModel(const std::string &modelFile, const bool verbose)
+void vpMbGenericTracker::loadModel(const std::string &modelFile, const bool verbose, const vpHomogeneousMatrix &T)
 {
   for (std::map<std::string, TrackerWrapper *>::const_iterator it = m_mapOfTrackers.begin();
        it != m_mapOfTrackers.end(); ++it) {
     TrackerWrapper *tracker = it->second;
-    tracker->loadModel(modelFile, verbose);
+    tracker->loadModel(modelFile, verbose, T);
   }
 }
 

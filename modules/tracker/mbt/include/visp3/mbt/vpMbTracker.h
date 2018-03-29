@@ -407,8 +407,9 @@ public:
   virtual void initFromPose(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo);
   virtual void initFromPose(const vpImage<unsigned char> &I, const vpPoseVector &cPo);
 
-  virtual void loadModel(const char *modelFile, const bool verbose = false);
-  virtual void loadModel(const std::string &modelFile, const bool verbose = false);
+  //TODO: remove this?
+//  virtual void loadModel(const char *modelFile, const bool verbose = false, const vpHomogeneousMatrix &T=vpHomogeneousMatrix());
+  virtual void loadModel(const std::string &modelFile, const bool verbose = false, const vpHomogeneousMatrix &T=vpHomogeneousMatrix());
 
   /*!
     Set the angle used to test polygons appearance.
@@ -756,7 +757,8 @@ protected:
 
   virtual void loadVRMLModel(const std::string &modelFile);
   virtual void loadCAOModel(const std::string &modelFile, std::vector<std::string> &vectorOfModelFilename,
-                            int &startIdFace, const bool verbose = false, const bool parent = true);
+                            int &startIdFace, const bool verbose = false, const bool parent = true,
+                            const vpHomogeneousMatrix &T=vpHomogeneousMatrix());
 
   void removeComment(std::ifstream &fileId);
 

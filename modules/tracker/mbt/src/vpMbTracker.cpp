@@ -1041,6 +1041,37 @@ void vpMbTracker::addPolygon(const std::vector<std::vector<vpPoint> > &listFaces
   }
 }
 
+//TODO: remove this?
+///*!
+//  Load a 3D model from the file in parameter. This file must either be a vrml
+//  file (.wrl) or a CAO file (.cao). CAO format is described in the
+//  loadCAOModel() method.
+
+//  \warning When this class is called to load a vrml model, remember that you
+//  have to call Call SoDD::finish() before ending the program.
+//  \code
+//int main()
+//{
+//    ...
+//#if defined(VISP_HAVE_COIN3D) && (COIN_MAJOR_VERSION == 3)
+//  SoDB::finish();
+//#endif
+//}
+//  \endcode
+
+//  \throw vpException::ioError if the file cannot be open, or if its extension
+//is not wrl or cao.
+
+//  \param modelFile : the file containing the the 3D model description.
+//  The extension of this file is either .wrl or .cao.
+//  \param verbose : verbose option to print additional information when loading
+//CAO model files which include other CAO model files.
+//*/
+//void vpMbTracker::loadModel(const char *modelFile, const bool verbose, const vpHomogeneousMatrix &T)
+//{
+//  loadModel(std::string(modelFile), verbose);
+//}
+
 /*!
   Load a 3D model from the file in parameter. This file must either be a vrml
   file (.wrl) or a CAO file (.cao). CAO format is described in the
@@ -1066,34 +1097,7 @@ is not wrl or cao.
   \param verbose : verbose option to print additional information when loading
 CAO model files which include other CAO model files.
 */
-void vpMbTracker::loadModel(const char *modelFile, const bool verbose) { loadModel(std::string(modelFile), verbose); }
-
-/*!
-  Load a 3D model from the file in parameter. This file must either be a vrml
-  file (.wrl) or a CAO file (.cao). CAO format is described in the
-  loadCAOModel() method.
-
-  \warning When this class is called to load a vrml model, remember that you
-  have to call Call SoDD::finish() before ending the program.
-  \code
-int main()
-{
-    ...
-#if defined(VISP_HAVE_COIN3D) && (COIN_MAJOR_VERSION == 3)
-  SoDB::finish();
-#endif
-}
-  \endcode
-
-  \throw vpException::ioError if the file cannot be open, or if its extension
-is not wrl or cao.
-
-  \param modelFile : the file containing the the 3D model description.
-  The extension of this file is either .wrl or .cao.
-  \param verbose : verbose option to print additional information when loading
-CAO model files which include other CAO model files.
-*/
-void vpMbTracker::loadModel(const std::string &modelFile, const bool verbose)
+void vpMbTracker::loadModel(const std::string &modelFile, const bool verbose, const vpHomogeneousMatrix &T)
 {
   std::string::const_iterator it;
 
@@ -1109,7 +1113,7 @@ void vpMbTracker::loadModel(const std::string &modelFile, const bool verbose)
       nbPolygonPoints = 0;
       nbCylinders = 0;
       nbCircles = 0;
-      loadCAOModel(modelFile, vectorOfModelFilename, startIdFace, verbose, true);
+      loadCAOModel(modelFile, vectorOfModelFilename, startIdFace, verbose, true, T);
     } else if ((*(it - 1) == 'l' && *(it - 2) == 'r' && *(it - 3) == 'w' && *(it - 4) == '.') ||
                (*(it - 1) == 'L' && *(it - 2) == 'R' && *(it - 3) == 'W' && *(it - 4) == '.')) {
       loadVRMLModel(modelFile);
@@ -1316,7 +1320,8 @@ std::map<std::string, std::string> vpMbTracker::parseParameters(std::string &end
   included CAO model file.
 */
 void vpMbTracker::loadCAOModel(const std::string &modelFile, std::vector<std::string> &vectorOfModelFilename,
-                               int &startIdFace, const bool verbose, const bool parent)
+                               int &startIdFace, const bool verbose, const bool parent,
+                               const vpHomogeneousMatrix &T)
 {
   std::ifstream fileId;
   fileId.exceptions(std::ifstream::failbit | std::ifstream::eofbit);
@@ -1395,7 +1400,7 @@ void vpMbTracker::loadCAOModel(const std::string &modelFile, std::vector<std::st
 
         if (!cyclic) {
           if (vpIoTools::checkFilename(headerPath)) {
-            loadCAOModel(headerPath, vectorOfModelFilename, startIdFace, verbose, false);
+            loadCAOModel(headerPath, vectorOfModelFilename, startIdFace, verbose, false, T);
           } else {
             throw vpException(vpException::ioError, "file cannot be open");
           }
@@ -1432,9 +1437,11 @@ void vpMbTracker::loadCAOModel(const std::string &modelFile, std::vector<std::st
     }
     vpPoint *caoPoints = new vpPoint[caoNbrPoint];
 
-    double x; // 3D coordinates
-    double y;
-    double z;
+    //TODO: test
+//    double x; // 3D coordinates
+//    double y;
+//    double z;
+    vpColVector pts_3d(4, 1.0);
 
     int i; // image coordinate (used for matching)
     int j;
@@ -1442,9 +1449,13 @@ void vpMbTracker::loadCAOModel(const std::string &modelFile, std::vector<std::st
     for (unsigned int k = 0; k < caoNbrPoint; k++) {
       removeComment(fileId);
 
-      fileId >> x;
-      fileId >> y;
-      fileId >> z;
+      //TODO: test
+//      fileId >> x;
+//      fileId >> y;
+//      fileId >> z;
+      fileId >> pts_3d[0];
+      fileId >> pts_3d[1];
+      fileId >> pts_3d[2];
 
       if (caoVersion == 2) {
         fileId >> i;
@@ -1453,7 +1464,10 @@ void vpMbTracker::loadCAOModel(const std::string &modelFile, std::vector<std::st
 
       fileId.ignore(256, '\n'); // skip the rest of the line
 
-      caoPoints[k].setWorldCoordinates(x, y, z);
+      //TODO: test
+//      caoPoints[k].setWorldCoordinates(x, y, z);
+      vpColVector pts_3d_tf = T*pts_3d;
+      caoPoints[k].setWorldCoordinates(pts_3d_tf[0], pts_3d_tf[1], pts_3d_tf[2]);
     }
 
     removeComment(fileId);

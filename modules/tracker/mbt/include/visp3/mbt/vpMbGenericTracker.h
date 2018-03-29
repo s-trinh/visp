@@ -193,11 +193,13 @@ public:
   virtual void loadConfigFile(const std::string &configFile1, const std::string &configFile2);
   virtual void loadConfigFile(const std::map<std::string, std::string> &mapOfConfigFiles);
 
-  using vpMbTracker::loadModel;
-  virtual void loadModel(const std::string &modelFile, const bool verbose = false);
+  //TODO:
+//  using vpMbTracker::loadModel;
+  virtual void loadModel(const std::string &modelFile, const bool verbose = false, const vpHomogeneousMatrix &T=vpHomogeneousMatrix());
   virtual void loadModel(const std::string &modelFile1, const std::string &modelFile2, const bool verbose = false);
   virtual void loadModel(const std::map<std::string, std::string> &mapOfModelFiles, const bool verbose = false);
 
+  //TODO:
   virtual void reInitModel(const vpImage<unsigned char> &I, const std::string &cad_name,
                            const vpHomogeneousMatrix &cMo_, const bool verbose = false);
   virtual void reInitModel(const vpImage<unsigned char> &I1, const vpImage<unsigned char> &I2,
