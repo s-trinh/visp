@@ -105,7 +105,8 @@ public:
   enum RANSAC_FILTER_FLAGS {
     NO_FILTER,
     PREFILTER_DEGENERATE_POINTS, /*!< Remove degenerate points (same 3D or 2D coordinates) before the RANSAC. */
-    CHECK_DEGENERATE_POINTS      /*!< Check for degenerate points during the RANSAC. */
+    CHECK_DEGENERATE_POINTS,     /*!< Check for degenerate points during the RANSAC. */
+    CHECK_DUPLICATE_POINTS      /*!< Check for duplicate points during the RANSAC. */
   };
 
   unsigned int npt;         //!< Number of point used in pose computation
@@ -354,6 +355,12 @@ public:
                         const unsigned int &numberOfInlierToReachAConsensus, const double &threshold,
                         unsigned int &ninliers, std::vector<vpPoint> &listInliers, vpHomogeneousMatrix &cMo,
                         const int &maxNbTrials=10000, const bool useParallelRansac=true, const unsigned int nthreads=0);
+
+  //TODO:
+  static void findMatch2(std::vector<vpPoint> &p2D, std::vector<vpPoint> &p3D,
+                         const unsigned int &numberOfInlierToReachAConsensus, const double &threshold,
+                         unsigned int &ninliers, std::vector<vpPoint> &listInliers, vpHomogeneousMatrix &cMo,
+                         const int &maxNbTrials=10000, const bool useParallelRansac=true, const unsigned int nthreads=0);
 };
 
 #endif
