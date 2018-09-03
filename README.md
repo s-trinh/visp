@@ -46,3 +46,6 @@ To cite the generic model-based tracker:
 
 Please read before starting work on a pull request: http://visp.inria.fr/contributing-code/
 
+#### CLA
+You must sign the Contributor License Agreement (CLA) after submitting a pull request.
+
