@@ -54,7 +54,7 @@ install:
   - ps: >-
       if (${env:CMAKE_GENERATOR} -imatch "Visual Studio 15 2017 Win64") {
         echo "Extracting OpenCV Visual Studio to C:\projects\deps ..."
-        7z x ${env:VISP_OPENCV_MINGW_FILE} -y -o"C:\projects\deps\opencv-4.0.0-beta-vc14_vc15"
+        7z x ${env:VISP_OPENCV_VS2015_2017_FILE} -y -o"C:\projects\deps\opencv-4.0.0-beta-vc14_vc15"
       }
 
   #- ps: >-
