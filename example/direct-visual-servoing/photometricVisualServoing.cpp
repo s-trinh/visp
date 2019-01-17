@@ -176,6 +176,23 @@ bool getOptions(int argc, const char **argv, std::string &ipath, bool &click_all
 
 int main(int argc, const char **argv)
 {
+  {
+    vpImage<unsigned char> I1(1, 16), I2(1, 16), Idiff, Idiff2;
+    for (unsigned int i = 0; i < I1.getSize(); i++) {
+      I1.bitmap[i] = i;
+      I2.bitmap[i] = 2*i;
+    }
+
+    vpImageTools::imageDifference(I1, I2, Idiff);
+    std::cout << "Idiff:\n" << Idiff << std::endl;
+
+    vpImageTools::imageDifference(I1, I2, Idiff2);
+    std::cout << "Idiff2:\n" << Idiff2 << std::endl;
+
+  //  return 0;
+  }
+
+
   try {
     std::string env_ipath;
     std::string opt_ipath;
@@ -321,24 +338,29 @@ int main(int argc, const char **argv)
     }
 #endif
 
-    vpImage<unsigned char> Idiff;
+    vpImage<unsigned char> Idiff, Idiff2;
     Idiff = I;
+    Idiff2 =I;
 
     vpImageTools::imageDifference(I, Id, Idiff);
 
 // Affiche de l'image de difference
 #if defined VISP_HAVE_X11
-    vpDisplayX d1;
+    vpDisplayX d1, d2;
 #elif defined VISP_HAVE_GDI
-    vpDisplayGDI d1;
+    vpDisplayGDI d1, d2;
 #elif defined VISP_HAVE_GTK
-    vpDisplayGTK d1;
+    vpDisplayGTK d1, d2;
 #endif
 #if defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_GTK)
     if (opt_display) {
       d1.init(Idiff, 40 + (int)I.getWidth(), 10, "photometric visual servoing : s-s* ");
       vpDisplay::display(Idiff);
       vpDisplay::flush(Idiff);
+
+      d2.init(Idiff2, 40 + (int)I.getWidth(), 10+I.getHeight(), "photometric visual servoing : s-s* ");
+      vpDisplay::display(Idiff2);
+      vpDisplay::flush(Idiff2);
     }
 #endif
     // create the robot (here a simulated free flying camera)
@@ -412,6 +434,7 @@ int main(int argc, const char **argv)
     int iterGN = 90; // swicth to Gauss Newton after iterGN iterations
 
     double normeError = 0;
+    double t_regular = 0.0, t_sse = 0.0;
     do {
       std::cout << "--------------------------------------------" << iter++ << std::endl;
 
@@ -424,11 +447,22 @@ int main(int argc, const char **argv)
         vpDisplay::flush(I);
       }
 #endif
+
+      double t = vpTime::measureTimeMs();
       vpImageTools::imageDifference(I, Id, Idiff);
+      t_regular += vpTime::measureTimeMs() - t;
+
+      t = vpTime::measureTimeMs();
+      vpImageTools::imageDifference(I, Id, Idiff2);
+      t_sse += vpTime::measureTimeMs() - t;
+
 #if defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_GTK)
       if (opt_display) {
         vpDisplay::display(Idiff);
         vpDisplay::flush(Idiff);
+
+        vpDisplay::display(Idiff2);
+        vpDisplay::flush(Idiff2);
       }
 #endif
       // Compute current visual feature
@@ -470,6 +504,9 @@ int main(int argc, const char **argv)
 
     v = 0;
     robot.setVelocity(vpRobot::CAMERA_FRAME, v);
+
+    std::cout << "t_regular: " << t_regular << " ms" << std::endl;
+    std::cout << "t_sse: " << t_sse << " ms" << std::endl;
 
     return EXIT_SUCCESS;
   } catch (const vpException &e) {
