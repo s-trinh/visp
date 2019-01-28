@@ -174,6 +174,51 @@ bool getOptions(int argc, const char **argv, std::string &ipath, unsigned int &w
 
 int main(int argc, const char **argv)
 {
+  {
+    const std::string input = argv[1];
+    const double scale = argc > 2 ? std::atof(argv[2]) : 2.0;
+    std::cout << "scale: " << scale << std::endl;
+    {
+      vpImage<unsigned char> I;
+      vpImageIo::read(I, input);
+      vpImage<unsigned char> I_resize(I.getHeight()*scale, I.getWidth()*scale), I_resize2(I.getHeight()*scale, I.getWidth()*scale);
+
+      double t = vpTime::measureTimeMs();
+      vpImageTools::resize(I, I_resize, vpImageTools::INTERPOLATION_NEAREST);
+      t = vpTime::measureTimeMs() - t;
+      std::cout << "Original resize: " << t << " ms" << std::endl;
+
+      t = vpTime::measureTimeMs();
+      vpImageTools::resize2(I, I_resize2);
+      t = vpTime::measureTimeMs() - t;
+      std::cout << "New resize: " << t << " ms" << std::endl;
+
+      vpImageIo::write(I_resize, "resize.png");
+      vpImageIo::write(I_resize2, "resize2.png");
+    }
+
+    {
+      vpImage<vpRGBa> I;
+      vpImageIo::read(I, input);
+      vpImage<vpRGBa> I_resize(I.getHeight()*scale, I.getWidth()*scale), I_resize2(I.getHeight()*scale, I.getWidth()*scale);
+
+      double t = vpTime::measureTimeMs();
+      vpImageTools::resize(I, I_resize, vpImageTools::INTERPOLATION_LINEAR);
+      t = vpTime::measureTimeMs() - t;
+      std::cout << "Original resize: " << t << " ms" << std::endl;
+
+      t = vpTime::measureTimeMs();
+      vpImageTools::resize2(I, I_resize2);
+      t = vpTime::measureTimeMs() - t;
+      std::cout << "New resize: " << t << " ms" << std::endl;
+
+      vpImageIo::write(I_resize, "resize_color.png");
+      vpImageIo::write(I_resize2, "resize_color2.png");
+    }
+
+    return 0;
+  }
+
   try {
     std::string env_ipath;
     std::string opt_ipath;
