@@ -178,43 +178,82 @@ int main(int argc, const char **argv)
     const std::string input = argv[1];
     const double scale = argc > 2 ? std::atof(argv[2]) : 2.0;
     std::cout << "scale: " << scale << std::endl;
+    const unsigned int nThreads = argc > 3 ? std::atoi(argv[3]) : 0;
+    std::cout << "nThreads: " << nThreads << std::endl;
+
     {
       vpImage<unsigned char> I;
       vpImageIo::read(I, input);
-      vpImage<unsigned char> I_resize(I.getHeight()*scale, I.getWidth()*scale), I_resize2(I.getHeight()*scale, I.getWidth()*scale);
+      vpImage<unsigned char> I_resize(I.getHeight()*scale, I.getWidth()*scale);
 
       double t = vpTime::measureTimeMs();
-      vpImageTools::resize(I, I_resize, vpImageTools::INTERPOLATION_NEAREST);
-      t = vpTime::measureTimeMs() - t;
-      std::cout << "Original resize: " << t << " ms" << std::endl;
-
-      t = vpTime::measureTimeMs();
-      vpImageTools::resize2(I, I_resize2);
+      vpImageTools::resize(I, I_resize, vpImageTools::INTERPOLATION_NEAREST, nThreads);
       t = vpTime::measureTimeMs() - t;
       std::cout << "New resize: " << t << " ms" << std::endl;
 
-      vpImageIo::write(I_resize, "resize.png");
-      vpImageIo::write(I_resize2, "resize2.png");
+      cv::Mat img, img_resize;
+      vpImageConvert::convert(I, img);
+      t = vpTime::measureTimeMs();
+      cv::resize(img, img_resize, cv::Size(), scale, scale, cv::INTER_LINEAR);
+      t = vpTime::measureTimeMs() - t;
+      std::cout << "OpenCV resize: " << t << " ms" << std::endl;
+
+      vpImageIo::write(I_resize, "resize.jpg");
+      cv::imwrite("resize3.jpg", img_resize);
     }
 
     {
       vpImage<vpRGBa> I;
       vpImageIo::read(I, input);
-      vpImage<vpRGBa> I_resize(I.getHeight()*scale, I.getWidth()*scale), I_resize2(I.getHeight()*scale, I.getWidth()*scale);
+      vpImage<vpRGBa> I_resize(I.getHeight()*scale, I.getWidth()*scale);
 
       double t = vpTime::measureTimeMs();
-      vpImageTools::resize(I, I_resize, vpImageTools::INTERPOLATION_LINEAR);
+      vpImageTools::resize(I, I_resize, vpImageTools::INTERPOLATION_LINEAR, nThreads);
       t = vpTime::measureTimeMs() - t;
       std::cout << "Original resize: " << t << " ms" << std::endl;
 
+      cv::Mat img, img_resize;
+      vpImageConvert::convert(I, img);
       t = vpTime::measureTimeMs();
-      vpImageTools::resize2(I, I_resize2);
+      cv::resize(img, img_resize, cv::Size(), scale, scale, cv::INTER_LINEAR);
       t = vpTime::measureTimeMs() - t;
-      std::cout << "New resize: " << t << " ms" << std::endl;
+      std::cout << "OpenCV resize: " << t << " ms" << std::endl;
 
-      vpImageIo::write(I_resize, "resize_color.png");
-      vpImageIo::write(I_resize2, "resize_color2.png");
+      vpImageIo::write(I_resize, "resize_color.jpg");
+      cv::imwrite("resize_color3.jpg", img_resize);
+
+      vpImage<vpRGBa> I_resize2(I.getHeight()*scale, I.getWidth()*scale);
+      vpImageTools::resize2(I, I_resize2);
+      vpImageIo::write(I_resize2, "resize_color2.jpg");
     }
+
+//    {
+////      unsigned int width = 640, height = 480;
+////      vpImage<vpRGBa> I(height, width), I_resize(height*2, width*2), I_resize2(height*2, width*2);
+
+//      vpImage<vpRGBa> I;
+//      vpImageIo::read(I, input);
+//      vpImage<vpRGBa> I_resize(I.getHeight()*scale, I.getWidth()*scale);
+//      vpImage<vpRGBa> I_resize2(I.getHeight()*scale, I.getWidth()*scale);
+
+////      for (unsigned int i = 0; i < I.getHeight(); i++) {
+////        for (unsigned int j = 0; j < I.getWidth(); j++) {
+////          I[i][j] = vpRGBa(i * I.getWidth() + j);
+//////          I[i][j] = vpRGBa(255);
+////        }
+////      }
+
+//      vpImageTools::resize(I, I_resize, vpImageTools::INTERPOLATION_LINEAR, 1);
+//      vpImageTools::resize2(I, I_resize2);
+
+//      vpImageIo::write(I_resize, "I_resize.jpg");
+//      vpImageIo::write(I_resize2, "I_resize2.jpg");
+
+////      std::cout << "I:\n" << I << std::endl;
+////      std::cout << "\nI_resize:\n" << I_resize << std::endl;
+////      std::cout << "\nI_resize2:\n" << I_resize2 << std::endl;
+//      std::cout << "\n(I_resize == I_resize2)? " << (I_resize == I_resize2) << std::endl;
+//    }
 
     return 0;
   }

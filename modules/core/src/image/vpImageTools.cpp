@@ -850,7 +850,11 @@ float vpImageTools::lerp(const float A, const float B, const float t) {
   return A * (1.0f - t) + B * t;
 }
 
-int64_t vpImageTools::lerp(int64_t A, int64_t B, int64_t t, int64_t t_1) {
+int32_t vpImageTools::lerp(int32_t A, int32_t B, int32_t t, int32_t t_1) {
+  return A * t_1 + B * t;
+}
+
+int64_t vpImageTools::lerp2(int64_t A, int64_t B, int64_t t, int64_t t_1) {
   return A * t_1 + B * t;
 }
 
