@@ -146,6 +146,13 @@ vpRowVector &vpRowVector::operator=(vpRowVector &&other)
 
   return *this;
 }
+
+vpRowVector &vpRowVector::operator=(const std::initializer_list<double> &list)
+{
+  resize(1, static_cast<unsigned int>(list.size()), false);
+  std::copy(list.begin(), list.end(), data);
+  return *this;
+}
 #endif
 
 /*!

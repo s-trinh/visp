@@ -93,7 +93,7 @@ public:
   /*!
   Copy constructor of a 2D array.
   */
-  vpArray2D<Type>(const vpArray2D<Type> &A) : rowNum(0), colNum(0), rowPtrs(NULL), dsize(0), data(NULL)
+  vpArray2D<Type>(const vpArray2D<Type> &A) : vpArray2D<Type>()
   {
     resize(A.rowNum, A.colNum, false, false);
     memcpy(data, A.data, rowNum * colNum * sizeof(Type));
@@ -105,7 +105,7 @@ public:
   \param r : Array number of rows.
   \param c : Array number of columns.
   */
-  vpArray2D<Type>(unsigned int r, unsigned int c) : rowNum(0), colNum(0), rowPtrs(NULL), dsize(0), data(NULL)
+  vpArray2D<Type>(unsigned int r, unsigned int c) : vpArray2D<Type>()
   {
     resize(r, c);
   }
@@ -117,7 +117,7 @@ public:
   \param c : Array number of columns.
   \param val : Each element of the array is set to \e val.
   */
-  vpArray2D<Type>(unsigned int r, unsigned int c, Type val) : rowNum(0), colNum(0), rowPtrs(NULL), dsize(0), data(NULL)
+  vpArray2D<Type>(unsigned int r, unsigned int c, Type val) : vpArray2D<Type>()
   {
     resize(r, c, false, false);
     *this = val;
@@ -125,24 +125,69 @@ public:
 
 #ifdef VISP_HAVE_CXX11
   //! C++11 list initialization: https://en.cppreference.com/w/cpp/language/list_initialization
-  vpArray2D<Type>(const std::initializer_list<Type> &list) : rowNum(0), colNum(0), rowPtrs(NULL), dsize(0), data(NULL)
+  explicit vpArray2D<Type>(const std::initializer_list<Type> &list) : vpArray2D<Type>()
   {
     resize(1, static_cast<unsigned int>(list.size()), false, false);
     std::copy(list.begin(), list.end(), data);
   }
 
   //! C++11 list initialization: https://en.cppreference.com/w/cpp/language/list_initialization
-  vpArray2D<Type>(unsigned int nrows, unsigned int ncols, const std::initializer_list<Type> &list)
+  explicit vpArray2D<Type>(unsigned int nrows, unsigned int ncols, const std::initializer_list<Type> &list)
     : rowNum(0), colNum(0), rowPtrs(NULL), dsize(0), data(NULL)
   {
-    if (nrows * ncols != list.size()) {
+    if (nrows * ncols != static_cast<unsigned int>(list.size())) {
       std::ostringstream oss;
       oss << "Cannot create a vpArray2D of size (" << nrows << ", " << ncols
-          << ") with a list of size " << list.size() << nrows;
+          << ") with a list of size " << list.size();
       throw vpException(vpException::dimensionError, oss.str());
     }
+
     resize(nrows, ncols, false, false);
     std::copy(list.begin(), list.end(), data);
+  }
+
+  explicit vpArray2D<Type>(const std::initializer_list<std::initializer_list<Type> > &lists) : vpArray2D<Type>()
+  {
+    unsigned int nrows = static_cast<unsigned int>(lists.size()), ncols = 0;
+    for (auto& l : lists) {
+      if (static_cast<unsigned int>(l.size()) > ncols) {
+        ncols = static_cast<unsigned int>(l.size());
+      }
+    }
+
+    resize(nrows, ncols, false, false);
+    auto it = lists.begin();
+    for (unsigned int i = 0; i < rowNum; i++, ++it) {
+      std::copy(it->begin(), it->end(), rowPtrs[i]);
+    }
+  }
+
+  vpArray2D<Type> &operator=(const std::initializer_list<Type> &list)
+  {
+    if (dsize != static_cast<unsigned int>(list.size())) {
+      resize(1, static_cast<unsigned int>(list.size()), false, false);
+    }
+    std::copy(list.begin(), list.end(), data);
+
+    return *this;
+  }
+
+  vpArray2D<Type> &operator=(const std::initializer_list<std::initializer_list<Type> > &lists)
+  {
+    unsigned int nrows = static_cast<unsigned int>(lists.size()), ncols = 0;
+    for (auto& l : lists) {
+      if (static_cast<unsigned int>(l.size()) > ncols) {
+        ncols = static_cast<unsigned int>(l.size());
+      }
+    }
+
+    resize(nrows, ncols, false, false);
+    auto it = lists.begin();
+    for (unsigned int i = 0; i < rowNum; i++, ++it) {
+      std::copy(it->begin(), it->end(), rowPtrs[i]);
+    }
+
+    return *this;
   }
 #endif
 
@@ -274,6 +319,11 @@ public:
 
   void reshape(unsigned int nrows, unsigned int ncols)
   {
+    if (dsize == 0) {
+      resize(nrows, ncols);
+      return;
+    }
+
     if (nrows * ncols != dsize) {
       std::ostringstream oss;
       oss << "Cannot reshape array of total size " << dsize
@@ -281,19 +331,15 @@ public:
       throw vpException(vpException::dimensionError, oss.str());
     }
 
-    if (dsize == 0) {
-      return;
-    }
+    rowNum = nrows;
+    colNum = ncols;
 
-    this->rowNum = nrows;
-    this->colNum = ncols;
-
-    this->rowPtrs = (Type **)realloc(this->rowPtrs, nrows * sizeof(Type *));
+    rowPtrs = reinterpret_cast<Type **>(realloc(rowPtrs, nrows * sizeof(Type *)));
     // Update rowPtrs
     {
       Type **t_ = rowPtrs;
       for (unsigned int i = 0; i < dsize; i += ncols) {
-        *t_++ = this->data + i;
+        *t_++ = data + i;
       }
     }
   }

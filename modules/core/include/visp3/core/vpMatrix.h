@@ -157,25 +157,40 @@ vpMatrix M(R);
   vpMatrix(vpMatrix &&A);
 
   //! C++11 list initialization: https://en.cppreference.com/w/cpp/language/list_initialization
-  vpMatrix(const std::initializer_list<double> &list) : vpArray2D<double>(list) { }
+  explicit vpMatrix(const std::initializer_list<double> &list) : vpArray2D<double>(list) { }
 
-  vpMatrix(unsigned int nrows, unsigned int ncols, const std::initializer_list<double> &list)
+  explicit vpMatrix(unsigned int nrows, unsigned int ncols, const std::initializer_list<double> &list)
     : vpArray2D<double>(nrows, ncols, list) {}
 
-  vpMatrix(const std::initializer_list<std::initializer_list<double> > &lists) : vpArray2D<double>()
+  explicit vpMatrix(const std::initializer_list<std::initializer_list<double> > &lists) : vpArray2D<double>(lists) { }
+
+  vpMatrix& operator=(const std::initializer_list<double> &list)
+  {
+    if (dsize != static_cast<unsigned int>(list.size())) {
+      resize(1, static_cast<unsigned int>(list.size()), false, false);
+    }
+
+    std::copy(list.begin(), list.end(), data);
+
+    return *this;
+  }
+
+  vpMatrix& operator=(const std::initializer_list<std::initializer_list<double> > &lists)
   {
     unsigned int nrows = static_cast<unsigned int>(lists.size()), ncols = 0;
     for (auto& l : lists) {
-      if (static_cast<unsigned int>(l.size()) > this->colNum) {
+      if (static_cast<unsigned int>(l.size()) > ncols) {
         ncols = static_cast<unsigned int>(l.size());
       }
     }
 
     resize(nrows, ncols, false, false);
     auto it = lists.begin();
-    for (unsigned int i = 0; i < this->rowNum; i++, ++it) {
-      std::copy(it->begin(), it->end(), this->rowPtrs[i]);
+    for (unsigned int i = 0; i < rowNum; i++, ++it) {
+      std::copy(it->begin(), it->end(), rowPtrs[i]);
     }
+
+    return *this;
   }
 #endif
 

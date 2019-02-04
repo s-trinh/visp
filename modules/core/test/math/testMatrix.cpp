@@ -239,51 +239,6 @@ vpMatrix mat_mul_twist_matrix(const vpMatrix &A, const vpVelocityTwistMatrix &V)
 
 int main(int argc, char *argv[])
 {
-  {
-    vpArray2D<float> a{ 1.f, 2.f, 3.f };
-    std::cout << "a:\n" << a << std::endl;
-    a = { -1, -2, -3, 4, 5.5, 6.0f };
-    std::cout << "a:\n" << a << std::endl;
-    a.reshape(2, 3);
-    std::cout << "a.reshape(2,3):\n" << a << std::endl;
-    a.reshape(3, 2);
-    std::cout << "a = a.reshape(3, 2):\n" << a << std::endl;
-
-    vpMatrix m{1, 2, 3};
-    std::cout << "m:\n" << m << std::endl;
-    m = { -1, -2, -3, -4 };
-    std::cout << "m:\n" << m << std::endl;
-    m.reshape(2, 2);
-    std::cout << "m:\n" << m << std::endl;
-
-    vpMatrix m2(3, 2, { 1, 2, 3, 4, 5, 6 });
-    std::cout << "m2:\n" << m2 << std::endl;
-
-    vpMatrix m3{ {1,2,3},{4,5,6},{7,8,9} };
-    std::cout << "m3:\n" << m3 << std::endl;
-
-    vpMatrix m4;
-    m4 << 1, 2, 3;
-    std::cout << "m4:\n" << m4 << std::endl;
-    m4 = { {1,2,3},{4,5,6},{7,8,9} };
-    std::cout << "m4:\n" << m4 << std::endl;
-    m4 << -1, -2, -3, -4;
-    std::cout << "m4:\n" << m4 << std::endl;
-
-    vpColVector c{ 1, 2, 3 };
-    std::cout << "c:\n" << c << std::endl;
-    c = { -1, -2, -3 };
-    std::cout << "c:\n" << c << std::endl;
-
-    vpRowVector r{ 1, 2, 3, 4, 5, 6 };
-    std::cout << "r:\n" << r << std::endl;
-    r = { -1, -2, -3 };
-    std::cout << "r:\n" << r << std::endl;
-
-    return 0;
-  }
-
-
   try {
     bool ctest = true;
     for (int i = 1; i < argc; i++) {
