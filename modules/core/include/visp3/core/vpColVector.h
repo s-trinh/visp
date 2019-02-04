@@ -98,8 +98,13 @@ public:
   vpColVector(const vpMatrix &M, unsigned int j);
   vpColVector(const std::vector<double> &v);
   vpColVector(const std::vector<float> &v);
-#ifdef VISP_HAVE_CPP11_COMPATIBILITY
+#ifdef VISP_HAVE_CXX11
   vpColVector(vpColVector &&v);
+  //! C++11 list initialization: https://en.cppreference.com/w/cpp/language/list_initialization
+  vpColVector(const std::initializer_list<double> &list)
+    : vpArray2D<double>(static_cast<unsigned int>(list.size()), 1) {
+    std::copy(list.begin(), list.end(), data);
+  }
 #endif
   /*!
     Destructor.
@@ -194,7 +199,7 @@ public:
   vpColVector &operator=(const std::vector<double> &v);
   vpColVector &operator=(const std::vector<float> &v);
   vpColVector &operator=(double x);
-#ifdef VISP_HAVE_CPP11_COMPATIBILITY
+#ifdef VISP_HAVE_CXX11
   vpColVector &operator=(vpColVector &&v);
 #endif
   //! Comparison operator.

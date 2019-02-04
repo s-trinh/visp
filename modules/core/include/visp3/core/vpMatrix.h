@@ -118,6 +118,7 @@ public:
     zero.
   */
   vpMatrix() : vpArray2D<double>(0, 0) {}
+
   /*!
     Constructor that initialize a matrix of double with 0.
 
@@ -125,6 +126,7 @@ public:
     \param c : Matrix number of columns.
   */
   vpMatrix(unsigned int r, unsigned int c) : vpArray2D<double>(r, c) {}
+
   /*!
     Constructor that initialize a matrix of double with \e val.
 
@@ -134,6 +136,7 @@ public:
   */
   vpMatrix(unsigned int r, unsigned int c, double val) : vpArray2D<double>(r, c, val) {}
   vpMatrix(const vpMatrix &M, unsigned int r, unsigned int c, unsigned int nrows, unsigned int ncols);
+
   /*!
      Create a matrix from a 2D array that could be one of the following
      container that inherit from vpArray2D such as vpMatrix, vpRotationMatrix,
@@ -148,11 +151,47 @@ vpMatrix M(R);
    */
   vpMatrix(const vpArray2D<double> &A) : vpArray2D<double>(A) {}
 
-#ifdef VISP_HAVE_CPP11_COMPATIBILITY
+#ifdef VISP_HAVE_CXX11
   vpMatrix(const vpMatrix &A) : vpArray2D<double>(A) {}
 
   vpMatrix(vpMatrix &&A);
+
+  //! C++11 list initialization: https://en.cppreference.com/w/cpp/language/list_initialization
+  vpMatrix(const std::initializer_list<double> &list) : vpArray2D<double>(list) { }
+
+  vpMatrix(unsigned int nrows, unsigned int ncols, const std::initializer_list<double> &list)
+    : vpArray2D<double>(nrows, ncols, list) {}
+
+  vpMatrix(const std::initializer_list<std::initializer_list<double> > &lists) : vpArray2D<double>()
+  {
+    unsigned int nrows = static_cast<unsigned int>(lists.size()), ncols = 0;
+    for (auto& l : lists) {
+      if (static_cast<unsigned int>(l.size()) > this->colNum) {
+        ncols = static_cast<unsigned int>(l.size());
+      }
+    }
+
+    resize(nrows, ncols, false, false);
+    auto it = lists.begin();
+    for (unsigned int i = 0; i < this->rowNum; i++, ++it) {
+      std::copy(it->begin(), it->end(), this->rowPtrs[i]);
+    }
+  }
 #endif
+
+  vpMatrix& operator<<(double val)
+  {
+    resize(1, 1, false, false);
+    this->rowPtrs[0][0] = val;
+    return *this;
+  }
+
+  vpMatrix& operator,(double val)
+  {
+    resize(1, colNum + 1, false, false);
+    rowPtrs[0][colNum - 1] = val;
+    return *this;
+  }
 
   //! Destructor (Memory de-allocation)
   virtual ~vpMatrix() {}

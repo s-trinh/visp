@@ -89,6 +89,7 @@ public:
   Number of columns and rows are set to zero.
   */
   vpArray2D<Type>() : rowNum(0), colNum(0), rowPtrs(NULL), dsize(0), data(NULL) {}
+
   /*!
   Copy constructor of a 2D array.
   */
@@ -97,6 +98,7 @@ public:
     resize(A.rowNum, A.colNum, false, false);
     memcpy(data, A.data, rowNum * colNum * sizeof(Type));
   }
+
   /*!
   Constructor that initializes a 2D array with 0.
 
@@ -107,6 +109,7 @@ public:
   {
     resize(r, c);
   }
+
   /*!
   Constructor that initialize a 2D array with \e val.
 
@@ -119,6 +122,30 @@ public:
     resize(r, c, false, false);
     *this = val;
   }
+
+#ifdef VISP_HAVE_CXX11
+  //! C++11 list initialization: https://en.cppreference.com/w/cpp/language/list_initialization
+  vpArray2D<Type>(const std::initializer_list<Type> &list) : rowNum(0), colNum(0), rowPtrs(NULL), dsize(0), data(NULL)
+  {
+    resize(1, static_cast<unsigned int>(list.size()), false, false);
+    std::copy(list.begin(), list.end(), data);
+  }
+
+  //! C++11 list initialization: https://en.cppreference.com/w/cpp/language/list_initialization
+  vpArray2D<Type>(unsigned int nrows, unsigned int ncols, const std::initializer_list<Type> &list)
+    : rowNum(0), colNum(0), rowPtrs(NULL), dsize(0), data(NULL)
+  {
+    if (nrows * ncols != list.size()) {
+      std::ostringstream oss;
+      oss << "Cannot create a vpArray2D of size (" << nrows << ", " << ncols
+          << ") with a list of size " << list.size() << nrows;
+      throw vpException(vpException::dimensionError, oss.str());
+    }
+    resize(nrows, ncols, false, false);
+    std::copy(list.begin(), list.end(), data);
+  }
+#endif
+
   /*!
   Destructor that desallocate memory.
   */
@@ -156,6 +183,7 @@ public:
   inline unsigned int getRows() const { return rowNum; }
   //! Return the number of elements of the 2D array.
   inline unsigned int size() const { return colNum * rowNum; }
+
   /*!
   Set the size of the array and initialize all the values to zero.
 
@@ -243,6 +271,33 @@ public:
       }
     }
   }
+
+  void reshape(unsigned int nrows, unsigned int ncols)
+  {
+    if (nrows * ncols != dsize) {
+      std::ostringstream oss;
+      oss << "Cannot reshape array of total size " << dsize
+          << " into shape (" << nrows << ", " << ncols << ")";
+      throw vpException(vpException::dimensionError, oss.str());
+    }
+
+    if (dsize == 0) {
+      return;
+    }
+
+    this->rowNum = nrows;
+    this->colNum = ncols;
+
+    this->rowPtrs = (Type **)realloc(this->rowPtrs, nrows * sizeof(Type *));
+    // Update rowPtrs
+    {
+      Type **t_ = rowPtrs;
+      for (unsigned int i = 0; i < dsize; i += ncols) {
+        *t_++ = this->data + i;
+      }
+    }
+  }
+
   //! Set all the elements of the array to \e x.
   vpArray2D<Type> &operator=(Type x)
   {
