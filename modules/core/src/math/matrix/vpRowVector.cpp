@@ -124,6 +124,30 @@ vpRowVector &vpRowVector::operator=(double x)
   return *this;
 }
 
+#ifdef VISP_HAVE_CXX11
+vpRowVector &vpRowVector::operator=(vpRowVector &&other)
+{
+  if (this != &other) {
+    free(data);
+    free(rowPtrs);
+
+    rowNum = other.rowNum;
+    colNum = other.colNum;
+    rowPtrs = other.rowPtrs;
+    dsize = other.dsize;
+    data = other.data;
+
+    other.rowNum = 0;
+    other.colNum = 0;
+    other.rowPtrs = NULL;
+    other.dsize = 0;
+    other.data = NULL;
+  }
+
+  return *this;
+}
+#endif
+
 /*!
 
   Multiply a row vector by a column vector.
@@ -501,6 +525,23 @@ vpRowVector::vpRowVector(const vpRowVector &v, unsigned int c, unsigned int ncol
 {
   init(v, c, ncols);
 }
+
+#ifdef VISP_HAVE_CXX11
+vpRowVector::vpRowVector(vpRowVector &&v) : vpArray2D<double>()
+{
+  rowNum = v.rowNum;
+  colNum = v.colNum;
+  rowPtrs = v.rowPtrs;
+  dsize = v.dsize;
+  data = v.data;
+
+  v.rowNum = 0;
+  v.colNum = 0;
+  v.rowPtrs = NULL;
+  v.dsize = 0;
+  v.data = NULL;
+}
+#endif
 
 /*!
   Normalise the vector given as input parameter and return the normalized

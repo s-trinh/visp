@@ -53,7 +53,6 @@ class vpColVector;
   \file vpRowVector.h
   \brief Definition of row vector class as well
   as a set of operations on these vectors.
-
 */
 
 /*!
@@ -87,6 +86,11 @@ public:
   vpRowVector(const vpMatrix &M, unsigned int i);
   vpRowVector(const std::vector<double> &v);
   vpRowVector(const std::vector<float> &v);
+#ifdef VISP_HAVE_CXX11
+  vpRowVector(vpRowVector &&v);
+  //! C++11 list initialization: https://en.cppreference.com/w/cpp/language/list_initialization
+  vpRowVector(const std::initializer_list<double> &list) : vpArray2D<double>(list) { }
+#endif
   /*!
     Destructor.
   */
@@ -174,6 +178,9 @@ public:
   vpRowVector &operator=(const std::vector<double> &v);
   vpRowVector &operator=(const std::vector<float> &v);
   vpRowVector &operator=(const double x);
+#ifdef VISP_HAVE_CXX11
+  vpRowVector &operator=(vpRowVector &&v);
+#endif
 
   double operator*(const vpColVector &x) const;
   vpRowVector operator*(const vpMatrix &M) const;
