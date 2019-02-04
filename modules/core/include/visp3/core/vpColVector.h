@@ -100,7 +100,6 @@ public:
   vpColVector(const std::vector<float> &v);
 #ifdef VISP_HAVE_CXX11
   vpColVector(vpColVector &&v);
-  //! C++11 list initialization: https://en.cppreference.com/w/cpp/language/list_initialization
   vpColVector(const std::initializer_list<double> &list)
     : vpArray2D<double>(static_cast<unsigned int>(list.size()), 1) {
     std::copy(list.begin(), list.end(), data);
@@ -201,6 +200,7 @@ public:
   vpColVector &operator=(double x);
 #ifdef VISP_HAVE_CXX11
   vpColVector &operator=(vpColVector &&v);
+  vpColVector &operator=(const std::initializer_list<double> &list);
 #endif
   //! Comparison operator.
   bool operator==(const vpColVector &v) const;

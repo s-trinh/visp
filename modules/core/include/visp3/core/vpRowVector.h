@@ -88,7 +88,6 @@ public:
   vpRowVector(const std::vector<float> &v);
 #ifdef VISP_HAVE_CXX11
   vpRowVector(vpRowVector &&v);
-  //! C++11 list initialization: https://en.cppreference.com/w/cpp/language/list_initialization
   vpRowVector(const std::initializer_list<double> &list) : vpArray2D<double>(list) { }
 #endif
   /*!
@@ -180,6 +179,7 @@ public:
   vpRowVector &operator=(const double x);
 #ifdef VISP_HAVE_CXX11
   vpRowVector &operator=(vpRowVector &&v);
+  vpRowVector &operator=(const std::initializer_list<double> &list);
 #endif
 
   double operator*(const vpColVector &x) const;

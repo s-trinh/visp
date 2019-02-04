@@ -671,6 +671,13 @@ vpColVector &vpColVector::operator=(vpColVector &&other)
 
   return *this;
 }
+
+vpColVector& vpColVector::operator=(const std::initializer_list<double> &list)
+{
+  resize(static_cast<unsigned int>(list.size()), false);
+  std::copy(list.begin(), list.end(), data);
+  return *this;
+}
 #endif
 
 bool vpColVector::operator==(const vpColVector &v) const {
