@@ -304,23 +304,21 @@ public:
 
   void reshape(unsigned int nrows, unsigned int ncols)
   {
+    if (dsize == 0) {
+      resize(nrows, ncols);
+      return;
+    }
+
     if (nrows * ncols != dsize) {
       std::ostringstream oss;
       oss << "Cannot reshape array of total size " << dsize
-          << " into shape (" << nrows << ", " << ncols << ")\n"
-          << "Use resize() instead.";
+          << " into shape (" << nrows << ", " << ncols << ")";
       throw vpException(vpException::dimensionError, oss.str());
-    }
-
-    if (dsize == 0) {
-      resize(nrows, ncols, false, false);
-      return;
     }
 
     rowNum = nrows;
     colNum = ncols;
     rowPtrs = reinterpret_cast<Type **>(realloc(rowPtrs, nrows * sizeof(Type *)));
-
     // Update rowPtrs
     Type **t_ = rowPtrs;
     for (unsigned int i = 0; i < dsize; i += ncols) {

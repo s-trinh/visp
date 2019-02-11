@@ -164,6 +164,20 @@ vpMatrix M(R);
   explicit vpMatrix(const std::initializer_list<std::initializer_list<double> > &lists) : vpArray2D<double>(lists) { }
 #endif
 
+  vpMatrix& operator<<(double val)
+  {
+    resize(1, 1, false, false);
+    this->rowPtrs[0][0] = val;
+    return *this;
+  }
+
+  vpMatrix& operator,(double val)
+  {
+    resize(1, colNum + 1, false, false);
+    rowPtrs[0][colNum - 1] = val;
+    return *this;
+  }
+
   //! Destructor (Memory de-allocation)
   virtual ~vpMatrix() {}
 
