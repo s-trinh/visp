@@ -124,14 +124,27 @@ public:
   }
 
 #ifdef VISP_HAVE_CXX11
-  //! C++11 list initialization: https://en.cppreference.com/w/cpp/language/list_initialization
+  vpArray2D<Type>(vpArray2D<Type> &&A)
+  {
+    rowNum = A.rowNum;
+    colNum = A.colNum;
+    rowPtrs = A.rowPtrs;
+    dsize = A.dsize;
+    data = A.data;
+
+    A.rowNum = 0;
+    A.colNum = 0;
+    A.rowPtrs = NULL;
+    A.dsize = 0;
+    A.data = NULL;
+  }
+
   explicit vpArray2D<Type>(const std::initializer_list<Type> &list) : vpArray2D<Type>()
   {
     resize(1, static_cast<unsigned int>(list.size()), false, false);
     std::copy(list.begin(), list.end(), data);
   }
 
-  //! C++11 list initialization: https://en.cppreference.com/w/cpp/language/list_initialization
   explicit vpArray2D<Type>(unsigned int nrows, unsigned int ncols, const std::initializer_list<Type> &list)
     : rowNum(0), colNum(0), rowPtrs(NULL), dsize(0), data(NULL)
   {
@@ -160,34 +173,6 @@ public:
     for (unsigned int i = 0; i < rowNum; i++, ++it) {
       std::copy(it->begin(), it->end(), rowPtrs[i]);
     }
-  }
-
-  vpArray2D<Type> &operator=(const std::initializer_list<Type> &list)
-  {
-    if (dsize != static_cast<unsigned int>(list.size())) {
-      resize(1, static_cast<unsigned int>(list.size()), false, false);
-    }
-    std::copy(list.begin(), list.end(), data);
-
-    return *this;
-  }
-
-  vpArray2D<Type> &operator=(const std::initializer_list<std::initializer_list<Type> > &lists)
-  {
-    unsigned int nrows = static_cast<unsigned int>(lists.size()), ncols = 0;
-    for (auto& l : lists) {
-      if (static_cast<unsigned int>(l.size()) > ncols) {
-        ncols = static_cast<unsigned int>(l.size());
-      }
-    }
-
-    resize(nrows, ncols, false, false);
-    auto it = lists.begin();
-    for (unsigned int i = 0; i < rowNum; i++, ++it) {
-      std::copy(it->begin(), it->end(), rowPtrs[i]);
-    }
-
-    return *this;
   }
 #endif
 
@@ -319,28 +304,27 @@ public:
 
   void reshape(unsigned int nrows, unsigned int ncols)
   {
-    if (dsize == 0) {
-      resize(nrows, ncols);
-      return;
-    }
-
     if (nrows * ncols != dsize) {
       std::ostringstream oss;
       oss << "Cannot reshape array of total size " << dsize
-          << " into shape (" << nrows << ", " << ncols << ")";
+          << " into shape (" << nrows << ", " << ncols << ")\n"
+          << "Use resize() instead.";
       throw vpException(vpException::dimensionError, oss.str());
+    }
+
+    if (dsize == 0) {
+      resize(nrows, ncols, false, false);
+      return;
     }
 
     rowNum = nrows;
     colNum = ncols;
-
     rowPtrs = reinterpret_cast<Type **>(realloc(rowPtrs, nrows * sizeof(Type *)));
+
     // Update rowPtrs
-    {
-      Type **t_ = rowPtrs;
-      for (unsigned int i = 0; i < dsize; i += ncols) {
-        *t_++ = data + i;
-      }
+    Type **t_ = rowPtrs;
+    for (unsigned int i = 0; i < dsize; i += ncols) {
+      *t_++ = data + i;
     }
   }
 
@@ -362,6 +346,58 @@ public:
     }
     return *this;
   }
+
+#ifdef VISP_HAVE_CXX11
+  vpArray2D<Type> &operator=(vpArray2D<Type> &&other)
+  {
+    if (this != &other) {
+      free(data);
+      free(rowPtrs);
+
+      rowNum = other.rowNum;
+      colNum = other.colNum;
+      rowPtrs = other.rowPtrs;
+      dsize = other.dsize;
+      data = other.data;
+
+      other.rowNum = 0;
+      other.colNum = 0;
+      other.rowPtrs = NULL;
+      other.dsize = 0;
+      other.data = NULL;
+    }
+
+    return *this;
+  }
+
+  vpArray2D<Type> &operator=(const std::initializer_list<Type> &list)
+  {
+    if (dsize != static_cast<unsigned int>(list.size())) {
+      resize(1, static_cast<unsigned int>(list.size()), false, false);
+    }
+    std::copy(list.begin(), list.end(), data);
+
+    return *this;
+  }
+
+  vpArray2D<Type> &operator=(const std::initializer_list<std::initializer_list<Type> > &lists)
+  {
+    unsigned int nrows = static_cast<unsigned int>(lists.size()), ncols = 0;
+    for (auto& l : lists) {
+      if (static_cast<unsigned int>(l.size()) > ncols) {
+        ncols = static_cast<unsigned int>(l.size());
+      }
+    }
+
+    resize(nrows, ncols, false, false);
+    auto it = lists.begin();
+    for (unsigned int i = 0; i < rowNum; i++, ++it) {
+      std::copy(it->begin(), it->end(), rowPtrs[i]);
+    }
+
+    return *this;
+  }
+#endif
 
   //! Set element \f$A_{ij} = x\f$ using A[i][j] = x
   inline Type *operator[](unsigned int i) { return rowPtrs[i]; }

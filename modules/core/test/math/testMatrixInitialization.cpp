@@ -52,10 +52,10 @@ int main()
     a.reshape(2, 3);
     std::cout << "a.reshape(2,3):\n" << a << std::endl;
     a.reshape(3, 2);
-    std::cout << "a = a.reshape(3, 2):\n" << a << std::endl;
+    std::cout << "a.reshape(3,2):\n" << a << std::endl;
 
     vpArray2D<float> a2;
-    a2.reshape(2,2);
+    a2.resize(2,2);
     a2 = {1, 2, 3, 4};
     std::cout << "a2:\n" << a2 << std::endl;
 
@@ -117,9 +117,43 @@ int main()
     m1.reshape(1, 4);
     std::cout << "m1:\n" << m1 << std::endl;
 
-    vpMatrix m2(3,3);
+    vpMatrix m2(2,2);
     m2 << 1, 2, 3, 4, 5, 6, 7, 8, 9;
     std::cout << "m2:\n" << m2 << std::endl;
+
+    m2.resize(3, 3, false);
+    std::cout << "m2:\n" << m2 << std::endl;
+
+    m2 << 0.0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11;
+    m2.reshape(2, 6);
+    std::cout << "m2:\n" << m2 << std::endl;
+
+    vpColVector c;
+    c << 1, 2, 3, 4;
+    std::cout << "c: " << c << std::endl;
+
+    try {
+      c.reshape(2, 2);
+      std::cout << "after c.reshape(2, 2): " << c.t() << std::endl;
+      c = c.reshape(2, 2);
+      std::cout << "c:" << c << std::endl;
+    } catch (const vpException &e) {
+      std::cerr << "Exception: c = c.reshape(2, 2);\n" << e.what() << std::endl;
+    }
+
+    vpRowVector r;
+    r << 1, 2, 3;
+    std::cout << "r: " << r << std::endl;
+
+    vpMatrix m = r.reshape(3, 1);
+    std::cout << "m:\n" << m << std::endl;
+
+    try {
+      r.reshape(3, 1);
+      std::cout << "after r.reshape(3, 1): " << r << std::endl;
+    } catch (const vpException &e) {
+      std::cerr << "Exception: r = r.reshape(3, 1);\n" << e.what() << std::endl;
+    }
   }
 
   return  EXIT_SUCCESS;

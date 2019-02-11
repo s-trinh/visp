@@ -224,6 +224,8 @@ public:
 
   vpColVector &operator<<(const vpColVector &v);
   vpColVector &operator<<(double *);
+  vpColVector& operator<<(double val);
+  vpColVector& operator,(double val);
 
   int print(std::ostream &s, unsigned int length, char const *intro = 0) const;
 
@@ -239,7 +241,7 @@ public:
   }
 
   void reshape(vpMatrix &M, const unsigned int &nrows, const unsigned int &ncols);
-  vpMatrix reshape(const unsigned int &nrows, const unsigned int &ncols);
+  vpMatrix reshape(unsigned int nrows, unsigned int ncols);
 
   /*! Modify the size of the column vector.
     \param i : Size of the vector. This value corresponds to the vector number

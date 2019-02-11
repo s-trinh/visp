@@ -198,6 +198,8 @@ public:
   vpRowVector operator-() const;
 
   vpRowVector &operator<<(const vpRowVector &v);
+  vpRowVector& operator<<(double val);
+  vpRowVector& operator,(double val);
 
   int print(std::ostream &s, unsigned int length, char const *intro = 0) const;
   /*!
@@ -210,8 +212,9 @@ public:
 
     (*this) *= r2d;
   }
+
   void reshape(vpMatrix &M, const unsigned int &nrows, const unsigned int &ncols);
-  vpMatrix reshape(const unsigned int &nrows, const unsigned int &ncols);
+  vpMatrix reshape(unsigned int nrows, unsigned int ncols);
 
   /*! Modify the size of the row vector.
     \param i : Size of the vector. This value corresponds to the vector number

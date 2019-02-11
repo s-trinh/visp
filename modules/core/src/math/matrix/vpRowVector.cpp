@@ -451,6 +451,20 @@ vpRowVector &vpRowVector::operator<<(const vpRowVector &v)
   return *this;
 }
 
+vpRowVector& vpRowVector::operator<<(double val)
+{
+  resize(1, false);
+  data[0] = val;
+  return *this;
+}
+
+vpRowVector& vpRowVector::operator,(double val)
+{
+  resize(colNum + 1, false);
+  data[colNum - 1] = val;
+  return *this;
+}
+
 /*!
   Transpose the row vector. The resulting vector becomes a column vector.
 */
@@ -596,7 +610,7 @@ vpRowVector &vpRowVector::normalize()
 
   \sa reshape(vpMatrix &, const unsigned int &, const unsigned int &)
 */
-vpMatrix vpRowVector::reshape(const unsigned int &nrows, const unsigned int &ncols)
+vpMatrix vpRowVector::reshape(unsigned int nrows, unsigned int ncols)
 {
   vpMatrix M(nrows, ncols);
   reshape(M, nrows, ncols);
