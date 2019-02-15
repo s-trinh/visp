@@ -36,7 +36,11 @@ int main(int argc, char **argv)
               << "cao or wrl]" << std::endl;
     std::cout << "Tracker optional config files: " << objectname << ".[ppm]" << std::endl;
 
+#if 0
     vpImage<unsigned char> I;
+#else
+    vpImage<vpRGBa> I;
+#endif
     vpCameraParameters cam;
     vpHomogeneousMatrix cMo;
 

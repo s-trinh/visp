@@ -45,7 +45,11 @@ int main(int argc, char **argv)
     std::cout << "Tracker optional config files: " << objectname << ".[ppm]" << std::endl;
 
     //! [Image]
+#if 0
     vpImage<unsigned char> I;
+#else
+    vpImage<vpRGBa> I;
+#endif
     vpCameraParameters cam;
     //! [Image]
     //! [cMo]
@@ -140,7 +144,7 @@ int main(int argc, char **argv)
       //! [Get pose]
       //! [Display]
       tracker->getCameraParameters(cam);
-      tracker->display(I, cMo, cam, vpColor::red, 2, true);
+      tracker->display(I, cMo, cam, vpColor::red, 2, false);
       //! [Display]
       vpDisplay::displayFrame(I, cMo, cam, 0.025, vpColor::none, 3);
       vpDisplay::displayText(I, 10, 10, "A click to exit...", vpColor::red);

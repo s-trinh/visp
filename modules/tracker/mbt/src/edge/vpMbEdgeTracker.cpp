@@ -1031,9 +1031,19 @@ void vpMbEdgeTracker::testTracking()
  */
 void vpMbEdgeTracker::track(const vpImage<unsigned char> &I)
 {
-  initPyramid(I, Ipyramid);
+  track(&I, NULL);
+}
 
-  //  for (int lvl = ((int)scales.size()-1); lvl >= 0; lvl -= 1)
+void vpMbEdgeTracker::track(const vpImage<vpRGBa> &I)
+{
+  vpImageConvert::convert(I, m_I);
+  track(&m_I, &I);
+}
+
+void vpMbEdgeTracker::track(const vpImage<unsigned char> * const I, const vpImage<vpRGBa> * const I_color)
+{
+  initPyramid(*I, Ipyramid);
+
   unsigned int lvl = (unsigned int)scales.size();
   do {
     lvl--;
@@ -1052,30 +1062,6 @@ void vpMbEdgeTracker::track(const vpImage<unsigned char> &I)
           throw;
         }
 
-        // initialize the vector that contains the error and the matrix that
-        // contains the interaction matrix AY: Useless as it is done in
-        // coputeVVS()
-        /*
-        for(std::list<vpMbtDistanceLine*>::const_iterator
-        it=lines[lvl].begin(); it!=lines[lvl].end(); ++it){ l = *it; if
-        (l->isVisible()){ l->initInteractionMatrixError();
-          }
-        }
-
-        for(std::list<vpMbtDistanceCylinder*>::const_iterator
-        it=cylinders[lvl].begin(); it!=cylinders[lvl].end(); ++it){ cy = *it;
-          if(cy->isVisible()) {
-            cy->initInteractionMatrixError();
-          }
-        }
-
-        for(std::list<vpMbtDistanceCircle*>::const_iterator
-        it=circles[lvl].begin(); it!=circles[lvl].end(); ++it){ ci = *it; if
-        (ci->isVisible()){ ci->initInteractionMatrixError();
-          }
-        }
-        */
-
         try {
           computeVVS(*Ipyramid[lvl], lvl);
         } catch (...) {
@@ -1086,27 +1072,30 @@ void vpMbEdgeTracker::track(const vpImage<unsigned char> &I)
         testTracking();
 
         if (displayFeatures) {
-          displayFeaturesOnImage(I, lvl);
+          if (I_color != NULL)
+            displayFeaturesOnImage(*I_color, lvl);
+          else
+            displayFeaturesOnImage(*I, lvl);
         }
 
         // Looking for new visible face
         bool newvisibleface = false;
-        visibleFace(I, cMo, newvisibleface);
+        visibleFace(*I, cMo, newvisibleface);
 
         // cam.computeFov(I.getWidth(), I.getHeight());
         if (useScanLine) {
           faces.computeClippedPolygons(cMo, cam);
-          faces.computeScanLineRender(cam, I.getWidth(), I.getHeight());
+          faces.computeScanLineRender(cam, I->getWidth(), I->getHeight());
         }
 
-        updateMovingEdge(I);
+        updateMovingEdge(*I);
 
-        initMovingEdge(I, cMo);
+        initMovingEdge(*I, cMo);
         // Reinit the moving edge for the lines which need it.
-        reinitMovingEdge(I, cMo);
+        reinitMovingEdge(*I, cMo);
 
         if (computeProjError)
-          computeProjectionError(I);
+          computeProjectionError(*I);
 
         upScale(lvl);
       } catch (const vpException &e) {
@@ -1184,7 +1173,7 @@ void vpMbEdgeTracker::init(const vpImage<unsigned char> &I)
   Set the pose to be used in entry of the next call to the track() function.
   This pose will be just used once.
 
-  \param I : image corresponding to the desired pose.
+  \param I : grayscale image corresponding to the desired pose.
   \param cdMo : Pose to affect.
 */
 void vpMbEdgeTracker::setPose(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cdMo)
@@ -1192,6 +1181,21 @@ void vpMbEdgeTracker::setPose(const vpImage<unsigned char> &I, const vpHomogeneo
   cMo = cdMo;
 
   init(I);
+}
+
+/*!
+  Set the pose to be used in entry of the next call to the track() function.
+  This pose will be just used once.
+
+  \param I : color image corresponding to the desired pose.
+  \param cdMo : Pose to affect.
+*/
+void vpMbEdgeTracker::setPose(const vpImage<vpRGBa> &I_color, const vpHomogeneousMatrix &cdMo)
+{
+  cMo = cdMo;
+
+  vpImageConvert::convert(I_color, m_I);
+  init(m_I);
 }
 
 /*!
@@ -1358,6 +1362,33 @@ void vpMbEdgeTracker::displayFeaturesOnImage(const vpImage<unsigned char> &I, co
 
     for (std::list<vpMbtDistanceCylinder *>::const_iterator it = cylinders[lvl].begin(); it != cylinders[lvl].end();
          ++it) {
+      vpMbtDistanceCylinder *cy = *it;
+      if (cy->isVisible() && cy->isTracked()) {
+        cy->displayMovingEdges(I);
+      }
+    }
+
+    for (std::list<vpMbtDistanceCircle *>::const_iterator it = circles[lvl].begin(); it != circles[lvl].end(); ++it) {
+      vpMbtDistanceCircle *ci = *it;
+      if (ci->isVisible() && ci->isTracked()) {
+        ci->displayMovingEdges(I);
+      }
+    }
+  }
+}
+
+void vpMbEdgeTracker::displayFeaturesOnImage(const vpImage<vpRGBa> &I, const unsigned int lvl)
+{
+  if (lvl == 0) {
+    for (std::list<vpMbtDistanceLine *>::const_iterator it = lines[lvl].begin(); it != lines[lvl].end(); ++it) {
+      vpMbtDistanceLine *l = *it;
+      if (l->isVisible() && l->isTracked()) {
+        l->displayMovingEdges(I);
+      }
+    }
+
+    for (std::list<vpMbtDistanceCylinder *>::const_iterator it = cylinders[lvl].begin(); it != cylinders[lvl].end();
+      ++it) {
       vpMbtDistanceCylinder *cy = *it;
       if (cy->isVisible() && cy->isTracked()) {
         cy->displayMovingEdges(I);
@@ -2286,8 +2317,8 @@ void vpMbEdgeTracker::resetTracker()
   nbvisiblepolygone = 0;
   percentageGdPt = 0.4;
 
-  angleAppears = vpMath::rad(89);
-  angleDisappears = vpMath::rad(89);
+  angleAppears = vpMath::rad(89); //TODO:
+  angleDisappears = vpMath::rad(89); //TODO:
   clippingFlag = vpPolygon3D::NO_CLIPPING;
 
   m_optimizationMethod = vpMbTracker::GAUSS_NEWTON_OPT;

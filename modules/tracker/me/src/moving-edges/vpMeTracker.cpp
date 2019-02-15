@@ -325,12 +325,14 @@ void vpMeTracker::track(const vpImage<unsigned char> &I)
 */
 void vpMeTracker::display(const vpImage<unsigned char> &I)
 {
-#if (DEBUG_LEVEL1)
-  {
-    std::cout << "begin vpMeTracker::displayList() " << std::endl;
-    std::cout << " There are " << list.size() << " sites in the list " << std::endl;
+  for (std::list<vpMeSite>::const_iterator it = list.begin(); it != list.end(); ++it) {
+    vpMeSite p_me = *it;
+    p_me.display(I);
   }
-#endif
+}
+
+void vpMeTracker::display(const vpImage<vpRGBa> &I)
+{
   for (std::list<vpMeSite>::const_iterator it = list.begin(); it != list.end(); ++it) {
     vpMeSite p_me = *it;
     p_me.display(I);

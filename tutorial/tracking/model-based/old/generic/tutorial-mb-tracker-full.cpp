@@ -49,7 +49,11 @@ int main(int argc, char **argv)
     std::cout << "Tracker optional config files: " << objectname << ".[ppm]" << std::endl;
 
     //! [Image]
+#if 0
     vpImage<unsigned char> I;
+#else
+    vpImage<vpRGBa> I;
+#endif
     vpCameraParameters cam;
     //! [Image]
     //! [cMo]

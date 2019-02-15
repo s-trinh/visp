@@ -465,8 +465,8 @@ void vpMbDepthNormalTracker::resetTracker()
   m_computeInteraction = true;
   computeCovariance = false;
 
-  angleAppears = vpMath::rad(89);
-  angleDisappears = vpMath::rad(89);
+  angleAppears = vpMath::rad(89); //TODO:
+  angleDisappears = vpMath::rad(89); //TODO:
 
   clippingFlag = vpPolygon3D::NO_CLIPPING;
 
@@ -498,6 +498,13 @@ void vpMbDepthNormalTracker::setPose(const vpImage<unsigned char> &I, const vpHo
 {
   cMo = cdMo;
   init(I);
+}
+
+void vpMbDepthNormalTracker::setPose(const vpImage<vpRGBa> &I_color, const vpHomogeneousMatrix &cdMo)
+{
+  cMo = cdMo;
+  vpImageConvert::convert(I_color, m_I);
+  init(m_I);
 }
 
 #if defined(VISP_HAVE_PCL)
@@ -736,6 +743,11 @@ void vpMbDepthNormalTracker::setDepthNormalSamplingStep(const unsigned int stepX
 void vpMbDepthNormalTracker::track(const vpImage<unsigned char> &)
 {
   throw vpException(vpException::fatalError, "Cannot track with a grayscale image!");
+}
+
+void vpMbDepthNormalTracker::track(const vpImage<vpRGBa> &)
+{
+  throw vpException(vpException::fatalError, "Cannot track with a color image!");
 }
 
 #ifdef VISP_HAVE_PCL

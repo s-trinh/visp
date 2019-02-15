@@ -44,7 +44,11 @@ int main(int argc, char **argv)
     std::cout << "Tracker optional config files: " << objectname << ".[ppm]" << std::endl;
 
     //! [Image]
+#if 1
     vpImage<unsigned char> I;
+#else
+    vpImage<vpRGBa> I;
+#endif
     vpCameraParameters cam;
     //! [Image]
     //! [cMo]
@@ -116,6 +120,10 @@ int main(int argc, char **argv)
     cam.initPersProjWithoutDistortion(839, 839, 325, 243);
     //! [Set camera parameters]
     tracker.setCameraParameters(cam);
+    std::cout << "tracker.getAngleAppear()" << vpMath::deg(tracker.getAngleAppear()) << std::endl;
+    std::cout << "tracker.getAngleDisappear()" << vpMath::deg(tracker.getAngleDisappear()) << std::endl;
+    tracker.setAngleAppear(vpMath::rad(70));
+    tracker.setAngleDisappear(vpMath::rad(80));
     //! [Set parameters]
 
     //! [Load cao]
@@ -139,7 +147,7 @@ int main(int argc, char **argv)
       //! [Get pose]
       //! [Display]
       tracker.getCameraParameters(cam);
-      tracker.display(I, cMo, cam, vpColor::red, 2, true);
+      tracker.display(I, cMo, cam, vpColor::red, 2);
       //! [Display]
       vpDisplay::displayFrame(I, cMo, cam, 0.025, vpColor::none, 3);
       vpDisplay::displayText(I, 10, 10, "A click to exit...", vpColor::red);

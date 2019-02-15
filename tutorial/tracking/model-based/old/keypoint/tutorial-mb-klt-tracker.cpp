@@ -35,7 +35,11 @@ int main(int argc, char **argv)
 #endif
               << "cao or wrl]" << std::endl;
     std::cout << "Tracker optional config files: " << objectname << ".[ppm]" << std::endl;
+#if 0
     vpImage<unsigned char> I;
+#else
+    vpImage<vpRGBa> I;
+#endif
     vpCameraParameters cam;
     vpHomogeneousMatrix cMo;
 
@@ -89,7 +93,8 @@ int main(int argc, char **argv)
     }
     tracker.setOgreVisibilityTest(true);
     tracker.setOgreShowConfigDialog(false);
-    tracker.loadModel(objectname + "-triangle.cao");
+//    tracker.loadModel(objectname + "-triangle.cao");
+    tracker.loadModel(objectname + ".cao");
     tracker.setDisplayFeatures(true);
     tracker.initClick(I, objectname + ".init", true);
 
@@ -99,7 +104,7 @@ int main(int argc, char **argv)
       tracker.track(I);
       tracker.getPose(cMo);
       tracker.getCameraParameters(cam);
-      tracker.display(I, cMo, cam, vpColor::red, 2, true);
+      tracker.display(I, cMo, cam, vpColor::red, 2, false);
       vpDisplay::displayFrame(I, cMo, cam, 0.025, vpColor::none, 3);
       vpDisplay::displayText(I, 10, 10, "A click to exit...", vpColor::red);
       vpDisplay::flush(I);
