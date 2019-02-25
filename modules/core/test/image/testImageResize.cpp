@@ -258,12 +258,14 @@ int main(int argc, const char **argv)
     }
 
     // Grayscale image
-    vpImage<unsigned char> I; // Input image
+    vpImage<unsigned char> I, I_tmp; // Input image
 
     // Read the input grey image from the disk
     filename = vpIoTools::createFilePath(ipath, "Klimt/Klimt.pgm");
     std::cout << "Read image: " << filename << std::endl;
-    vpImageIo::read(I, filename);
+    vpImageIo::read(I_tmp, filename);
+
+    I_tmp.quarterSizeImage(I);
 
     vpImage<unsigned char> I_resize;
     double t = vpTime::measureTimeMs();
@@ -306,12 +308,14 @@ int main(int argc, const char **argv)
     }
 
     // Color image
-    vpImage<vpRGBa> I_color; // Input image
+    vpImage<vpRGBa> I_color, I_color_tmp; // Input image
 
     // Read the input grey image from the disk
     filename = vpIoTools::createFilePath(ipath, "Klimt/Klimt.ppm");
     std::cout << "\nRead image: " << filename << std::endl;
-    vpImageIo::read(I_color, filename);
+    vpImageIo::read(I_color_tmp, filename);
+
+    I_color_tmp.quarterSizeImage(I_color);
 
     vpImage<vpRGBa> I_color_resize;
     t = vpTime::measureTimeMs();
