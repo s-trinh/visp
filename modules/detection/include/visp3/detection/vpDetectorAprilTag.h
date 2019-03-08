@@ -218,33 +218,34 @@ public:
     TAG_36h11,       /*!< AprilTag <a
                         href="https://april.eecs.umich.edu/software/apriltag.html">36h11</a>
                         pattern (recommended) */
-    TAG_36h10,       /*!< AprilTag <a
-                        href="https://april.eecs.umich.edu/software/apriltag.html">36h10</a>
-                        pattern */
-    TAG_36ARTOOLKIT, /*!< <a href="https://artoolkit.org/">ARToolKit</a>
-                        pattern. */
+//    TAG_36h10,       /*!< AprilTag <a
+//                        href="https://april.eecs.umich.edu/software/apriltag.html">36h10</a>
+//                        pattern */
+//    TAG_36ARTOOLKIT, /*!< <a href="https://artoolkit.org/">ARToolKit</a>
+//                        pattern. */
     TAG_25h9,        /*!< AprilTag <a
                         href="https://april.eecs.umich.edu/software/apriltag.html">25h9</a>
                         pattern */
-    TAG_25h7,        /*!< AprilTag <a
-                        href="https://april.eecs.umich.edu/software/apriltag.html">25h7</a>
-                        pattern */
+//    TAG_25h7,        /*!< AprilTag <a
+//                        href="https://april.eecs.umich.edu/software/apriltag.html">25h7</a>
+//                        pattern */
     TAG_16h5         /*!< AprilTag <a
                         href="https://april.eecs.umich.edu/software/apriltag.html">16h5</a>
                         pattern */
   };
 
   enum vpPoseEstimationMethod {
-    HOMOGRAPHY,              /*!< Pose from homography */
-    HOMOGRAPHY_VIRTUAL_VS,   /*!< Non linear virtual visual servoing approach
-                                initialized by the homography approach */
-    DEMENTHON_VIRTUAL_VS,    /*!< Non linear virtual visual servoing approach
-                                initialized by the Dementhon approach */
-    LAGRANGE_VIRTUAL_VS,     /*!< Non linear virtual visual servoing approach
-                                initialized by the Lagrange approach */
-    BEST_RESIDUAL_VIRTUAL_VS /*!< Non linear virtual visual servoing approach
-                                initialized by the approach that gives the
-                                lowest residual */
+    HOMOGRAPHY,                       /*!< Pose from homography */
+    HOMOGRAPHY_VIRTUAL_VS,            /*!< Non linear virtual visual servoing approach
+                                        initialized by the homography approach */
+    DEMENTHON_VIRTUAL_VS,             /*!< Non linear virtual visual servoing approach
+                                        initialized by the Dementhon approach */
+    LAGRANGE_VIRTUAL_VS,              /*!< Non linear virtual visual servoing approach
+                                        initialized by the Lagrange approach */
+    BEST_RESIDUAL_VIRTUAL_VS,         /*!< Non linear virtual visual servoing approach
+                                        initialized by the approach that gives the
+                                        lowest residual */
+    HOMOGRAPHY_ORTHOGONAL_ITERATION   /*!< Pose from homography followed by a refine by Orthogonal Iteration */
   };
 
   vpDetectorAprilTag(const vpAprilTagFamily &tagFamily = TAG_36h11,
@@ -321,6 +322,10 @@ inline std::ostream &operator<<(std::ostream &os, const vpDetectorAprilTag::vpPo
     os << "BEST_RESIDUAL_VIRTUAL_VS";
     break;
 
+  case vpDetectorAprilTag::HOMOGRAPHY_ORTHOGONAL_ITERATION:
+    os << "HOMOGRAPHY_ORTHOGONAL_ITERATION";
+    break;
+
   default:
       os << "ERROR_UNKNOWN_POSE_METHOD!";
     break;
@@ -336,21 +341,21 @@ inline std::ostream &operator<<(std::ostream &os, const vpDetectorAprilTag::vpAp
     os << "36h11";
     break;
 
-  case vpDetectorAprilTag::TAG_36h10:
-    os << "36h10";
-    break;
+//  case vpDetectorAprilTag::TAG_36h10:
+//    os << "36h10";
+//    break;
 
-  case vpDetectorAprilTag::TAG_36ARTOOLKIT:
-    os << "36artoolkit";
-    break;
+//  case vpDetectorAprilTag::TAG_36ARTOOLKIT:
+//    os << "36artoolkit";
+//    break;
 
   case vpDetectorAprilTag::TAG_25h9:
     os << "25h9";
     break;
 
-  case vpDetectorAprilTag::TAG_25h7:
-    os << "25h7";
-    break;
+//  case vpDetectorAprilTag::TAG_25h7:
+//    os << "25h7";
+//    break;
 
   case vpDetectorAprilTag::TAG_16h5:
     os << "16h5";

@@ -40,11 +40,12 @@
 #include <apriltag.h>
 #include <common/homography.h>
 #include <tag16h5.h>
-#include <tag25h7.h>
+//#include <tag25h7.h>
 #include <tag25h9.h>
-#include <tag36artoolkit.h>
-#include <tag36h10.h>
+//#include <tag36artoolkit.h>
+//#include <tag36h10.h>
 #include <tag36h11.h>
+#include <apriltag_pose.h>
 
 #include <visp3/core/vpDisplay.h>
 #include <visp3/core/vpPixelMeterConversion.h>
@@ -65,21 +66,21 @@ public:
       m_tf = tag36h11_create();
       break;
 
-    case TAG_36h10:
-      m_tf = tag36h10_create();
-      break;
+//    case TAG_36h10:
+//      m_tf = tag36h10_create();
+//      break;
 
-    case TAG_36ARTOOLKIT:
-      m_tf = tag36artoolkit_create();
-      break;
+//    case TAG_36ARTOOLKIT:
+//      m_tf = tag36artoolkit_create();
+//      break;
 
     case TAG_25h9:
       m_tf = tag25h9_create();
       break;
 
-    case TAG_25h7:
-      m_tf = tag25h7_create();
-      break;
+//    case TAG_25h7:
+//      m_tf = tag25h7_create();
+//      break;
 
     case TAG_16h5:
       m_tf = tag16h5_create();
@@ -87,7 +88,6 @@ public:
 
     default:
       throw vpException(vpException::fatalError, "Unknow Tag family!");
-      break;
     }
 
     m_td = apriltag_detector_create();
@@ -106,21 +106,21 @@ public:
       tag36h11_destroy(m_tf);
       break;
 
-    case TAG_36h10:
-      tag36h10_destroy(m_tf);
-      break;
+//    case TAG_36h10:
+//      tag36h10_destroy(m_tf);
+//      break;
 
-    case TAG_36ARTOOLKIT:
-      tag36artoolkit_destroy(m_tf);
-      break;
+//    case TAG_36ARTOOLKIT:
+//      tag36artoolkit_destroy(m_tf);
+//      break;
 
     case TAG_25h9:
       tag25h9_destroy(m_tf);
       break;
 
-    case TAG_25h7:
-      tag25h7_destroy(m_tf);
-      break;
+//    case TAG_25h7:
+//      tag25h7_destroy(m_tf);
+//      break;
 
     case TAG_16h5:
       tag16h5_destroy(m_tf);
@@ -140,7 +140,6 @@ public:
               std::vector<std::string> &messages, const bool computePose, const bool displayTag,
               const vpColor color, const unsigned int thickness)
   {
-    std::vector<vpHomogeneousMatrix> tagPosesPrev = m_tagPoses;
     m_tagPoses.clear();
 
     image_u8_t im = {/*.width =*/(int32_t)I.getWidth(),
@@ -191,11 +190,6 @@ public:
 
       if (computePose) {
         vpHomogeneousMatrix cMo;
-        {
-          if ((int)tagPosesPrev.size() > i) {
-            cMo = tagPosesPrev[i];
-          }
-        }
         if (getPose(i, m_tagSize, m_cam, cMo)) {
           m_tagPoses.push_back(cMo);
         }
@@ -218,21 +212,32 @@ public:
       return false;
     }
 
-    if (m_poseEstimationMethod == HOMOGRAPHY || m_poseEstimationMethod == HOMOGRAPHY_VIRTUAL_VS
-        || m_poseEstimationMethod == BEST_RESIDUAL_VIRTUAL_VS) {
+    vpHomogeneousMatrix cMo_homography_ortho_iter;
+    if (m_poseEstimationMethod == HOMOGRAPHY_ORTHOGONAL_ITERATION ||
+        m_poseEstimationMethod == BEST_RESIDUAL_VIRTUAL_VS) {
       double fx = cam.get_px(), fy = cam.get_py();
       double cx = cam.get_u0(), cy = cam.get_v0();
 
-      matd_t *M = homography_to_pose(det->H, fx, fy, cx, cy, tagSize / 2);
+      apriltag_detection_info_t info;
+      info.det = det;
+      info.tagsize = tagSize;
+      info.fx = fx;
+      info.fy = fy;
+      info.cx = cx;
+      info.cy = cy;
 
-      for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-          cMo[i][j] = MATD_EL(M, i, j);
+      apriltag_pose_t pose;
+      estimate_tag_pose(&info, &pose);
+
+      for (unsigned int i = 0; i < 3; i++) {
+        for (unsigned int j = 0; j < 3; j++) {
+          cMo[i][j] = MATD_EL(pose.R, i, j);
         }
-        cMo[i][3] = MATD_EL(M, i, 3);
+        cMo[i][3] = MATD_EL(pose.t, i, 0);
       }
 
-      matd_destroy(M);
+      matd_destroy(pose.R);
+      matd_destroy(pose.t);
 
       if (m_zAlignedWithCameraFrame) {
         vpHomogeneousMatrix oMo;
@@ -242,11 +247,53 @@ public:
         oMo[2][0] = 0; oMo[2][1] =  0; oMo[2][2] = -1;
         cMo = cMo*oMo;
       }
+
+      cMo_homography_ortho_iter = cMo;
+    }
+
+    vpHomogeneousMatrix cMo_homography;
+    if (m_poseEstimationMethod == HOMOGRAPHY || m_poseEstimationMethod == HOMOGRAPHY_VIRTUAL_VS ||
+        m_poseEstimationMethod == BEST_RESIDUAL_VIRTUAL_VS) {
+      double fx = cam.get_px(), fy = cam.get_py();
+      double cx = cam.get_u0(), cy = cam.get_v0();
+
+      apriltag_detection_info_t info;
+      info.det = det;
+      info.tagsize = tagSize;
+      info.fx = fx;
+      info.fy = fy;
+      info.cx = cx;
+      info.cy = cy;
+
+      apriltag_pose_t pose;
+      estimate_pose_for_tag_homography(&info, &pose);
+
+      for (unsigned int i = 0; i < 3; i++) {
+        for (unsigned int j = 0; j < 3; j++) {
+          cMo[i][j] = MATD_EL(pose.R, i, j);
+        }
+        cMo[i][3] = MATD_EL(pose.t, i, 0);
+      }
+
+      matd_destroy(pose.R);
+      matd_destroy(pose.t);
+
+      if (m_zAlignedWithCameraFrame) {
+        vpHomogeneousMatrix oMo;
+        // Apply a rotation of 180deg around x axis
+        oMo[0][0] = 1; oMo[0][1] =  0; oMo[0][2] = 0;
+        oMo[1][0] = 0; oMo[1][1] = -1; oMo[1][2] = 0;
+        oMo[2][0] = 0; oMo[2][1] =  0; oMo[2][2] = -1;
+        cMo = cMo*oMo;
+      }
+
+      cMo_homography = cMo;
     }
 
     // Add marker object points
     vpPose pose;
-    if (m_poseEstimationMethod != HOMOGRAPHY) {
+    if (m_poseEstimationMethod != HOMOGRAPHY &&
+        m_poseEstimationMethod != HOMOGRAPHY_ORTHOGONAL_ITERATION) {
       vpPoint pt;
 
       vpImagePoint imPt;
@@ -303,13 +350,15 @@ public:
       pose.addPoints(pts);
     }
 
-    if (m_poseEstimationMethod != HOMOGRAPHY && m_poseEstimationMethod != HOMOGRAPHY_VIRTUAL_VS) {
+    if (m_poseEstimationMethod != HOMOGRAPHY && m_poseEstimationMethod != HOMOGRAPHY_VIRTUAL_VS &&
+        m_poseEstimationMethod != HOMOGRAPHY_ORTHOGONAL_ITERATION) {
       if (m_poseEstimationMethod == BEST_RESIDUAL_VIRTUAL_VS) {
-        vpHomogeneousMatrix cMo_dementhon, cMo_lagrange, cMo_homography = cMo;
+        vpHomogeneousMatrix cMo_dementhon, cMo_lagrange;
 
         double residual_dementhon = std::numeric_limits<double>::max(),
                residual_lagrange = std::numeric_limits<double>::max();
         double residual_homography = pose.computeResidual(cMo_homography);
+        double residual_homography_ortho_iter = pose.computeResidual(cMo_homography_ortho_iter);
 
         if (pose.computePose(vpPose::DEMENTHON, cMo_dementhon)) {
           residual_dementhon = pose.computeResidual(cMo_dementhon);
@@ -319,23 +368,24 @@ public:
           residual_lagrange = pose.computeResidual(cMo_lagrange);
         }
 
-        if (residual_dementhon < residual_lagrange) {
-          if (residual_dementhon < residual_homography) {
-            cMo = cMo_dementhon;
-          } else {
-            cMo = cMo_homography;
-          }
-        } else if (residual_lagrange < residual_homography) {
-          cMo = cMo_lagrange;
-        } else {
-          //              cMo = cMo_homography; //already the case
-        }
+        std::vector<double> residuals = {residual_dementhon,
+                                         residual_lagrange,
+                                         residual_homography,
+                                         residual_homography_ortho_iter};
+        std::vector<vpHomogeneousMatrix> poses = {cMo_dementhon,
+                                                  cMo_lagrange,
+                                                  cMo_homography,
+                                                  cMo_homography_ortho_iter};
+
+        std::ptrdiff_t minIndex = std::min_element(residuals.begin(), residuals.end()) - residuals.begin();
+        cMo = *(poses.begin() + minIndex);
       } else {
         pose.computePose(m_mapOfCorrespondingPoseMethods[m_poseEstimationMethod], cMo);
       }
     }
 
-    if (m_poseEstimationMethod != HOMOGRAPHY) {
+    if (m_poseEstimationMethod != HOMOGRAPHY &&
+        m_poseEstimationMethod != HOMOGRAPHY_ORTHOGONAL_ITERATION) {
       // Compute final pose using VVS
       pose.computePose(vpPose::VIRTUAL_VS, cMo);
     }
@@ -353,11 +403,11 @@ public:
 
   void setQuadSigma(const float quadSigma) { m_td->quad_sigma = quadSigma; }
 
-  void setRefineDecode(const bool refineDecode) { m_td->refine_decode = refineDecode ? 1 : 0; }
+//  void setRefineDecode(const bool refineDecode) { m_td->refine_decode = refineDecode ? 1 : 0; }
 
   void setRefineEdges(const bool refineEdges) { m_td->refine_edges = refineEdges ? 1 : 0; }
 
-  void setRefinePose(const bool refinePose) { m_td->refine_pose = refinePose ? 1 : 0; }
+//  void setRefinePose(const bool refinePose) { m_td->refine_pose = refinePose ? 1 : 0; }
 
   void setTagSize(const double tagSize) { m_tagSize = tagSize; }
 
@@ -527,19 +577,19 @@ void vpDetectorAprilTag::setAprilTagQuadDecimate(const float quadDecimate) { m_i
 */
 void vpDetectorAprilTag::setAprilTagQuadSigma(const float quadSigma) { m_impl->setQuadSigma(quadSigma); }
 
-/*!
-  From the AprilTag code:
-  <blockquote>
-  when non-zero, detections are refined in a way intended to
-  increase the number of detected tags. Especially effective for
-  very small tags near the resolution threshold (e.g. 10px on a
-  side).
-  </blockquote>
-  Default is 0.
+///*!
+//  From the AprilTag code:
+//  <blockquote>
+//  when non-zero, detections are refined in a way intended to
+//  increase the number of detected tags. Especially effective for
+//  very small tags near the resolution threshold (e.g. 10px on a
+//  side).
+//  </blockquote>
+//  Default is 0.
 
-  \param refineDecode : If true, set refine_decode to 1.
-*/
-void vpDetectorAprilTag::setAprilTagRefineDecode(const bool refineDecode) { m_impl->setRefineDecode(refineDecode); }
+//  \param refineDecode : If true, set refine_decode to 1.
+//*/
+//void vpDetectorAprilTag::setAprilTagRefineDecode(const bool refineDecode) { m_impl->setRefineDecode(refineDecode); }
 
 /*!
   From the AprilTag code:
@@ -557,23 +607,23 @@ void vpDetectorAprilTag::setAprilTagRefineDecode(const bool refineDecode) { m_im
 */
 void vpDetectorAprilTag::setAprilTagRefineEdges(const bool refineEdges) { m_impl->setRefineEdges(refineEdges); }
 
-/*!
-  From the AprilTag code:
-  <blockquote>
-  when non-zero, detections are refined in a way intended to
-  increase the accuracy of the extracted pose. This is done by
-  maximizing the contrast around the black and white border of
-  the tag. This generally increases the number of successfully
-  detected tags, though not as effectively (or quickly) as
-  refine_decode.
-  This option must be enabled in order for "goodness" to be
-  computed.
-  </blockquote>
-  Default is 0.
+///*!
+//  From the AprilTag code:
+//  <blockquote>
+//  when non-zero, detections are refined in a way intended to
+//  increase the accuracy of the extracted pose. This is done by
+//  maximizing the contrast around the black and white border of
+//  the tag. This generally increases the number of successfully
+//  detected tags, though not as effectively (or quickly) as
+//  refine_decode.
+//  This option must be enabled in order for "goodness" to be
+//  computed.
+//  </blockquote>
+//  Default is 0.
 
-  \param refinePose : If true, set refine_pose to 1.
-*/
-void vpDetectorAprilTag::setAprilTagRefinePose(const bool refinePose) { m_impl->setRefinePose(refinePose); }
+//  \param refinePose : If true, set refine_pose to 1.
+//*/
+//void vpDetectorAprilTag::setAprilTagRefinePose(const bool refinePose) { m_impl->setRefinePose(refinePose); }
 
 /*!
  * Modify the resulting tag pose returned by getPose() in order to get

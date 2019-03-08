@@ -110,7 +110,7 @@ int main(int argc, const char **argv)
 #endif
 
     //! [Construct grabber]
-#if defined(VISP_HAVE_V4L2)
+#if 0 //defined(VISP_HAVE_V4L2)
     vpV4l2Grabber g;
     std::ostringstream device;
     device << "/dev/video" << opt_device;
@@ -118,7 +118,7 @@ int main(int argc, const char **argv)
     g.setDevice(device.str());
     g.setScale(1);
     g.open(I);
-#elif defined(VISP_HAVE_DC1394)
+#elif 0 //defined(VISP_HAVE_DC1394)
     (void)opt_device; // To avoid non used warning
     std::cout << "Use DC1394 grabber" << std::endl;
     vp1394TwoGrabber g;
@@ -162,6 +162,8 @@ int main(int argc, const char **argv)
     std::cout << "cam:\n" << cam << std::endl;
     std::cout << "poseEstimationMethod: " << poseEstimationMethod << std::endl;
     std::cout << "tagFamily: " << tagFamily << std::endl;
+    std::cout << "quad_decimate: " << quad_decimate << std::endl;
+    std::cout << "nThreads: " << nThreads << std::endl;
 
     vpDisplay *d = NULL;
     if (! display_off) {
