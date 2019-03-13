@@ -732,10 +732,17 @@ static inline void ptsort(struct pt *pts, int sz)
     if (stacksz > 1024)
         stacksz = 0;
 
+#ifdef _MSC_VER
+    struct *pt _tmp_stack = (struct *pt)malloc(stacksz * sizeof *_tmp_stack);
+#else
     struct pt _tmp_stack[stacksz];
+#endif
     struct pt *tmp = _tmp_stack;
 
     if (stacksz == 0) {
+#ifdef _MSC_VER
+      free(tmp);
+#endif
         // it was too big, malloc it instead.
         tmp = (struct pt *)malloc(sizeof(struct pt) * sz);
     }
@@ -772,8 +779,13 @@ static inline void ptsort(struct pt *pts, int sz)
     if (bpos < bsz)
         memcpy(&pts[outpos], &bs[bpos], (bsz-bpos)*sizeof(struct pt));
 
-    if (stacksz == 0)
+    if (stacksz == 0) {
         free(tmp);
+    } else {
+#ifdef _MSC_VER
+      free(tmp);
+#endif
+    }
 
 #undef MERGE
 }
@@ -1539,7 +1551,11 @@ zarray_t* do_gradient_clusters(image_u8_t* threshim, int ts, int y0, int y1, int
     struct uint64_zarray_entry **clustermap = (struct uint64_zarray_entry **)calloc(nclustermap, sizeof(struct uint64_zarray_entry*));
 
     int mem_chunk_size = 2048;
+#ifdef _MSC_VER
+    struct uint64_zarray_entry** mem_pools = (struct uint64_zarray_entry**)malloc(2*nclustermap/mem_chunk_size * sizeof *mem_pools);
+#else
     struct uint64_zarray_entry* mem_pools[2*nclustermap/mem_chunk_size];
+#endif
     int mem_pool_idx = 0;
     int mem_pool_loc = 0;
     mem_pools[mem_pool_idx] = (struct uint64_zarray_entry *)calloc(mem_chunk_size, sizeof(struct uint64_zarray_entry));
@@ -1659,6 +1675,9 @@ zarray_t* do_gradient_clusters(image_u8_t* threshim, int ts, int y0, int y1, int
     for (int i = 0; i <= mem_pool_idx; i++) {
         free(mem_pools[i]);
     }
+#ifdef _MSC_VER
+    free(mem_pools);
+#endif
     free(clustermap);
 
     return clusters;
@@ -1726,7 +1745,11 @@ zarray_t* gradient_clusters(apriltag_detector_t *td, image_u8_t* threshim, int w
 
     int sz = h - 1;
     int chunksize = 1 + sz / td->nthreads;
+#ifdef _MSC_VER
+    struct cluster_task *tasks = (struct cluster_task *)malloc(sz / chunksize + 1 * sizeof *cluster_task);
+#else
     struct cluster_task tasks[sz / chunksize + 1];
+#endif
 
     int ntasks = 0;
 
@@ -1823,6 +1846,10 @@ zarray_t* fit_quads(apriltag_detector_t *td, int w, int h, zarray_t* clusters, i
     }
 
     workerpool_run(td->wp);
+
+#ifdef _MSC_VER
+    free(tasks);
+#endif
 
     return quads;
 }

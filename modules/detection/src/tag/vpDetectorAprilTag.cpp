@@ -40,11 +40,15 @@
 #include <apriltag.h>
 #include <common/homography.h>
 #include <tag16h5.h>
-//#include <tag25h7.h>
+#include <tag25h7.h>
 #include <tag25h9.h>
-//#include <tag36artoolkit.h>
-//#include <tag36h10.h>
+#include <tag36h10.h>
 #include <tag36h11.h>
+#include <tagCircle21h7.h>
+#include <tagCircle49h12.h>
+#include <tagCustom48h12.h>
+#include <tagStandard41h12.h>
+#include <tagStandard52h13.h>
 #include <apriltag_pose.h>
 
 #include <visp3/core/vpDisplay.h>
@@ -66,32 +70,53 @@ public:
       m_tf = tag36h11_create();
       break;
 
-//    case TAG_36h10:
-//      m_tf = tag36h10_create();
-//      break;
+    case TAG_36h10:
+      m_tf = tag36h10_create();
+      break;
 
-//    case TAG_36ARTOOLKIT:
-//      m_tf = tag36artoolkit_create();
-//      break;
+    case TAG_36ARTOOLKIT:
+      break;
 
     case TAG_25h9:
       m_tf = tag25h9_create();
       break;
 
-//    case TAG_25h7:
-//      m_tf = tag25h7_create();
-//      break;
+    case TAG_25h7:
+      m_tf = tag25h7_create();
+      break;
 
     case TAG_16h5:
       m_tf = tag16h5_create();
+      break;
+
+    case TAG_CIRCLE21h7:
+      m_tf = tagCircle21h7_create();
+      break;
+
+    case TAG_CIRCLE49h12:
+      m_tf = tagCircle49h12_create();
+      break;
+
+    case TAG_CUSTOM48h12:
+      m_tf = tagCustom48h12_create();
+      break;
+
+    case TAG_STANDARD41h12:
+      m_tf = tagStandard41h12_create();
+      break;
+
+    case TAG_STANDARD52h13:
+      m_tf = tagStandard52h13_create();
       break;
 
     default:
       throw vpException(vpException::fatalError, "Unknow Tag family!");
     }
 
-    m_td = apriltag_detector_create();
-    apriltag_detector_add_family(m_td, m_tf);
+    if (m_tagFamily != TAG_36ARTOOLKIT) {
+      m_td = apriltag_detector_create();
+      apriltag_detector_add_family(m_td, m_tf);
+    }
 
     m_mapOfCorrespondingPoseMethods[DEMENTHON_VIRTUAL_VS] = vpPose::DEMENTHON;
     m_mapOfCorrespondingPoseMethods[LAGRANGE_VIRTUAL_VS] = vpPose::LAGRANGE;
@@ -106,24 +131,43 @@ public:
       tag36h11_destroy(m_tf);
       break;
 
-//    case TAG_36h10:
-//      tag36h10_destroy(m_tf);
-//      break;
+    case TAG_36h10:
+      tag36h10_destroy(m_tf);
+      break;
 
-//    case TAG_36ARTOOLKIT:
-//      tag36artoolkit_destroy(m_tf);
-//      break;
+    case TAG_36ARTOOLKIT:
+      break;
 
     case TAG_25h9:
       tag25h9_destroy(m_tf);
       break;
 
-//    case TAG_25h7:
-//      tag25h7_destroy(m_tf);
-//      break;
+    case TAG_25h7:
+      tag25h7_destroy(m_tf);
+      break;
 
     case TAG_16h5:
       tag16h5_destroy(m_tf);
+      break;
+
+    case TAG_CIRCLE21h7:
+      tagCircle21h7_destroy(m_tf);
+      break;
+
+    case TAG_CIRCLE49h12:
+      tagCustom48h12_destroy(m_tf);
+      break;
+
+    case TAG_CUSTOM48h12:
+      tagCustom48h12_destroy(m_tf);
+      break;
+
+    case TAG_STANDARD41h12:
+      tagStandard41h12_destroy(m_tf);
+      break;
+
+    case TAG_STANDARD52h13:
+      tagStandard52h13_destroy(m_tf);
       break;
 
     default:
@@ -140,6 +184,10 @@ public:
               std::vector<std::string> &messages, const bool computePose, const bool displayTag,
               const vpColor color, const unsigned int thickness)
   {
+    if (m_tagFamily == TAG_36ARTOOLKIT) {
+      return false;
+    }
+
     m_tagPoses.clear();
 
     image_u8_t im = {/*.width =*/(int32_t)I.getWidth(),
@@ -167,10 +215,10 @@ public:
       for (int j = 0; j < 4; j++) {
         polygon.push_back(vpImagePoint(det->p[j][1], det->p[j][0]));
       }
-      polygons[i] = polygon;
+      polygons[static_cast<size_t>(i)] = polygon;
       std::stringstream ss;
       ss << m_tagFamily << " id: " << det->id;
-      messages[i] = ss.str();
+      messages[static_cast<size_t>(i)] = ss.str();
 
       if (displayTag) {
         vpColor Ox = (color == vpColor::none) ? vpColor::red : color;
@@ -190,7 +238,7 @@ public:
 
       if (computePose) {
         vpHomogeneousMatrix cMo;
-        if (getPose(i, m_tagSize, m_cam, cMo)) {
+        if (getPose(static_cast<size_t>(i), m_tagSize, m_cam, cMo)) {
           m_tagPoses.push_back(cMo);
         }
         // else case should never happen
@@ -204,6 +252,10 @@ public:
     if (m_detections == NULL) {
       throw(vpException(vpException::fatalError, "Cannot get tag index=%d pose: detection empty", tagIndex));
     }
+    if (m_tagFamily == TAG_36ARTOOLKIT) {
+      return  false;
+    }
+
     apriltag_detection_t *det;
     zarray_get(m_detections, static_cast<int>(tagIndex), &det);
 
@@ -397,17 +449,23 @@ public:
 
   void setCameraParameters(const vpCameraParameters &cam) { m_cam = cam; }
 
+  void setAprilTagDecodeSharpening(const double decodeSharpening) { m_td->decode_sharpening = decodeSharpening; }
+
   void setNbThreads(const int nThreads) { m_td->nthreads = nThreads; }
 
   void setQuadDecimate(const float quadDecimate) { m_td->quad_decimate = quadDecimate; }
 
   void setQuadSigma(const float quadSigma) { m_td->quad_sigma = quadSigma; }
 
-//  void setRefineDecode(const bool refineDecode) { m_td->refine_decode = refineDecode ? 1 : 0; }
+#if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
+  vp_deprecated void setRefineDecode(const bool) { }
+#endif
 
   void setRefineEdges(const bool refineEdges) { m_td->refine_edges = refineEdges ? 1 : 0; }
 
-//  void setRefinePose(const bool refinePose) { m_td->refine_pose = refinePose ? 1 : 0; }
+#if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
+  vp_deprecated void setRefinePose(const bool) { }
+#endif
 
   void setTagSize(const double tagSize) { m_tagSize = tagSize; }
 
@@ -527,6 +585,11 @@ bool vpDetectorAprilTag::getPose(size_t tagIndex, const double tagSize, const vp
   return (m_impl->getPose(tagIndex, tagSize, cam, cMo));
 }
 
+void vpDetectorAprilTag::setAprilTagDecodeSharpening(const double decodeSharpening)
+{
+  return (m_impl->setAprilTagDecodeSharpening(decodeSharpening));
+}
+
 /*!
   Set the number of threads for April Tag detection (default is 1).
 
@@ -577,19 +640,12 @@ void vpDetectorAprilTag::setAprilTagQuadDecimate(const float quadDecimate) { m_i
 */
 void vpDetectorAprilTag::setAprilTagQuadSigma(const float quadSigma) { m_impl->setQuadSigma(quadSigma); }
 
-///*!
-//  From the AprilTag code:
-//  <blockquote>
-//  when non-zero, detections are refined in a way intended to
-//  increase the number of detected tags. Especially effective for
-//  very small tags near the resolution threshold (e.g. 10px on a
-//  side).
-//  </blockquote>
-//  Default is 0.
-
-//  \param refineDecode : If true, set refine_decode to 1.
-//*/
-//void vpDetectorAprilTag::setAprilTagRefineDecode(const bool refineDecode) { m_impl->setRefineDecode(refineDecode); }
+#if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
+/*!
+  Deprecated parameter from AprilTag 2 version.
+*/
+vp_deprecated void vpDetectorAprilTag::setAprilTagRefineDecode(const bool refineDecode) { m_impl->setRefineDecode(refineDecode); }
+#endif
 
 /*!
   From the AprilTag code:
@@ -607,23 +663,12 @@ void vpDetectorAprilTag::setAprilTagQuadSigma(const float quadSigma) { m_impl->s
 */
 void vpDetectorAprilTag::setAprilTagRefineEdges(const bool refineEdges) { m_impl->setRefineEdges(refineEdges); }
 
-///*!
-//  From the AprilTag code:
-//  <blockquote>
-//  when non-zero, detections are refined in a way intended to
-//  increase the accuracy of the extracted pose. This is done by
-//  maximizing the contrast around the black and white border of
-//  the tag. This generally increases the number of successfully
-//  detected tags, though not as effectively (or quickly) as
-//  refine_decode.
-//  This option must be enabled in order for "goodness" to be
-//  computed.
-//  </blockquote>
-//  Default is 0.
-
-//  \param refinePose : If true, set refine_pose to 1.
-//*/
-//void vpDetectorAprilTag::setAprilTagRefinePose(const bool refinePose) { m_impl->setRefinePose(refinePose); }
+#if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
+/*!
+  Deprecated parameter from AprilTag 2 version.
+*/
+vp_deprecated void vpDetectorAprilTag::setAprilTagRefinePose(const bool refinePose) { m_impl->setRefinePose(refinePose); }
+#endif
 
 /*!
  * Modify the resulting tag pose returned by getPose() in order to get

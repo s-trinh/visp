@@ -526,7 +526,11 @@ double value_for_pixel(image_u8_t *im, double px, double py) {
 }
 
 void sharpen(apriltag_detector_t* td, double* values, int size) {
+#ifdef _MSC_VER
+    double *sharpened = (double *)malloc(size*size * sizeof *sharpened);
+#else
     double sharpened[size*size];
+#endif
     double kernel[9] = {
         0, -1, 0,
         -1, 4, -1,
@@ -553,6 +557,10 @@ void sharpen(apriltag_detector_t* td, double* values, int size) {
             values[y*size + x] = values[y*size + x] + td->decode_sharpening*sharpened[y*size + x];
         }
     }
+
+#ifdef _MSC_VER
+    free(sharpened);
+#endif
 }
 
 // returns the decision margin. Return < 0 if the detection should be rejected.
@@ -666,7 +674,11 @@ float quad_decode(apriltag_detector_t* td, apriltag_family_t *family, image_u8_t
     float black_score = 0, white_score = 0;
     float black_score_count = 1, white_score_count = 1;
 
+#ifdef _MSC_VER
+    double *values = (double *)malloc(family->total_width*family->total_width * sizeof *values);
+#else
     double values[family->total_width*family->total_width];
+#endif
     memset(values, 0, family->total_width*family->total_width*sizeof(double));
 
     int min_coord = (family->width_at_border - family->total_width)/2;
@@ -718,6 +730,10 @@ float quad_decode(apriltag_detector_t* td, apriltag_family_t *family, image_u8_t
             black_score_count++;
         }
     }
+
+#ifdef _MSC_VER
+    free(values);
+#endif
 
     quick_decode_codeword(family, rcode, entry);
     return fmin(white_score / white_score_count, black_score / black_score_count);
@@ -1320,7 +1336,7 @@ zarray_t *apriltag_detector_detect(apriltag_detector_t *td, image_u8_t *im_orig)
 
             for (int j = 0; j < 4; j++) {
                 int k = (j + 1) & 3;
-                uint8_t data_[] = { rgb[0], rgb[1], rgb[2] };
+                uint8_t data_[] = { (uint8_t)rgb[0], (uint8_t)rgb[1], (uint8_t)rgb[2] };
                 image_u8x3_draw_line(out,
                                      det->p[j][0], det->p[j][1], det->p[k][0], det->p[k][1],
                                      data_,

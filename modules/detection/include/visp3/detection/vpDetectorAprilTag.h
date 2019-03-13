@@ -215,23 +215,33 @@ class VISP_EXPORT vpDetectorAprilTag : public vpDetectorBase
 
 public:
   enum vpAprilTagFamily {
-    TAG_36h11,       /*!< AprilTag <a
-                        href="https://april.eecs.umich.edu/software/apriltag.html">36h11</a>
-                        pattern (recommended) */
-//    TAG_36h10,       /*!< AprilTag <a
-//                        href="https://april.eecs.umich.edu/software/apriltag.html">36h10</a>
-//                        pattern */
-//    TAG_36ARTOOLKIT, /*!< <a href="https://artoolkit.org/">ARToolKit</a>
-//                        pattern. */
-    TAG_25h9,        /*!< AprilTag <a
-                        href="https://april.eecs.umich.edu/software/apriltag.html">25h9</a>
-                        pattern */
-//    TAG_25h7,        /*!< AprilTag <a
-//                        href="https://april.eecs.umich.edu/software/apriltag.html">25h7</a>
-//                        pattern */
-    TAG_16h5         /*!< AprilTag <a
-                        href="https://april.eecs.umich.edu/software/apriltag.html">16h5</a>
-                        pattern */
+    TAG_36h11,        /*!< AprilTag <a
+                         href="https://april.eecs.umich.edu/software/apriltag.html">36h11</a>
+                         pattern (recommended) */
+    TAG_36h10,        ///< DEPRECATED
+    TAG_36ARTOOLKIT,  ///< DEPRECATED AND WILL NOT DETECT
+    TAG_25h9,         /*!< AprilTag <a
+                         href="https://april.eecs.umich.edu/software/apriltag.html">25h9</a>
+                         pattern */
+    TAG_25h7,         ///< DEPRECATED AND POOR DETECTION PERFORMANCE
+    TAG_16h5,         /*!< AprilTag <a
+                         href="https://april.eecs.umich.edu/software/apriltag.html">16h5</a>
+                         pattern */
+    TAG_CIRCLE21h7,   /*!< AprilTag <a
+                         href="https://april.eecs.umich.edu/software/apriltag.html">16h5</a>
+                         pattern */
+    TAG_CIRCLE49h12,  /*!< AprilTag <a
+                         href="https://april.eecs.umich.edu/software/apriltag.html">16h5</a>
+                         pattern */
+    TAG_CUSTOM48h12,   /*!< AprilTag <a
+                          href="https://april.eecs.umich.edu/software/apriltag.html">16h5</a>
+                          pattern */
+    TAG_STANDARD41h12, /*!< AprilTag <a
+                          href="https://april.eecs.umich.edu/software/apriltag.html">16h5</a>
+                          pattern */
+    TAG_STANDARD52h13  /*!< AprilTag <a
+                          href="https://april.eecs.umich.edu/software/apriltag.html">16h5</a>
+                          pattern */
   };
 
   enum vpPoseEstimationMethod {
@@ -263,6 +273,7 @@ public:
   */
   inline vpPoseEstimationMethod getPoseEstimationMethod() const { return m_poseEstimationMethod; }
 
+  void setAprilTagDecodeSharpening(const double decodeSharpening);
   void setAprilTagNbThreads(const int nThreads);
   void setAprilTagPoseEstimationMethod(const vpPoseEstimationMethod &poseEstimationMethod);
   void setAprilTagQuadDecimate(const float quadDecimate);
@@ -341,24 +352,44 @@ inline std::ostream &operator<<(std::ostream &os, const vpDetectorAprilTag::vpAp
     os << "36h11";
     break;
 
-//  case vpDetectorAprilTag::TAG_36h10:
-//    os << "36h10";
-//    break;
+  case vpDetectorAprilTag::TAG_36h10:
+    os << "36h10";
+    break;
 
-//  case vpDetectorAprilTag::TAG_36ARTOOLKIT:
-//    os << "36artoolkit";
-//    break;
+  case vpDetectorAprilTag::TAG_36ARTOOLKIT:
+    os << "36artoolkit";
+    break;
 
   case vpDetectorAprilTag::TAG_25h9:
     os << "25h9";
     break;
 
-//  case vpDetectorAprilTag::TAG_25h7:
-//    os << "25h7";
-//    break;
+  case vpDetectorAprilTag::TAG_25h7:
+    os << "25h7";
+    break;
 
   case vpDetectorAprilTag::TAG_16h5:
     os << "16h5";
+    break;
+
+  case vpDetectorAprilTag::TAG_CIRCLE21h7:
+    os << "CIRCLE21h7";
+    break;
+
+  case vpDetectorAprilTag::TAG_CIRCLE49h12:
+    os << "CIRCLE49h12";
+    break;
+
+  case vpDetectorAprilTag::TAG_CUSTOM48h12:
+    os << "CUSTOM48h12";
+    break;
+
+  case vpDetectorAprilTag::TAG_STANDARD41h12:
+    os << "STANDARD41h12";
+    break;
+
+  case vpDetectorAprilTag::TAG_STANDARD52h13:
+    os << "STANDARD52h13";
     break;
 
   default:

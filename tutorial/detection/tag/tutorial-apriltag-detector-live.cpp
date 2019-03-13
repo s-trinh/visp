@@ -89,8 +89,9 @@ int main(int argc, const char **argv)
                    " [--pose_method <method> (0: HOMOGRAPHY, 1: HOMOGRAPHY_VIRTUAL_VS, "
                    " 2: DEMENTHON_VIRTUAL_VS, 3: LAGRANGE_VIRTUAL_VS, "
                    " 4: BEST_RESIDUAL_VIRTUAL_VS) (default: 0)]"
-                   " [--tag_family <family> (0: TAG_36h11, 1: TAG_36h10, 2: TAG_36ARTOOLKIT,"
-                   " 3: TAG_25h9, 4: TAG_25h7, 5: TAG_16h5) (default: 0)]"
+                   " [--tag_family <family> (0: TAG_36h11, 1: TAG_36h10 (DEPRECATED), 2: TAG_36ARTOOLKIT (DEPRECATED),"
+                   " 3: TAG_25h9, 4: TAG_25h7 (DEPRECATED), 5: TAG_16h5, 6: TAG_CIRCLE21h7, 7: TAG_CIRCLE49h12,"
+                   " 8: TAG_CUSTOM48h12, 9: TAG_STANDARD41h12, 10: TAG_STANDARD52h13) (default: 0)]"
                    " [--display_tag]";
 #if (defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_OPENCV))
       std::cout << " [--display_off] [--color <color id>] [--thickness <line thickness>]";
@@ -110,7 +111,7 @@ int main(int argc, const char **argv)
 #endif
 
     //! [Construct grabber]
-#if 0 //defined(VISP_HAVE_V4L2)
+#if defined(VISP_HAVE_V4L2)
     vpV4l2Grabber g;
     std::ostringstream device;
     device << "/dev/video" << opt_device;
@@ -118,7 +119,7 @@ int main(int argc, const char **argv)
     g.setDevice(device.str());
     g.setScale(1);
     g.open(I);
-#elif 0 //defined(VISP_HAVE_DC1394)
+#elif defined(VISP_HAVE_DC1394)
     (void)opt_device; // To avoid non used warning
     std::cout << "Use DC1394 grabber" << std::endl;
     vp1394TwoGrabber g;
