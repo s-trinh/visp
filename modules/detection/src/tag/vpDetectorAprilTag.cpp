@@ -45,16 +45,18 @@
 #include <tag36h10.h>
 #include <tag36h11.h>
 #include <tagCircle21h7.h>
+#include <tagStandard41h12.h>
+#include <apriltag_pose.h>
+#include <visp3/detection/vpDetectorAprilTag.h>
+#if BUILD_BIG_FAMILY_TAG
 #include <tagCircle49h12.h>
 #include <tagCustom48h12.h>
-#include <tagStandard41h12.h>
 #include <tagStandard52h13.h>
-#include <apriltag_pose.h>
+#endif
 
 #include <visp3/core/vpDisplay.h>
 #include <visp3/core/vpPixelMeterConversion.h>
 #include <visp3/core/vpPoint.h>
-#include <visp3/detection/vpDetectorAprilTag.h>
 #include <visp3/vision/vpPose.h>
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -93,6 +95,7 @@ public:
       m_tf = tagCircle21h7_create();
       break;
 
+#if BUILD_BIG_FAMILY_TAG
     case TAG_CIRCLE49h12:
       m_tf = tagCircle49h12_create();
       break;
@@ -101,12 +104,13 @@ public:
       m_tf = tagCustom48h12_create();
       break;
 
-    case TAG_STANDARD41h12:
-      m_tf = tagStandard41h12_create();
-      break;
-
     case TAG_STANDARD52h13:
       m_tf = tagStandard52h13_create();
+      break;
+#endif
+
+    case TAG_STANDARD41h12:
+      m_tf = tagStandard41h12_create();
       break;
 
     default:
@@ -154,6 +158,7 @@ public:
       tagCircle21h7_destroy(m_tf);
       break;
 
+#if BUILD_BIG_FAMILY_TAG
     case TAG_CIRCLE49h12:
       tagCustom48h12_destroy(m_tf);
       break;
@@ -162,12 +167,13 @@ public:
       tagCustom48h12_destroy(m_tf);
       break;
 
-    case TAG_STANDARD41h12:
-      tagStandard41h12_destroy(m_tf);
-      break;
-
     case TAG_STANDARD52h13:
       tagStandard52h13_destroy(m_tf);
+      break;
+#endif
+
+    case TAG_STANDARD41h12:
+      tagStandard41h12_destroy(m_tf);
       break;
 
     default:
@@ -185,6 +191,7 @@ public:
               const vpColor color, const unsigned int thickness)
   {
     if (m_tagFamily == TAG_36ARTOOLKIT) {
+      //TAG_36ARTOOLKIT is not available anymore
       return false;
     }
 
@@ -253,6 +260,7 @@ public:
       throw(vpException(vpException::fatalError, "Cannot get tag index=%d pose: detection empty", tagIndex));
     }
     if (m_tagFamily == TAG_36ARTOOLKIT) {
+      //TAG_36ARTOOLKIT is not available anymore
       return  false;
     }
 
@@ -263,6 +271,12 @@ public:
     if (tagIndex >= (size_t)nb_detections) {
       return false;
     }
+
+    //In AprilTag3, estimate_pose_for_tag_homography() and estimate_tag_pose() have been added.
+    //They use a tag frame aligned with the camera frame
+    //Before the release of AprilTag3, convention used was to define the z-axis of tag going upward.
+    //To keep compatibility, we maintain the same convention than before and there is setZAlignedWithCameraAxis().
+    //Under the hood, we use aligned frames and transform the pose according to the option.
 
     vpHomogeneousMatrix cMo_homography_ortho_iter;
     if (m_poseEstimationMethod == HOMOGRAPHY_ORTHOGONAL_ITERATION ||
@@ -291,7 +305,8 @@ public:
       matd_destroy(pose.R);
       matd_destroy(pose.t);
 
-      if (m_zAlignedWithCameraFrame) {
+      //AprilTag uses aligned frames convention
+      if (!m_zAlignedWithCameraFrame) {
         vpHomogeneousMatrix oMo;
         // Apply a rotation of 180deg around x axis
         oMo[0][0] = 1; oMo[0][1] =  0; oMo[0][2] = 0;
@@ -330,7 +345,8 @@ public:
       matd_destroy(pose.R);
       matd_destroy(pose.t);
 
-      if (m_zAlignedWithCameraFrame) {
+      //AprilTag uses aligned frames convention
+      if (!m_zAlignedWithCameraFrame) {
         vpHomogeneousMatrix oMo;
         // Apply a rotation of 180deg around x axis
         oMo[0][0] = 1; oMo[0][1] =  0; oMo[0][2] = 0;
@@ -353,8 +369,7 @@ public:
       std::vector<vpPoint> pts(4);
       if (m_zAlignedWithCameraFrame) {
         pt.setWorldCoordinates(-tagSize / 2.0, tagSize / 2.0, 0.0);
-      }
-      else {
+      } else {
         pt.setWorldCoordinates(-tagSize / 2.0, -tagSize / 2.0, 0.0);
       }
       imPt.set_uv(det->p[0][0], det->p[0][1]);
@@ -365,8 +380,7 @@ public:
 
       if (m_zAlignedWithCameraFrame) {
         pt.setWorldCoordinates(tagSize / 2.0, tagSize / 2.0, 0.0);
-      }
-      else {
+      } else {
         pt.setWorldCoordinates(tagSize / 2.0, -tagSize / 2.0, 0.0);
       }
       imPt.set_uv(det->p[1][0], det->p[1][1]);
@@ -377,8 +391,7 @@ public:
 
       if (m_zAlignedWithCameraFrame) {
         pt.setWorldCoordinates(tagSize / 2.0, -tagSize / 2.0, 0.0);
-      }
-      else {
+      } else {
         pt.setWorldCoordinates(tagSize / 2.0, tagSize / 2.0, 0.0);
       }
       imPt.set_uv(det->p[2][0], det->p[2][1]);
@@ -389,8 +402,7 @@ public:
 
       if (m_zAlignedWithCameraFrame) {
         pt.setWorldCoordinates(-tagSize / 2.0, -tagSize / 2.0, 0.0);
-      }
-      else {
+      } else {
         pt.setWorldCoordinates(-tagSize / 2.0, tagSize / 2.0, 0.0);
       }
       imPt.set_uv(det->p[3][0], det->p[3][1]);
@@ -457,15 +469,11 @@ public:
 
   void setQuadSigma(const float quadSigma) { m_td->quad_sigma = quadSigma; }
 
-#if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
-  vp_deprecated void setRefineDecode(const bool) { }
-#endif
+  void setRefineDecode(const bool) { }
 
   void setRefineEdges(const bool refineEdges) { m_td->refine_edges = refineEdges ? 1 : 0; }
 
-#if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
-  vp_deprecated void setRefinePose(const bool) { }
-#endif
+  void setRefinePose(const bool) { }
 
   void setTagSize(const double tagSize) { m_tagSize = tagSize; }
 
@@ -487,9 +495,6 @@ protected:
 };
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 
-/*!
-   Default constructor.
-*/
 vpDetectorAprilTag::vpDetectorAprilTag(const vpAprilTagFamily &tagFamily,
                                        const vpPoseEstimationMethod &poseEstimationMethod)
   : m_displayTag(false), m_displayTagColor(vpColor::none), m_displayTagThickness(2),
@@ -498,9 +503,6 @@ vpDetectorAprilTag::vpDetectorAprilTag(const vpAprilTagFamily &tagFamily,
 {
 }
 
-/*!
-   Destructor that desallocate memory.
-*/
 vpDetectorAprilTag::~vpDetectorAprilTag() { delete m_impl; }
 
 /*!
@@ -568,7 +570,7 @@ bool vpDetectorAprilTag::detect(const vpImage<unsigned char> &I, const double ta
 
   The following code shows how to use this function:
   \code
-    vpCameraParameters cam;
+  vpCameraParameters cam;
   vpDetectorAprilTag detector(tagFamily);
   detector.detect(I);
   for (size_t i = 0; i < detector.getNbObjects(); i++) {
@@ -624,7 +626,10 @@ void vpDetectorAprilTag::setAprilTagPoseEstimationMethod(const vpPoseEstimationM
 
   \param quadDecimate : Value for quad_decimate.
 */
-void vpDetectorAprilTag::setAprilTagQuadDecimate(const float quadDecimate) { m_impl->setQuadDecimate(quadDecimate); }
+void vpDetectorAprilTag::setAprilTagQuadDecimate(const float quadDecimate)
+{
+  m_impl->setQuadDecimate(quadDecimate);
+}
 
 /*!
   From the AprilTag code:
@@ -638,13 +643,18 @@ void vpDetectorAprilTag::setAprilTagQuadDecimate(const float quadDecimate) { m_i
 
   \param quadSigma : Value for quad_sigma.
 */
-void vpDetectorAprilTag::setAprilTagQuadSigma(const float quadSigma) { m_impl->setQuadSigma(quadSigma); }
+void vpDetectorAprilTag::setAprilTagQuadSigma(const float quadSigma)
+{
+  m_impl->setQuadSigma(quadSigma);
+}
 
 #if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
 /*!
   Deprecated parameter from AprilTag 2 version.
 */
-vp_deprecated void vpDetectorAprilTag::setAprilTagRefineDecode(const bool refineDecode) { m_impl->setRefineDecode(refineDecode); }
+vp_deprecated void vpDetectorAprilTag::setAprilTagRefineDecode(const bool refineDecode) {
+  m_impl->setRefineDecode(refineDecode);
+}
 #endif
 
 /*!
@@ -661,13 +671,19 @@ vp_deprecated void vpDetectorAprilTag::setAprilTagRefineDecode(const bool refine
 
   \param refineEdges : If true, set refine_edges to 1.
 */
-void vpDetectorAprilTag::setAprilTagRefineEdges(const bool refineEdges) { m_impl->setRefineEdges(refineEdges); }
+void vpDetectorAprilTag::setAprilTagRefineEdges(const bool refineEdges)
+{
+  m_impl->setRefineEdges(refineEdges);
+}
 
 #if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
 /*!
   Deprecated parameter from AprilTag 2 version.
 */
-vp_deprecated void vpDetectorAprilTag::setAprilTagRefinePose(const bool refinePose) { m_impl->setRefinePose(refinePose); }
+vp_deprecated void vpDetectorAprilTag::setAprilTagRefinePose(const bool refinePose)
+{
+  m_impl->setRefinePose(refinePose);
+}
 #endif
 
 /*!

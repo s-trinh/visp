@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+//extern "C" {
+#endif
+
 #include "apriltag.h"
 #include "common/matd.h"
 
@@ -64,4 +68,6 @@ void estimate_tag_pose_orthogonal_iteration(
  */
 double estimate_tag_pose(apriltag_detection_info_t* info, apriltag_pose_t* pose);
 
-
+#ifdef __cplusplus
+//}
+#endif

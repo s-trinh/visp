@@ -44,6 +44,8 @@
 #include <visp3/core/vpColor.h>
 #include <visp3/detection/vpDetectorBase.h>
 
+#define BUILD_BIG_FAMILY_TAG 0
+
 /*!
   \class vpDetectorAprilTag
   \ingroup group_detection_tag
@@ -219,7 +221,7 @@ public:
                          href="https://april.eecs.umich.edu/software/apriltag.html">36h11</a>
                          pattern (recommended) */
     TAG_36h10,        ///< DEPRECATED
-    TAG_36ARTOOLKIT,  ///< DEPRECATED AND WILL NOT DETECT
+    TAG_36ARTOOLKIT,  ///< DEPRECATED AND WILL NOT DETECT ARTOOLKIT TAGS
     TAG_25h9,         /*!< AprilTag <a
                          href="https://april.eecs.umich.edu/software/apriltag.html">25h9</a>
                          pattern */
@@ -230,6 +232,7 @@ public:
     TAG_CIRCLE21h7,   /*!< AprilTag <a
                          href="https://april.eecs.umich.edu/software/apriltag.html">16h5</a>
                          pattern */
+#if BUILD_BIG_FAMILY_TAG //keep this enum order
     TAG_CIRCLE49h12,  /*!< AprilTag <a
                          href="https://april.eecs.umich.edu/software/apriltag.html">16h5</a>
                          pattern */
@@ -242,6 +245,11 @@ public:
     TAG_STANDARD52h13  /*!< AprilTag <a
                           href="https://april.eecs.umich.edu/software/apriltag.html">16h5</a>
                           pattern */
+#else
+    TAG_STANDARD41h12  /*!< AprilTag <a
+                          href="https://april.eecs.umich.edu/software/apriltag.html">16h5</a>
+                          pattern */
+#endif
   };
 
   enum vpPoseEstimationMethod {
@@ -376,6 +384,7 @@ inline std::ostream &operator<<(std::ostream &os, const vpDetectorAprilTag::vpAp
     os << "CIRCLE21h7";
     break;
 
+#if BUILD_BIG_FAMILY_TAG
   case vpDetectorAprilTag::TAG_CIRCLE49h12:
     os << "CIRCLE49h12";
     break;
@@ -384,12 +393,13 @@ inline std::ostream &operator<<(std::ostream &os, const vpDetectorAprilTag::vpAp
     os << "CUSTOM48h12";
     break;
 
-  case vpDetectorAprilTag::TAG_STANDARD41h12:
-    os << "STANDARD41h12";
-    break;
-
   case vpDetectorAprilTag::TAG_STANDARD52h13:
     os << "STANDARD52h13";
+    break;
+#endif
+
+  case vpDetectorAprilTag::TAG_STANDARD41h12:
+    os << "STANDARD41h12";
     break;
 
   default:
