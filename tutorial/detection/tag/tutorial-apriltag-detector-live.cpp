@@ -16,12 +16,12 @@
 #include <visp3/core/vpXmlParserCamera.h>
 
 //! [Undef grabber]
-//#undef VISP_HAVE_V4L2
-//#undef VISP_HAVE_DC1394
-//#undef VISP_HAVE_CMU1394
-//#undef VISP_HAVE_FLYCAPTURE
+#undef VISP_HAVE_V4L2
+#undef VISP_HAVE_DC1394
+#undef VISP_HAVE_CMU1394
+#undef VISP_HAVE_FLYCAPTURE
 //#undef VISP_HAVE_REALSENSE2
-//#undef VISP_HAVE_OPENCV
+#undef VISP_HAVE_OPENCV
 //! [Undef grabber]
 
 int main(int argc, const char **argv)
@@ -51,7 +51,7 @@ int main(int argc, const char **argv)
   bool display_off = false;
 #endif
 
-  vpImage<unsigned char> I;
+  vpImage<unsigned char> I, I2;
 
   for (int i = 1; i < argc; i++) {
     if (std::string(argv[i]) == "--pose_method" && i + 1 < argc) {
@@ -144,6 +144,7 @@ int main(int argc, const char **argv)
     config.enable_stream(RS2_STREAM_COLOR, 640, 480, RS2_FORMAT_RGBA8, 30);
     g.open(config);
     g.acquire(I);
+    I2 = I;
 
     std::cout << "Read camera parameters from Realsense device" << std::endl;
     cam = g.getCameraParameters(RS2_STREAM_COLOR, vpCameraParameters::perspectiveProjWithoutDistortion);
@@ -166,14 +167,17 @@ int main(int argc, const char **argv)
     std::cout << "quad_decimate: " << quad_decimate << std::endl;
     std::cout << "nThreads: " << nThreads << std::endl;
 
-    vpDisplay *d = NULL;
+    vpDisplay *d = NULL, *d2 = NULL;
     if (! display_off) {
 #ifdef VISP_HAVE_X11
       d = new vpDisplayX(I);
+      d2 = new vpDisplayX(I2);
 #elif defined(VISP_HAVE_GDI)
       d = new vpDisplayGDI(I);
+      d2 = new vpDisplayGDI(I2);
 #elif defined(VISP_HAVE_OPENCV)
       d = new vpDisplayOpenCV(I);
+      d2 = new vpDisplayOpenCV(I2);
 #endif
     }
 
@@ -198,13 +202,16 @@ int main(int argc, const char **argv)
       vpImageConvert::convert(frame, I);
 #endif
       //! [Acquisition]
+      I2 = I;
 
       vpDisplay::display(I);
+      vpDisplay::display(I2);
 
       double t = vpTime::measureTimeMs();
       //! [Detect and compute pose]
       std::vector<vpHomogeneousMatrix> cMo_vec;
-      detector.detect(I, tagSize, cam, cMo_vec);
+      std::vector<vpHomogeneousMatrix> cMo_vec2;
+      detector.detect(I, tagSize, cam, cMo_vec, &cMo_vec2);
       //! [Detect and compute pose]
       t = vpTime::measureTimeMs() - t;
       time_vec.push_back(t);
@@ -218,10 +225,14 @@ int main(int argc, const char **argv)
         vpDisplay::displayFrame(I, cMo_vec[i], cam, tagSize / 2, vpColor::none, 3);
       }
       //! [Display camera pose for each tag]
+      for (size_t i = 0; i < cMo_vec2.size(); i++) {
+        vpDisplay::displayFrame(I2, cMo_vec2[i], cam, tagSize / 2, vpColor::none, 3);
+      }
 
       vpDisplay::displayText(I, 20, 20, "Click to quit.", vpColor::red);
       vpDisplay::flush(I);
-      if (vpDisplay::getClick(I, false))
+      vpDisplay::flush(I2);
+      if (vpDisplay::getClick(I, false) || vpDisplay::getClick(I2, false))
         break;
     }
 
@@ -230,8 +241,10 @@ int main(int argc, const char **argv)
               << " ; " << vpMath::getMedian(time_vec) << " ms"
               << " ; " << vpMath::getStdev(time_vec) << " ms" << std::endl;
 
-    if (! display_off)
+    if (! display_off) {
       delete d;
+      delete d2;
+    }
 
   } catch (const vpException &e) {
     std::cerr << "Catch an exception: " << e.getMessage() << std::endl;

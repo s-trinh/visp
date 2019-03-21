@@ -733,7 +733,7 @@ static inline void ptsort(struct pt *pts, int sz)
         stacksz = 0;
 
 #ifdef _MSC_VER
-    struct *pt _tmp_stack = (struct *pt)malloc(stacksz * sizeof *_tmp_stack);
+    struct pt *_tmp_stack = (struct *pt)malloc(stacksz * sizeof *_tmp_stack);
 #else
     struct pt _tmp_stack[stacksz];
 #endif
@@ -1628,7 +1628,7 @@ zarray_t* do_gradient_clusters(image_u8_t* threshim, int ts, int y0, int y1, int
                             clustermap[clustermap_bucket] = entry;          \
                         }                                                   \
                                                                             \
-                        struct pt p = { .x = (uint16_t)(2*x + dx), .y = (uint16_t)(2*y + dy), .gx = (int16_t)(dx*((int) v1-v0)), .gy = (int16_t)(dy*((int) v1-v0)) }; \
+                        struct pt p = { /*.x =*/ (uint16_t)(2*x + dx), /*.y =*/ (uint16_t)(2*y + dy), /*.gx =*/ (int16_t)(dx*((int) v1-v0)), /*.gy =*/ (int16_t)(dy*((int) v1-v0)) }; \
                         zarray_add(entry->cluster, &p);                     \
                     }                                                   \
                 }                                                       \

@@ -272,9 +272,10 @@ public:
 
   bool detect(const vpImage<unsigned char> &I);
   bool detect(const vpImage<unsigned char> &I, const double tagSize, const vpCameraParameters &cam,
-              std::vector<vpHomogeneousMatrix> &cMo_vec);
+              std::vector<vpHomogeneousMatrix> &cMo_vec, std::vector<vpHomogeneousMatrix> *cMo_vec2=NULL);
 
-  bool getPose(size_t tagIndex, const double tagSize, const vpCameraParameters &cam, vpHomogeneousMatrix &cMo);
+  bool getPose(size_t tagIndex, const double tagSize, const vpCameraParameters &cam,
+               vpHomogeneousMatrix &cMo, vpHomogeneousMatrix *cMo2=NULL);
 
   /*!
     Return the pose estimation method.

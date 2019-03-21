@@ -64,7 +64,7 @@ class vpDetectorAprilTag::Impl
 {
 public:
   Impl(const vpAprilTagFamily &tagFamily, const vpPoseEstimationMethod &method)
-    : m_cam(), m_poseEstimationMethod(method), m_tagFamily(tagFamily), m_tagPoses(), m_tagSize(1.0), m_td(NULL),
+    : m_cam(), m_poseEstimationMethod(method), m_tagFamily(tagFamily), m_tagSize(1.0), m_td(NULL),
       m_tf(NULL), m_detections(NULL), m_zAlignedWithCameraFrame(false)
   {
     switch (m_tagFamily) {
@@ -186,16 +186,26 @@ public:
     }
   }
 
+  void convertHomogeneousMatrix(const apriltag_pose_t &pose, vpHomogeneousMatrix &cMo) {
+    for (unsigned int i = 0; i < 3; i++) {
+      for (unsigned int j = 0; j < 3; j++) {
+        cMo[i][j] = MATD_EL(pose.R, i, j);
+      }
+      cMo[i][3] = MATD_EL(pose.t, i, 0);
+    }
+  }
+
   bool detect(const vpImage<unsigned char> &I, std::vector<std::vector<vpImagePoint> > &polygons,
-              std::vector<std::string> &messages, const bool computePose, const bool displayTag,
-              const vpColor color, const unsigned int thickness)
+              std::vector<std::string> &messages, const bool displayTag, const vpColor color,
+              const unsigned int thickness, std::vector<vpHomogeneousMatrix> *cMo_vec,
+              std::vector<vpHomogeneousMatrix> *cMo_vec2)
   {
     if (m_tagFamily == TAG_36ARTOOLKIT) {
       //TAG_36ARTOOLKIT is not available anymore
       return false;
     }
 
-    m_tagPoses.clear();
+    const bool computePose = cMo_vec != NULL;
 
     image_u8_t im = {/*.width =*/(int32_t)I.getWidth(),
                      /*.height =*/(int32_t)I.getHeight(),
@@ -244,9 +254,12 @@ public:
       }
 
       if (computePose) {
-        vpHomogeneousMatrix cMo;
-        if (getPose(static_cast<size_t>(i), m_tagSize, m_cam, cMo)) {
-          m_tagPoses.push_back(cMo);
+        vpHomogeneousMatrix cMo, cMo2;
+        if (getPose(static_cast<size_t>(i), m_tagSize, m_cam, cMo, cMo_vec2 ? &cMo2 : NULL)) {
+          cMo_vec->push_back(cMo);
+          if (cMo_vec2) {
+            cMo_vec2->push_back(cMo2);
+          }
         }
         // else case should never happen
       }
@@ -255,7 +268,7 @@ public:
     return detected;
   }
 
-  bool getPose(size_t tagIndex, const double tagSize, const vpCameraParameters &cam, vpHomogeneousMatrix &cMo) {
+  bool getPose(size_t tagIndex, const double tagSize, const vpCameraParameters &cam, vpHomogeneousMatrix &cMo, vpHomogeneousMatrix *cMo2) {
     if (m_detections == NULL) {
       throw(vpException(vpException::fatalError, "Cannot get tag index=%d pose: detection empty", tagIndex));
     }
@@ -292,18 +305,7 @@ public:
       info.cx = cx;
       info.cy = cy;
 
-      apriltag_pose_t pose;
-      estimate_tag_pose(&info, &pose);
-
-      for (unsigned int i = 0; i < 3; i++) {
-        for (unsigned int j = 0; j < 3; j++) {
-          cMo[i][j] = MATD_EL(pose.R, i, j);
-        }
-        cMo[i][3] = MATD_EL(pose.t, i, 0);
-      }
-
-      matd_destroy(pose.R);
-      matd_destroy(pose.t);
+      getPoseWithOrthogonalMethod(info, cMo, cMo2);
 
       //AprilTag uses aligned frames convention
       if (!m_zAlignedWithCameraFrame) {
@@ -313,6 +315,9 @@ public:
         oMo[1][0] = 0; oMo[1][1] = -1; oMo[1][2] = 0;
         oMo[2][0] = 0; oMo[2][1] =  0; oMo[2][2] = -1;
         cMo = cMo*oMo;
+        if (cMo2) {
+          *cMo2 = *cMo2*oMo;
+        }
       }
 
       cMo_homography_ortho_iter = cMo;
@@ -334,13 +339,7 @@ public:
 
       apriltag_pose_t pose;
       estimate_pose_for_tag_homography(&info, &pose);
-
-      for (unsigned int i = 0; i < 3; i++) {
-        for (unsigned int j = 0; j < 3; j++) {
-          cMo[i][j] = MATD_EL(pose.R, i, j);
-        }
-        cMo[i][3] = MATD_EL(pose.t, i, 0);
-      }
+      convertHomogeneousMatrix(pose, cMo);
 
       matd_destroy(pose.R);
       matd_destroy(pose.t);
@@ -454,10 +453,34 @@ public:
       pose.computePose(vpPose::VIRTUAL_VS, cMo);
     }
 
+    if (cMo2 && m_poseEstimationMethod != HOMOGRAPHY_ORTHOGONAL_ITERATION) {
+      *cMo2 = cMo;
+    }
+
     return true;
   }
 
-  void getTagPoses(std::vector<vpHomogeneousMatrix> &tagPoses) const { tagPoses = m_tagPoses; }
+  void getPoseWithOrthogonalMethod(apriltag_detection_info_t &info, vpHomogeneousMatrix &cMo1, vpHomogeneousMatrix *cMo2) {
+    double err1, err2;
+    apriltag_pose_t pose1, pose2;
+    estimate_tag_pose_orthogonal_iteration(&info, &err1, &pose1, &err2, &pose2, 50);
+    if (err1 <= err2) {
+      convertHomogeneousMatrix(pose1, cMo1);
+      if (cMo2) {
+        convertHomogeneousMatrix(pose2, *cMo2);
+      }
+    } else {
+      if (cMo2) {
+        convertHomogeneousMatrix(pose1, *cMo2);
+      }
+      convertHomogeneousMatrix(pose2, cMo1);
+    }
+
+    matd_destroy(pose1.R);
+    matd_destroy(pose1.t);
+    matd_destroy(pose2.R);
+    matd_destroy(pose2.t);
+  }
 
   void setCameraParameters(const vpCameraParameters &cam) { m_cam = cam; }
 
@@ -486,7 +509,6 @@ protected:
   std::map<vpPoseEstimationMethod, vpPose::vpPoseMethodType> m_mapOfCorrespondingPoseMethods;
   vpPoseEstimationMethod m_poseEstimationMethod;
   vpAprilTagFamily m_tagFamily;
-  std::vector<vpHomogeneousMatrix> m_tagPoses;
   double m_tagSize;
   apriltag_detector_t *m_td;
   apriltag_family_t *m_tf;
@@ -518,8 +540,10 @@ bool vpDetectorAprilTag::detect(const vpImage<unsigned char> &I)
   m_polygon.clear();
   m_nb_objects = 0;
 
-  bool detected = m_impl->detect(I, m_polygon, m_message, false, m_displayTag,
-                                 m_displayTagColor, m_displayTagThickness);
+  std::vector<vpHomogeneousMatrix> cMo_vec;
+  bool detected = m_impl->detect(I, m_polygon, m_message, m_displayTag,
+                                 m_displayTagColor, m_displayTagThickness,
+                                 NULL, NULL);
   m_nb_objects = m_message.size();
 
   return detected;
@@ -540,7 +564,7 @@ bool vpDetectorAprilTag::detect(const vpImage<unsigned char> &I)
   \sa getPose()
 */
 bool vpDetectorAprilTag::detect(const vpImage<unsigned char> &I, const double tagSize, const vpCameraParameters &cam,
-                                std::vector<vpHomogeneousMatrix> &cMo_vec)
+                                std::vector<vpHomogeneousMatrix> &cMo_vec, std::vector<vpHomogeneousMatrix> *cMo_vec2)
 {
   m_message.clear();
   m_polygon.clear();
@@ -548,10 +572,10 @@ bool vpDetectorAprilTag::detect(const vpImage<unsigned char> &I, const double ta
 
   m_impl->setTagSize(tagSize);
   m_impl->setCameraParameters(cam);
-  bool detected = m_impl->detect(I, m_polygon, m_message, true, m_displayTag,
-                                 m_displayTagColor, m_displayTagThickness);
+  bool detected = m_impl->detect(I, m_polygon, m_message, m_displayTag,
+                                 m_displayTagColor, m_displayTagThickness,
+                                 &cMo_vec, cMo_vec2);
   m_nb_objects = m_message.size();
-  m_impl->getTagPoses(cMo_vec);
 
   return detected;
 }
@@ -566,6 +590,7 @@ bool vpDetectorAprilTag::detect(const vpImage<unsigned char> &I, const double ta
   \param[in] tagSize : Tag size in meter corresponding to the external width of the pattern.
   \param[in] cam : Camera intrinsic parameters.
   \param[out] cMo : Pose of the tag.
+  \param[out] cMo2 : Second pose of the tag (if HOMOGRAPHY_ORTHOGONAL_ITERATION method is chosen).
   \return true if success, false otherwise.
 
   The following code shows how to use this function:
@@ -582,9 +607,10 @@ bool vpDetectorAprilTag::detect(const vpImage<unsigned char> &I, const double ta
 
   \sa detect(const vpImage<unsigned char> &, const double, const vpCameraParameters &, std::vector<vpHomogeneousMatrix> &)
  */
-bool vpDetectorAprilTag::getPose(size_t tagIndex, const double tagSize, const vpCameraParameters &cam, vpHomogeneousMatrix &cMo)
+bool vpDetectorAprilTag::getPose(size_t tagIndex, const double tagSize, const vpCameraParameters &cam,
+                                 vpHomogeneousMatrix &cMo, vpHomogeneousMatrix *cMo2)
 {
-  return (m_impl->getPose(tagIndex, tagSize, cam, cMo));
+  return (m_impl->getPose(tagIndex, tagSize, cam, cMo, cMo2));
 }
 
 void vpDetectorAprilTag::setAprilTagDecodeSharpening(const double decodeSharpening)
