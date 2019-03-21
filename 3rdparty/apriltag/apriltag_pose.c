@@ -49,7 +49,7 @@ double orthogonal_iteration(matd_t** v, matd_t** p, matd_t** t, matd_t** R, int 
     matd_scale_inplace(p_mean, 1.0/n_points);
 
 #ifdef _MSC_VER
-    matd_t* p_res = (matd_t *)malloc(n_points*sizeof p_res);
+    matd_t** p_res = (matd_t **)malloc(n_points*sizeof *p_res);
 #else
     matd_t* p_res[n_points];
 #endif
@@ -59,7 +59,7 @@ double orthogonal_iteration(matd_t** v, matd_t** p, matd_t** t, matd_t** R, int 
 
     // Compute M1_inv.
 #ifdef _MSC_VER
-    matd_t* F = (matd_t *)malloc(n_points*sizeof F);
+    matd_t** F = (matd_t **)malloc(n_points*sizeof *F);
 #else
     matd_t* F[n_points];
 #endif
@@ -92,7 +92,7 @@ double orthogonal_iteration(matd_t** v, matd_t** p, matd_t** t, matd_t** R, int 
 
         // Calculate rotation.
 #ifdef _MSC_VER
-    matd_t* q = (matd_t *)malloc(n_points*sizeof q);
+    matd_t** q = (matd_t **)malloc(n_points*sizeof *q);
 #else
     matd_t* q[n_points];
 #endif
@@ -180,7 +180,7 @@ void solve_poly_approx(double* p, int degree, double* roots, int* n_roots) {
 
     // Calculate roots of derivative.
 #ifdef _MSC_VER
-    matd_t* p_der = (matd_t *)malloc(degree*sizeof p_der);
+    matd_t* p_der = (matd_t *)malloc(degree*sizeof *p_der);
 #else
     double p_der[degree];
 #endif
@@ -189,7 +189,7 @@ void solve_poly_approx(double* p, int degree, double* roots, int* n_roots) {
     }
 
 #ifdef _MSC_VER
-    double* der_roots = (double *)malloc((degree - 1)*sizeof der_roots);
+    double* der_roots = (double *)malloc((degree - 1)*sizeof *der_roots);
 #else
     double der_roots[degree - 1];
 #endif
@@ -328,9 +328,9 @@ matd_t* fix_pose_ambiguities(matd_t** v, matd_t** p, matd_t* t, matd_t* R, int n
     matd_destroy(R_trans);
 
 #ifdef _MSC_VER
-    matd_t* v_trans = (matd_t *)malloc(n_points*sizeof *v_trans);
-    matd_t* p_trans = (matd_t *)malloc(n_points*sizeof *p_trans);
-    matd_t* F_trans = (matd_t *)malloc(n_points*sizeof *F_trans);
+    matd_t** v_trans = (matd_t **)malloc(n_points*sizeof *v_trans);
+    matd_t** p_trans = (matd_t **)malloc(n_points*sizeof *p_trans);
+    matd_t** F_trans = (matd_t **)malloc(n_points*sizeof *F_trans);
 #else
     matd_t* v_trans[n_points];
     matd_t* p_trans[n_points];
