@@ -1981,7 +1981,9 @@ zarray_t *apriltag_quad_thresh(apriltag_detector_t *td, image_u8_t *im)
         fprintf(f, "0 %d translate\n", im2->height);
         fprintf(f, "1 -1 scale\n");
 
-        postscript_image(f, im);
+        postscript_image(f, im2);
+
+        image_u8_destroy(im2);
 
         for (int i = 0; i < zarray_size(quads); i++) {
             struct quad *q;
