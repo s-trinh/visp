@@ -541,13 +541,14 @@ void estimate_tag_pose_orthogonal_iteration(
 
     estimate_pose_for_tag_homography(info, solution1);
     *err1 = orthogonal_iteration(v, p, &solution1->t, &solution1->R, 4, nIters);
-    solution2->R = fix_pose_ambiguities(v, p, solution1->t, solution1->R, 4);
-    if (solution2->R) {
-        solution2->t = matd_create(3, 1);
-        *err2 = orthogonal_iteration(v, p, &solution2->t, &solution2->R, 4, nIters);
-    } else {
-        *err2 = HUGE_VAL;
-    }
+//    solution2->R = fix_pose_ambiguities(v, p, solution1->t, solution1->R, 4);
+//    if (solution2->R) {
+//        solution2->t = matd_create(3, 1);
+//        *err2 = orthogonal_iteration(v, p, &solution2->t, &solution2->R, 4, nIters);
+//    } else {
+//        *err2 = HUGE_VAL;
+//    }
+    get_second_solution(v, p, solution1, solution2, nIters, err2);
 
     for (int i = 0; i < 4; i++) {
       matd_destroy(p[i]);
@@ -574,5 +575,15 @@ double estimate_tag_pose(apriltag_detection_info_t* info, apriltag_pose_t* pose)
         matd_destroy(pose1.R);
         matd_destroy(pose1.t);
         return err2;
+    }
+}
+
+void get_second_solution(matd_t* v[4], matd_t* p[4], apriltag_pose_t* solution1, apriltag_pose_t* solution2, int nIters, double* err2) {
+    solution2->R = fix_pose_ambiguities(v, p, solution1->t, solution1->R, 4);
+    if (solution2->R) {
+        solution2->t = matd_create(3, 1);
+        *err2 = orthogonal_iteration(v, p, &solution2->t, &solution2->R, 4, nIters);
+    } else {
+        *err2 = HUGE_VAL;
     }
 }

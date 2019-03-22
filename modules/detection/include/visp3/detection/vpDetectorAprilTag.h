@@ -44,7 +44,7 @@
 #include <visp3/core/vpColor.h>
 #include <visp3/detection/vpDetectorBase.h>
 
-#define BUILD_BIG_FAMILY_TAG 0
+#define BUILD_BIG_FAMILY_TAG 1
 
 /*!
   \class vpDetectorAprilTag
@@ -232,7 +232,7 @@ public:
     TAG_CIRCLE21h7,   /*!< AprilTag <a
                          href="https://april.eecs.umich.edu/software/apriltag.html">16h5</a>
                          pattern */
-#if BUILD_BIG_FAMILY_TAG //keep this enum order
+#if BUILD_BIG_FAMILY_TAG //add explicit enum values?
     TAG_CIRCLE49h12,  /*!< AprilTag <a
                          href="https://april.eecs.umich.edu/software/apriltag.html">16h5</a>
                          pattern */
@@ -272,10 +272,12 @@ public:
 
   bool detect(const vpImage<unsigned char> &I);
   bool detect(const vpImage<unsigned char> &I, const double tagSize, const vpCameraParameters &cam,
-              std::vector<vpHomogeneousMatrix> &cMo_vec, std::vector<vpHomogeneousMatrix> *cMo_vec2=NULL);
+              std::vector<vpHomogeneousMatrix> &cMo_vec, std::vector<vpHomogeneousMatrix> *cMo_vec2=NULL,
+              std::vector<double> *projErrors=NULL, std::vector<double> *projErrors2=NULL);
 
   bool getPose(size_t tagIndex, const double tagSize, const vpCameraParameters &cam,
-               vpHomogeneousMatrix &cMo, vpHomogeneousMatrix *cMo2=NULL);
+               vpHomogeneousMatrix &cMo, vpHomogeneousMatrix *cMo2=NULL,
+               double *projError=NULL, double *projError2=NULL);
 
   /*!
     Return the pose estimation method.
