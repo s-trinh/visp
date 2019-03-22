@@ -205,7 +205,7 @@ public:
       return false;
     }
 
-    const bool computePose = cMo_vec != NULL;
+    const bool computePose = (cMo_vec != NULL);
 
     image_u8_t im = {/*.width =*/(int32_t)I.getWidth(),
                      /*.height =*/(int32_t)I.getHeight(),
@@ -467,11 +467,19 @@ public:
     if (err1 <= err2) {
       convertHomogeneousMatrix(pose1, cMo1);
       if (cMo2) {
-        convertHomogeneousMatrix(pose2, *cMo2);
+        if (pose2.R) {
+          convertHomogeneousMatrix(pose2, *cMo2);
+        } else {
+          *cMo2 = cMo1;
+        }
       }
     } else {
       if (cMo2) {
-        convertHomogeneousMatrix(pose1, *cMo2);
+        if (pose2.R) {
+          convertHomogeneousMatrix(pose1, *cMo2);
+        } else {
+          *cMo2 = cMo1;
+        }
       }
       convertHomogeneousMatrix(pose2, cMo1);
     }

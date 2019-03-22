@@ -217,7 +217,7 @@ void fit_line(struct line_fit_pt *lfps, int sz, int i0, int i1, double *lineparm
     //    nx_old = cosf(normal_theta);
     //    ny_old = sinf(normal_theta);
     //}
-    
+
     // Instead of using the above cos/sin method, pose it as an eigenvalue problem.
     double eig_small = 0.5*(Cxx + Cyy - sqrtf((Cxx - Cyy)*(Cxx - Cyy) + 4*Cxy*Cxy));
 
@@ -625,7 +625,7 @@ int quad_segment_agg(apriltag_detector_t *td, zarray_t *cluster, struct line_fit
 
     return 1;
 }
-    
+
 /**
  * Compute statistics that allow line fit queries to be
  * efficiently computed for any contiguous range of indices.
@@ -733,7 +733,7 @@ static inline void ptsort(struct pt *pts, int sz)
         stacksz = 0;
 
 #ifdef _MSC_VER
-    struct pt *_tmp_stack = (struct *pt)malloc(stacksz * sizeof *_tmp_stack);
+    struct pt *_tmp_stack = (struct pt *)malloc(stacksz * sizeof *_tmp_stack);
 #else
     struct pt _tmp_stack[stacksz];
 #endif
@@ -1746,7 +1746,7 @@ zarray_t* gradient_clusters(apriltag_detector_t *td, image_u8_t* threshim, int w
     int sz = h - 1;
     int chunksize = 1 + sz / td->nthreads;
 #ifdef _MSC_VER
-    struct cluster_task *tasks = (struct cluster_task *)malloc(sz / chunksize + 1 * sizeof *cluster_task);
+    struct cluster_task *tasks = (struct cluster_task *)malloc((sz / chunksize + 1) * sizeof *tasks);
 #else
     struct cluster_task tasks[sz / chunksize + 1];
 #endif
@@ -1771,7 +1771,11 @@ zarray_t* gradient_clusters(apriltag_detector_t *td, image_u8_t* threshim, int w
 
     workerpool_run(td->wp);
 
+#ifdef _MSC_VER
+    zarray_t **clusters_list = (zarray_t **)malloc(ntasks * sizeof *clusters_list);
+#else
     zarray_t* clusters_list[ntasks];
+#endif
     for (int i = 0; i < ntasks; i++) {
         clusters_list[i] = tasks[i].clusters;
     }
@@ -1800,6 +1804,9 @@ zarray_t* gradient_clusters(apriltag_detector_t *td, image_u8_t* threshim, int w
         free(h);
     }
     zarray_destroy(clusters_list[0]);
+#ifdef _MSC_VER
+    free(clusters_list);
+#endif
     return clusters;
 }
 
@@ -1825,7 +1832,11 @@ zarray_t* fit_quads(apriltag_detector_t *td, int w, int h, zarray_t* clusters, i
 
     int sz = zarray_size(clusters);
     int chunksize = 1 + sz / (APRILTAG_TASKS_PER_THREAD_TARGET * td->nthreads);
+#ifdef _MSC_VER
+    struct quad_task *tasks = (struct quad_task *)malloc((sz / chunksize + 1) * sizeof *tasks);
+#else
     struct quad_task tasks[sz / chunksize + 1];
+#endif
 
     int ntasks = 0;
     for (int i = 0; i < sz; i += chunksize) {
