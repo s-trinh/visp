@@ -17,10 +17,13 @@ steps:
     - echo "CMAKE_FLAGS:= $CMAKE_FLAGS"
     - export DEBIAN_FRONTEND=noninteractive
     - apt-get update -y
-    - apt-get install -y make $CC g++ cmake libopencv-dev libx11-dev liblapack-dev libopenblas-dev
+    - apt-get install -y make $CC g++ cmake git-core libopencv-dev libx11-dev liblapack-dev libopenblas-dev
     - $CC --version
+    - cd ..
     - git clone --depth 1 https://github.com/lagadic/visp-images
     - export VISP_INPUT_IMAGE_PATH=$(pwd)/visp-images
+    - echo $VISP_INPUT_IMAGE_PATH
+    - cd src
     - mkdir build && cd build
     - cmake $CMAKE_FLAGS ..
     - cat ViSP-third-party.txt
