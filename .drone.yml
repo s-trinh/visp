@@ -1,6 +1,6 @@
 ---
 kind: pipeline
-name: arm64_gcc_cmake
+name: arm64_gcc_cmake_opencv
 
 platform:
   os: linux
