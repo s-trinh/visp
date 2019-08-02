@@ -12,12 +12,13 @@ steps:
     CC: gcc
     CMAKE_FLAGS: '-DBUILD_DEMOS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_JAVA=OFF -DBUILD_MODULE_visp_java_bindings_generator=OFF -DBUILD_TUTORIALS=OFF'
   commands:
+    - pwd
+    - ls
     - echo "CMAKE_FLAGS:= $CMAKE_FLAGS"
+    - export DEBIAN_FRONTEND=noninteractive
     - apt-get update -y
     - apt-get install -y make $CC g++ cmake libopencv-dev libx11-dev liblapack-dev libopenblas-dev
     - $CC --version
-    - pwd
-    - ls
     - git clone --depth 1 https://github.com/lagadic/visp-images
     - export VISP_INPUT_IMAGE_PATH=$(pwd)/visp-images
     - mkdir build && cd build
