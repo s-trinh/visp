@@ -1,3 +1,4 @@
+---
 kind: pipeline
 name: arm64_gcc_cmake
 
@@ -12,8 +13,9 @@ steps:
     CC: gcc
     CMAKE_FLAGS: '-DBUILD_DEMOS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_JAVA=OFF -DBUILD_MODULE_visp_java_bindings_generator=OFF -DBUILD_TUTORIALS=OFF'
   commands:
-    - pwd
-    - ls
+    - cat /proc/cpuinfo
+    - uname -m
+    - uname -r
     - echo "CMAKE_FLAGS:= $CMAKE_FLAGS"
     - export DEBIAN_FRONTEND=noninteractive
     - apt-get update -y
@@ -22,10 +24,40 @@ steps:
     - cd ..
     - git clone --depth 1 https://github.com/lagadic/visp-images
     - export VISP_INPUT_IMAGE_PATH=$(pwd)/visp-images
-    - echo $VISP_INPUT_IMAGE_PATH
     - cd src
     - mkdir build && cd build
     - cmake $CMAKE_FLAGS ..
-    - cat ViSP-third-party.txt
     - make -j
-    - ctest
+    - ctest --output-on-failure
+
+---
+kind: pipeline
+name: arm64_gcc_cmake
+
+platform:
+  os: linux
+  arch: arm64
+
+steps:
+- name: Build and Test without OpenCV
+  image: ubuntu:18.04
+  environment:
+    CC: gcc
+    CMAKE_FLAGS: '-DBUILD_DEMOS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_JAVA=OFF -DBUILD_MODULE_visp_java_bindings_generator=OFF -DBUILD_TUTORIALS=OFF'
+  commands:
+    - cat /proc/cpuinfo
+    - uname -m
+    - uname -r
+    - echo "CMAKE_FLAGS:= $CMAKE_FLAGS"
+    - export DEBIAN_FRONTEND=noninteractive
+    - apt-get update -y
+    - apt-get install -y make $CC g++ cmake git-core libx11-dev liblapack-dev libopenblas-dev
+    - $CC --version
+    - cd ..
+    - git clone --depth 1 https://github.com/lagadic/visp-images
+    - export VISP_INPUT_IMAGE_PATH=$(pwd)/visp-images
+    - cd src
+    - mkdir build && cd build
+    - cmake $CMAKE_FLAGS ..
+    - make -j
+    - ctest --output-on-failure
