@@ -27,6 +27,8 @@ steps:
     - export VISP_INPUT_IMAGE_PATH=$(pwd)/visp-images
     - cd src
     - mkdir build && cd build
+    - export CC=/usr/bin/clang
+    - export CXX=/usr/bin/clang++
     - cmake $CMAKE_FLAGS ..
     - make -j
     - ctest --output-on-failure
