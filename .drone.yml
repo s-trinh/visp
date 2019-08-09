@@ -1,4 +1,3 @@
----
 install_config_build_test: &install_config_build_test
   commands:
     - lscpu
