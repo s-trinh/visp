@@ -1,5 +1,17 @@
 ---
-install_config_build_test: &install_config_build_test
+kind: pipeline
+name: arm64_clang_cmake_opencv
+
+platform:
+  os: linux
+  arch: arm64
+
+steps:
+- name: Build and Test
+  image: ubuntu:19.04
+  environment:
+    CC: clang
+    CMAKE_FLAGS: '-DBUILD_DEMOS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_JAVA=OFF -DBUILD_MODULE_visp_java_bindings_generator=OFF -DBUILD_TUTORIALS=OFF'
   commands:
     - lscpu
     - cat /proc/cpuinfo
@@ -8,7 +20,7 @@ install_config_build_test: &install_config_build_test
     - echo "CMAKE_FLAGS:= $CMAKE_FLAGS"
     - export DEBIAN_FRONTEND=noninteractive
     - apt-get update -y
-    - apt-get install -y make $CC $DEPENDENCIES
+    - apt-get install -y make $CC cmake git-core libopencv-dev libx11-dev libv4l-dev liblapack-dev libopenblas-dev
     - $CC --version
     - cd ..
     - git clone --depth 1 https://github.com/lagadic/visp-images
@@ -33,8 +45,24 @@ steps:
   environment:
     CC: gcc
     CMAKE_FLAGS: '-DBUILD_DEMOS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_JAVA=OFF -DBUILD_MODULE_visp_java_bindings_generator=OFF -DBUILD_TUTORIALS=OFF'
-    DEPENDENCIES: 'g++ cmake git-core libopencv-dev libx11-dev libv4l-dev liblapack-dev libopenblas-dev'
-    <<: *install_config_build_test
+  commands:
+    - lscpu
+    - cat /proc/cpuinfo
+    - uname -m
+    - uname -r
+    - echo "CMAKE_FLAGS:= $CMAKE_FLAGS"
+    - export DEBIAN_FRONTEND=noninteractive
+    - apt-get update -y
+    - apt-get install -y make $CC g++ cmake git-core libopencv-dev libx11-dev libv4l-dev liblapack-dev libopenblas-dev
+    - $CC --version
+    - cd ..
+    - git clone --depth 1 https://github.com/lagadic/visp-images
+    - export VISP_INPUT_IMAGE_PATH=$(pwd)/visp-images
+    - cd src
+    - mkdir build && cd build
+    - cmake $CMAKE_FLAGS ..
+    - make -j
+    - ctest --output-on-failure
 
 ---
 kind: pipeline
@@ -50,8 +78,24 @@ steps:
   environment:
     CC: gcc
     CMAKE_FLAGS: '-DBUILD_DEMOS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_JAVA=OFF -DBUILD_MODULE_visp_java_bindings_generator=OFF -DBUILD_TUTORIALS=OFF'
-    DEPENDENCIES: 'g++ cmake git-core libx11-dev libv4l-dev liblapack-dev libopenblas-dev'
-    <<: *install_config_build_test
+  commands:
+    - lscpu
+    - cat /proc/cpuinfo
+    - uname -m
+    - uname -r
+    - echo "CMAKE_FLAGS:= $CMAKE_FLAGS"
+    - export DEBIAN_FRONTEND=noninteractive
+    - apt-get update -y
+    - apt-get install -y make $CC g++ cmake git-core libx11-dev libv4l-dev liblapack-dev libopenblas-dev
+    - $CC --version
+    - cd ..
+    - git clone --depth 1 https://github.com/lagadic/visp-images
+    - export VISP_INPUT_IMAGE_PATH=$(pwd)/visp-images
+    - cd src
+    - mkdir build && cd build
+    - cmake $CMAKE_FLAGS ..
+    - make -j
+    - ctest --output-on-failure
 
 ---
 kind: pipeline
@@ -67,8 +111,24 @@ steps:
   environment:
     CC: gcc
     CMAKE_FLAGS: '-DBUILD_DEMOS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_JAVA=OFF -DBUILD_MODULE_visp_java_bindings_generator=OFF -DBUILD_TUTORIALS=OFF'
-    DEPENDENCIES: 'g++ cmake git-core libopencv-dev libx11-dev libv4l-dev liblapack-dev libopenblas-dev'
-    <<: *install_config_build_test
+  commands:
+    - lscpu
+    - cat /proc/cpuinfo
+    - uname -m
+    - uname -r
+    - echo "CMAKE_FLAGS:= $CMAKE_FLAGS"
+    - export DEBIAN_FRONTEND=noninteractive
+    - apt-get update -y
+    - apt-get install -y make $CC g++ cmake git-core libopencv-dev libx11-dev libv4l-dev liblapack-dev libopenblas-dev
+    - $CC --version
+    - cd ..
+    - git clone --depth 1 https://github.com/lagadic/visp-images
+    - export VISP_INPUT_IMAGE_PATH=$(pwd)/visp-images
+    - cd src
+    - mkdir build && cd build
+    - cmake $CMAKE_FLAGS ..
+    - make -j
+    - ctest --output-on-failure
 
 ---
 kind: pipeline
@@ -84,5 +144,21 @@ steps:
   environment:
     CC: gcc
     CMAKE_FLAGS: '-DBUILD_DEMOS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_JAVA=OFF -DBUILD_MODULE_visp_java_bindings_generator=OFF -DBUILD_TUTORIALS=OFF'
-    DEPENDENCIES: 'g++ cmake git-core libx11-dev libv4l-dev liblapack-dev libopenblas-dev'
-    <<: *install_config_build_test
+  commands:
+    - lscpu
+    - cat /proc/cpuinfo
+    - uname -m
+    - uname -r
+    - echo "CMAKE_FLAGS:= $CMAKE_FLAGS"
+    - export DEBIAN_FRONTEND=noninteractive
+    - apt-get update -y
+    - apt-get install -y make $CC g++ cmake git-core libx11-dev libv4l-dev liblapack-dev libopenblas-dev
+    - $CC --version
+    - cd ..
+    - git clone --depth 1 https://github.com/lagadic/visp-images
+    - export VISP_INPUT_IMAGE_PATH=$(pwd)/visp-images
+    - cd src
+    - mkdir build && cd build
+    - cmake $CMAKE_FLAGS ..
+    - make -j
+    - ctest --output-on-failure
