@@ -1,5 +1,6 @@
 ---
 install_config_build_test: &install_config_build_test
+  commands:
     - lscpu
     - cat /proc/cpuinfo
     - uname -m
@@ -33,7 +34,6 @@ steps:
     CC: gcc
     CMAKE_FLAGS: '-DBUILD_DEMOS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_JAVA=OFF -DBUILD_MODULE_visp_java_bindings_generator=OFF -DBUILD_TUTORIALS=OFF'
     DEPENDENCIES: 'g++ cmake git-core libopencv-dev libx11-dev libv4l-dev liblapack-dev libopenblas-dev'
-  commands:
     << : *install_config_build_test
 
 ---
@@ -51,7 +51,6 @@ steps:
     CC: gcc
     CMAKE_FLAGS: '-DBUILD_DEMOS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_JAVA=OFF -DBUILD_MODULE_visp_java_bindings_generator=OFF -DBUILD_TUTORIALS=OFF'
     DEPENDENCIES: 'g++ cmake git-core libx11-dev libv4l-dev liblapack-dev libopenblas-dev'
-  commands:
     << : *install_config_build_test
 
 ---
@@ -69,7 +68,6 @@ steps:
     CC: gcc
     CMAKE_FLAGS: '-DBUILD_DEMOS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_JAVA=OFF -DBUILD_MODULE_visp_java_bindings_generator=OFF -DBUILD_TUTORIALS=OFF'
     DEPENDENCIES: 'g++ cmake git-core libopencv-dev libx11-dev libv4l-dev liblapack-dev libopenblas-dev'
-  commands:
     << : *install_config_build_test
 
 ---
@@ -87,5 +85,4 @@ steps:
     CC: gcc
     CMAKE_FLAGS: '-DBUILD_DEMOS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_JAVA=OFF -DBUILD_MODULE_visp_java_bindings_generator=OFF -DBUILD_TUTORIALS=OFF'
     DEPENDENCIES: 'g++ cmake git-core libx11-dev libv4l-dev liblapack-dev libopenblas-dev'
-  commands:
     << : *install_config_build_test
