@@ -351,8 +351,8 @@ M:
   //---------------------------------
   /** @name Comparison operators */
   //@{
-  bool vpMatrix::operator==(const vpMatrix& b) const;
-  bool vpMatrix::operator!=(const vpMatrix& b) const;
+  bool operator==(const vpMatrix& b) const;
+  bool operator!=(const vpMatrix& b) const;
   //@}
 
   //-------------------------------------------------
