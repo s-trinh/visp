@@ -77,10 +77,5 @@ before_script:
 script: 
   - make
   - ctest --output-on-failure
-
-notifications:
-  email:
-    - Fabien.Spindler@inria.fr
-  on_success: change
-  on_failure: always
+  - ./modules/core/testMatrixTranspose
    

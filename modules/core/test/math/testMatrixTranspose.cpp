@@ -31,52 +31,6 @@ vpMatrix generateMatrixTranspose(unsigned int sz1, unsigned int sz2) {
   return M;
 }
 
-//void transpose2x2(const vpMatrix& a, unsigned int i, unsigned int j,
-//                  vpMatrix& b)
-//{
-//#if 0
-//  b[j][i] = a[i][j];
-//  b[j+1][i] = a[i][j+1];
-//  b[j][i+1] = a[i+1][j];
-//  b[j+1][i+1] = a[i+1][j+1];
-//#else
-//  b.data[j*b.getCols() + i] = a.data[i*a.getCols() + j];
-//  b.data[(j + 1)*b.getCols() + i] = a.data[i*a.getCols() + j + 1];
-//  b.data[j*b.getCols() + i + 1] = a.data[(i+1)*a.getCols() + j];
-//  b.data[(j + 1)*b.getCols() + i + 1] = a.data[(i + 1)*a.getCols() + j + 1];
-//#endif
-//}
-//
-//void transposeRecursiveTile(const vpMatrix& a,
-//                            unsigned int i0, unsigned int i1,
-//                            unsigned int j0, unsigned int j1,
-//                            vpMatrix& b)
-//{
-//  unsigned int diff = i1 - i0;
-//  unsigned int diff_2 = diff/2;
-//  if (diff > 2) {
-//    transposeRecursiveTile(a,
-//                           i0, i0 + diff_2,
-//                           j0, j0 + diff_2,
-//                           b);
-//    transposeRecursiveTile(a,
-//                           i1 - diff_2, i1,
-//                           j1 - diff_2, j1,
-//                           b);
-//    transposeRecursiveTile(a,
-//                           i0, i0 + diff_2,
-//                           j1 - diff_2, j1,
-//                           b);
-//    transposeRecursiveTile(a,
-//                           i1 - diff_2, i1,
-//                           j0, j0 + diff_2,
-//                           b);
-//  }
-//  else {
-//    transpose2x2(a, i0, j0, b);
-//  }
-//}
-
 void transposeTile(const vpMatrix& a, unsigned int i, unsigned int j,
                    vpMatrix& b, unsigned int diff1, unsigned int diff2)
 {
@@ -146,9 +100,8 @@ void transposeTileSwap(const vpMatrix& a, unsigned int i, unsigned int j,
 {
   for (unsigned int r = i; r < i + diff1; r++) {
     for (unsigned int c = j; c < j + diff2; c++) {
-      double tmp = a[c][r];
       b[c][r] = a[r][c];
-      b[r][c] = tmp;
+      b[r][c] = a[c][r];
     }
   }
 }
@@ -235,12 +188,7 @@ vpMatrix transposeRecursive(const vpMatrix& a, unsigned int minTileSize=8, bool 
 
   const unsigned int size1 = a.getRows();
   const unsigned int size2 = a.getCols();
-#if 0
-  transposeRecursiveTile(a,
-                         0, size,
-                         0, size,
-                         b);
-#else
+
   if (a.getRows() == a.getCols() && squareProc) {
     transposeRecursiveTileSquare(a,
                                  0, size1,
@@ -254,7 +202,6 @@ vpMatrix transposeRecursive(const vpMatrix& a, unsigned int minTileSize=8, bool 
                             b,
                             minTileSize);
   }
-#endif
 
   return b;
 }

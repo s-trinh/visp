@@ -107,4 +107,5 @@ build_script:
   - dir C:\projects\visp\build\install
   - dir %VISP_DLL_DIR%
   - if "%CMAKE_GENERATOR%"=="Visual Studio 15 2017 Win64" ctest --output-on-failure
+  - if "%CMAKE_GENERATOR%"=="Visual Studio 15 2017 Win64" .\modules\core\Release\testMatrixTranspose.exe
   - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" ctest --output-on-failure
