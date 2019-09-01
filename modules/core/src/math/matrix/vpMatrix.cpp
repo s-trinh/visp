@@ -675,6 +675,28 @@ vpMatrix &vpMatrix::operator=(double x)
   return *this;
 }
 
+bool vpMatrix::operator==(const vpMatrix& b) const
+{
+  if (b.rowNum != rowNum || b.colNum != colNum) {
+    return false;
+  }
+
+  for (unsigned int i = 0; i < rowNum; i++) {
+    for (unsigned int j = 0; j < colNum; j++) {
+      if (!vpMath::equal((*this)[i][j], b[i][j], std::numeric_limits<double>::epsilon())) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+bool vpMatrix::operator!=(const vpMatrix& b) const
+{
+  return !(*this == b);
+}
+
 /*!
   Assigment from an array of double. This method has to be used carefully
   since the array allocated behind \e x pointer should have the same dimension
