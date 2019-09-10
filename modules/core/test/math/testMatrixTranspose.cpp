@@ -115,7 +115,8 @@ void transposeRecursiveTileSquareSwap(const vpMatrix& a,
   unsigned int diff = i1 - i0;
   unsigned int middle = (i0 + i1) / 2;
   if (diff > minTileSize) {
-    // upper left
+#if 0
+        // upper left
     transposeRecursiveTileSquareSwap(a,
                                      i0, middle,
                                      j0, middle,
@@ -139,6 +140,32 @@ void transposeRecursiveTileSquareSwap(const vpMatrix& a,
                                      middle, j1,
                                      b,
                                      minTileSize);
+#else
+        // upper left
+    transposeRecursiveTileSquareSwap(a,
+                                     i0, middle,
+                                     j0, middle,
+                                     b,
+                                     minTileSize);
+    // lower left
+    transposeRecursiveTileSquareSwap(a,
+                                     middle, i1,
+                                     j0, middle,
+                                     b,
+                                     minTileSize);
+    // upper right
+    transposeRecursiveTileSquareSwap(a,
+                                     i0, middle,
+                                     middle, j1,
+                                     b,
+                                     minTileSize);
+    // lower right
+    transposeRecursiveTileSquareSwap(a,
+                                     middle, i1,
+                                     middle, j1,
+                                     b,
+                                     minTileSize);
+#endif
   }
   else {
     transposeTileSwap(a,
@@ -157,7 +184,8 @@ void transposeRecursiveTileSquare(const vpMatrix& a,
   unsigned int diff = end - start;
   unsigned int middle = (start + end) / 2;
   if (diff > minTileSize) {
-    // upper left
+#if 0
+        // upper left
     transposeRecursiveTileSquare(a,
                                  start,
                                  middle,
@@ -175,6 +203,26 @@ void transposeRecursiveTileSquare(const vpMatrix& a,
                                      start, middle,
                                      b,
                                      minTileSize);
+#else
+        // upper left
+    transposeRecursiveTileSquare(a,
+                                 start,
+                                 middle,
+                                 b,
+                                 minTileSize);
+    // lower left
+    transposeRecursiveTileSquareSwap(a,
+                                     middle, end,
+                                     start, middle,
+                                     b,
+                                     minTileSize);
+    // lower right
+    transposeRecursiveTileSquare(a,
+                                 middle,
+                                 end,
+                                 b,
+                                 minTileSize);
+#endif
   }
   else {
     transposeTile(a, start, start, b, end - start, end - start);
@@ -206,11 +254,121 @@ vpMatrix transposeRecursive(const vpMatrix& a, unsigned int minTileSize=8, bool 
   return b;
 }
 
+vpMatrix transposeTiling(const vpMatrix& a, int tileSize = 32)
+{
+  vpMatrix b;
+  b.resize(a.getCols(), a.getRows(), false, false);
+
+  const int nrows = static_cast<int>(a.getRows());
+  const int ncols = static_cast<int>(a.getCols());
+  for (int i = 0; i < nrows;) {
+    for (; i <= nrows - tileSize; i += tileSize) {
+      for (int k = i; k < i + tileSize; k++) {
+        for (int j = 0; j < ncols;) {
+          for (; j <= ncols - tileSize; j += tileSize) {
+            for (int l = j; l < j + tileSize; l++) {
+              b[l][k] = a[k][l];
+            }
+          }
+
+          for (; j < ncols; j++) {
+            b[j][k] = a[k][j];
+          }
+        }
+      }
+    }
+
+    for (; i < nrows; i++) {
+      for (int j = 0; j < ncols; j++) {
+        b[j][i] = a[i][j];
+      }
+    }
+  }
+
+  return b;
+}
+
 TEST_CASE("Benchmark vpMatrix transpose", "[benchmark]") {
-  const std::vector<std::pair<int, int>> sizes = { {65, 65}, {137, 137}, {1201, 1201},
+  const std::vector<std::pair<int, int>> sizes = { {65, 65}, {137, 137}, {1201, 1201}, {1024, 1024},
                                                    {64, 128}, {128, 64}, {512, 1024}, {1024, 512}, {64, 1024}, {1024, 64},
                                                    {6, 1024}, {1024, 6}, {6, 2048}, {2048, 6},
-                                                   {701, 1503}, {1791, 837} };
+                                                   {701, 1503}, {1791, 837}/*,
+                                                   {10000, 10000}*/ };
+
+  //{
+  //  const int nrows = 2, ncols = 2, tileSize = 2;
+  //  vpMatrix M = generateMatrix(nrows, ncols);
+  //  vpMatrix Mt_true = generateMatrixTranspose(nrows, ncols);
+  //  vpMatrix Mt = transposeTiling(M, tileSize);
+  //  std::cout << "\n(Mt == Mt_true): " << (Mt == Mt_true) << std::endl;
+  //  std::cout << "Mt_true:\n" << Mt_true << std::endl;
+  //  std::cout << "Mt:\n" << Mt << std::endl;
+  //}
+  //{
+  //  const int nrows = 1, ncols = 2, tileSize = 2;
+  //  vpMatrix M = generateMatrix(nrows, ncols);
+  //  vpMatrix Mt_true = generateMatrixTranspose(nrows, ncols);
+  //  vpMatrix Mt = transposeTiling(M, tileSize);
+  //  std::cout << "\n(Mt == Mt_true): " << (Mt == Mt_true) << std::endl;
+  //  std::cout << "Mt_true:\n" << Mt_true << std::endl;
+  //  std::cout << "Mt:\n" << Mt << std::endl;
+  //}
+  //{
+  //  const int nrows = 2, ncols = 1, tileSize = 2;
+  //  vpMatrix M = generateMatrix(nrows, ncols);
+  //  vpMatrix Mt_true = generateMatrixTranspose(nrows, ncols);
+  //  vpMatrix Mt = transposeTiling(M, tileSize);
+  //  std::cout << "\n(Mt == Mt_true): " << (Mt == Mt_true) << std::endl;
+  //  std::cout << "Mt_true:\n" << Mt_true << std::endl;
+  //  std::cout << "Mt:\n" << Mt << std::endl;
+  //}
+  //{
+  //  const int nrows = 1, ncols = 1, tileSize = 2;
+  //  vpMatrix M = generateMatrix(nrows, ncols);
+  //  vpMatrix Mt_true = generateMatrixTranspose(nrows, ncols);
+  //  vpMatrix Mt = transposeTiling(M, tileSize);
+  //  std::cout << "\n(Mt == Mt_true): " << (Mt == Mt_true) << std::endl;
+  //  std::cout << "Mt_true:\n" << Mt_true << std::endl;
+  //  std::cout << "Mt:\n" << Mt << std::endl;
+  //}
+
+  //{
+  //  const int nrows = 3, ncols = 6, tileSize = 2;
+  //  vpMatrix M = generateMatrix(nrows, ncols);
+  //  vpMatrix Mt_true = generateMatrixTranspose(nrows, ncols);
+  //  vpMatrix Mt = transposeTiling(M, tileSize);
+  //  std::cout << "\n(Mt == Mt_true): " << (Mt == Mt_true) << std::endl;
+  //  std::cout << "Mt_true:\n" << Mt_true << std::endl;
+  //  std::cout << "Mt:\n" << Mt << std::endl;
+  //}
+  //{
+  //  const int nrows = 6, ncols = 3, tileSize = 2;
+  //  vpMatrix M = generateMatrix(nrows, ncols);
+  //  vpMatrix Mt_true = generateMatrixTranspose(nrows, ncols);
+  //  vpMatrix Mt = transposeTiling(M, tileSize);
+  //  std::cout << "\n(Mt == Mt_true): " << (Mt == Mt_true) << std::endl;
+  //  std::cout << "Mt_true:\n" << Mt_true << std::endl;
+  //  std::cout << "Mt:\n" << Mt << std::endl;
+  //}
+
+  //{
+  //  const int nrows = 3, ncols = 7, tileSize = 2;
+  //  vpMatrix M = generateMatrix(nrows, ncols);
+  //  vpMatrix Mt_true = generateMatrixTranspose(nrows, ncols);
+  //  vpMatrix Mt = transposeTiling(M, tileSize);
+  //  std::cout << "\n(Mt == Mt_true): " << (Mt == Mt_true) << std::endl;
+  //  std::cout << "Mt_true:\n" << Mt_true << std::endl;
+  //  std::cout << "Mt:\n" << Mt << std::endl;
+  //}
+  //{
+  //  const int nrows = 7, ncols = 3, tileSize = 2;
+  //  vpMatrix M = generateMatrix(nrows, ncols);
+  //  vpMatrix Mt_true = generateMatrixTranspose(nrows, ncols);
+  //  vpMatrix Mt = transposeTiling(M, tileSize);
+  //  std::cout << "\n(Mt == Mt_true): " << (Mt == Mt_true) << std::endl;
+  //  std::cout << "Mt_true:\n" << Mt_true << std::endl;
+  //  std::cout << "Mt:\n" << Mt << std::endl;
+  //}
 
   for (auto sz : sizes) {
     vpMatrix M = generateMatrix(sz.first, sz.second);
@@ -244,6 +402,15 @@ TEST_CASE("Benchmark vpMatrix transpose", "[benchmark]") {
       return Mt;
     };
 
+    oss.str("");
+    oss << "Benchmark transpose tiling 8x8, size=";
+    oss << sz.first << "x" << sz.second;
+    BENCHMARK(oss.str().c_str()) {
+      vpMatrix Mt = transposeTiling(M, 8);
+      REQUIRE(Mt == Mt_true);
+      return Mt;
+    };
+
     if (sz.first == sz.second) {
       oss.str("");
       oss << "Benchmark recursive transpose 8x8 square proc, size=";
@@ -264,14 +431,14 @@ TEST_CASE("Benchmark vpMatrix transpose", "[benchmark]") {
       return Mt;
     };
 
-    oss.str("");
-    oss << "Benchmark recursive transpose 2x2, size=";
-    oss << sz.first << "x" << sz.second;
-    BENCHMARK(oss.str().c_str()) {
-      vpMatrix Mt = transposeRecursive(M, 2);
-      REQUIRE(Mt == Mt_true);
-      return Mt;
-    };
+    //oss.str("");
+    //oss << "Benchmark recursive transpose 2x2, size=";
+    //oss << sz.first << "x" << sz.second;
+    //BENCHMARK(oss.str().c_str()) {
+    //  vpMatrix Mt = transposeRecursive(M, 2);
+    //  REQUIRE(Mt == Mt_true);
+    //  return Mt;
+    //};
   }
 }
 }
