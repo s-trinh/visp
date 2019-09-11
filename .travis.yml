@@ -70,7 +70,7 @@ before_install:
 before_script:
   - mkdir build
   - cd build
-  - cmake ..
+  - cmake .. -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=leak -fsanitize=thread -g" -DCMAKE_C_FLAGS="-fsanitize=address -fsanitize=leak -fsanitize=thread -g" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address -fsanitize=leak -fsanitize=thread -g" -DCMAKE_MODULE_LINKER_FLAGS="-fsanitize=address -fsanitize=leak -fsanitize=thread -g"
   # Show 3rd parties that are detected
   - cat ViSP-third-party.txt
 
