@@ -30,6 +30,7 @@ public:
     return m_data[row*m_cols + col];
   }
 
+  // Transpose with cache optimized for source
   MatrixXd t1() const
   {
     MatrixXd At(m_cols, m_rows);
@@ -42,6 +43,7 @@ public:
     return At;
   }
 
+  // Transpose with cache optimized for dest
   MatrixXd t2() const
   {
     MatrixXd At(m_cols, m_rows);
@@ -55,19 +57,18 @@ public:
   }
 
   MatrixXd transposeTiling(int tileSize = 32) const;
+  MatrixXd transposeTilingSO(int tileSize = 32) const;
+  MatrixXd transposeTilingRAJA1(int tileSize = 32) const;
+  MatrixXd transposeTilingRAJA2(int tileSize = 32) const;
 
   MatrixXd transposeRecursive(int minTileSize = 8, bool squareProc = true) const;
 
   void transposeRecursiveTileSquare(int start, int end, MatrixXd& b, int minTileSize) const;
-
   void transposeRecursiveTileSquareSwap(int i0, int i1, int j0, int j1, MatrixXd& b, int minTileSize) const;
-
   void transposeTileSwap(int i, int j, MatrixXd& b, int diff1, int diff2) const;
 
   void transposeRecursiveTileV(int i0, int i1, int j0, int j1, MatrixXd& b, int minTileSize) const;
-
   void transposeRecursiveTileH(int i0, int i1, int j0, int j1, MatrixXd& b, int minTileSize) const;
-
   void transposeTile(int i, int j, MatrixXd& b, int diff1, int diff2) const;
 
   bool operator==(const MatrixXd& b) const
@@ -378,7 +379,7 @@ MatrixXd MatrixXd::transposeTiling(int tileSize) const
       for (; j <= ncols - tileSize; j += tileSize) {
         for (int k = i; k < i + tileSize; k++) {
           for (int l = j; l < j + tileSize; l++) {
-#if 1 //DEBUG
+#if DEBUG
             std::cout << "k: " << k << " ; l: " << l << std::endl;
 #endif
             b(l, k) = (*this)(k, l);
@@ -404,6 +405,115 @@ MatrixXd MatrixXd::transposeTiling(int tileSize) const
   return b;
 }
 
+MatrixXd MatrixXd::transposeTilingSO(int tileSize) const
+{
+  MatrixXd out(m_cols, m_rows);
+
+  for (int i = 0; i < m_rows; i += tileSize) {
+    for (int j = 0; j < m_cols; ++j) {
+      for (int b = 0; b < tileSize && i + b < m_rows; ++b) {
+        out.m_data[j*m_rows + i + b] = (*this).m_data[(i + b)*m_cols + j];
+      }
+    }
+  }
+
+  return out;
+}
+
+MatrixXd MatrixXd::transposeTilingRAJA1(int tileSize) const
+{
+  MatrixXd b(m_cols, m_rows);
+
+  const int outer_Dimc = (m_cols - 1) / tileSize + 1;
+  const int outer_Dimr = (m_rows - 1) / tileSize + 1;
+
+  //
+  // (0) Outer loops to iterate over tiles
+  //
+  for (int by = 0; by < outer_Dimr; ++by) {
+    for (int bx = 0; bx < outer_Dimc; ++bx) {
+      //
+      // (1) Loops to iterate over tile entries
+      //
+      for (int ty = 0; ty < tileSize; ++ty) {
+        for (int tx = 0; tx < tileSize; ++tx) {
+
+          int col = bx * tileSize + tx;  // Matrix column index
+          int row = by * tileSize + ty;  // Matrix row index
+
+          // Bounds check
+          if (row < m_rows && col < m_cols) {
+            b(col, row) = (*this)(row, col);
+          }
+        }
+      }
+
+    }
+  }
+
+  return b;
+}
+
+MatrixXd MatrixXd::transposeTilingRAJA2(int tileSize) const
+{
+  MatrixXd b(m_cols, m_rows);
+
+  const int outer_Dimc = (m_cols - 1) / tileSize + 1;
+  const int outer_Dimr = (m_rows - 1) / tileSize + 1;
+
+  // Stack-allocated local array for data on a tile
+  MatrixXd Tile(tileSize, tileSize);
+
+  //
+  // (0) Outer loops to iterate over tiles
+  //
+  for (int by = 0; by < outer_Dimr; ++by) {
+    for (int bx = 0; bx < outer_Dimc; ++bx) {
+
+      //
+      // (1) Inner loops to read input matrix tile data into the array
+      //
+      //     Note: loops are ordered so that input matrix data access
+      //           is stride-1.
+      //
+      for (int ty = 0; ty < tileSize; ++ty) {
+        for (int tx = 0; tx < tileSize; ++tx) {
+
+          int col = bx * tileSize + tx;  // Matrix column index
+          int row = by * tileSize + ty;  // Matrix row index
+
+          // Bounds check
+          if (row < m_rows && col < m_cols) {
+            Tile(ty, tx) = (*this)(row, col);
+          }
+        }
+      }
+
+      //
+      // (2) Inner loops to write array data into output array tile
+      //
+      //     Note: loop order is swapped from above so that output matrix
+      //           data access is stride-1.
+      //
+      for (int tx = 0; tx < tileSize; ++tx) {
+        for (int ty = 0; ty < tileSize; ++ty) {
+
+          int col = bx * tileSize + tx;  // Matrix column index
+          int row = by * tileSize + ty;  // Matrix row index
+
+          // Bounds check
+          if (row < m_rows && col < m_cols) {
+            b(col, row) = Tile(ty, tx);
+          }
+        }
+      }
+
+    }
+  }
+
+  return b;
+}
+
 TEST_CASE("Benchmark vpMatrix transpose", "[benchmark]") {
   const std::vector<std::pair<int, int>> sizes = { {65, 65}, {137, 137}, {1201, 1201}, {1024, 1024},
                                                    {64, 128}, {128, 64}, {512, 1024}, {1024, 512}, {64, 1024}, {1024, 64},
@@ -419,85 +529,175 @@ TEST_CASE("Benchmark vpMatrix transpose", "[benchmark]") {
   //std::cout << "\ntransposeRecursive:" << std::endl;
   //MatrixXd Mt_recursive = M.transposeRecursive(2, false);
 
-  {
-    const int nrows = 2, ncols = 2, tileSize = 2;
-    MatrixXd M = generateMatrix(nrows, ncols);
-    MatrixXd Mt_true = generateMatrixTranspose(nrows, ncols);
-    MatrixXd Mt = M.transposeTiling(tileSize);
-    std::cout << "\n(Mt == Mt_true): " << (Mt == Mt_true) << std::endl;
-    std::cout << "Mt_true:\n" << Mt_true << std::endl;
-    std::cout << "Mt:\n" << Mt << std::endl;
-  }
-  {
-    const int nrows = 1, ncols = 2, tileSize = 2;
-    MatrixXd M = generateMatrix(nrows, ncols);
-    MatrixXd Mt_true = generateMatrixTranspose(nrows, ncols);
-    MatrixXd Mt = M.transposeTiling(tileSize);
-    std::cout << "\n(Mt == Mt_true): " << (Mt == Mt_true) << std::endl;
-    std::cout << "Mt_true:\n" << Mt_true << std::endl;
-    std::cout << "Mt:\n" << Mt << std::endl;
-  }
-  {
-    const int nrows = 2, ncols = 1, tileSize = 2;
-    MatrixXd M = generateMatrix(nrows, ncols);
-    MatrixXd Mt_true = generateMatrixTranspose(nrows, ncols);
-    MatrixXd Mt = M.transposeTiling(tileSize);
-    std::cout << "\n(Mt == Mt_true): " << (Mt == Mt_true) << std::endl;
-    std::cout << "Mt_true:\n" << Mt_true << std::endl;
-    std::cout << "Mt:\n" << Mt << std::endl;
-  }
-
-  //for (auto sz : sizes) {
-  //  MatrixXd M = generateMatrix(sz.first, sz.second);
-  //  MatrixXd Mt_true = generateMatrixTranspose(sz.first, sz.second);
-
-  //  std::ostringstream oss;
-  //  oss << sz.first << "x" << sz.second;
-  //  oss << " - M.t1()";
-  //  BENCHMARK(oss.str().c_str()) {
-  //    MatrixXd Mt = M.t1();
-  //    REQUIRE(Mt == Mt_true);
-  //    return Mt;
-  //  };
-
-  //  oss.str("");
-  //  oss << sz.first << "x" << sz.second;
-  //  oss << " - M.t2()";
-  //  BENCHMARK(oss.str().c_str()) {
-  //    MatrixXd Mt = M.t2();
-  //    REQUIRE(Mt == Mt_true);
-  //    return Mt;
-  //  };
-
-  //  oss.str("");
-  //  oss << sz.first << "x" << sz.second;
-  //  oss << " - transpose tiling 8x8";
-  //  BENCHMARK(oss.str().c_str()) {
-  //    MatrixXd Mt = M.transposeTiling(8);
-  //    REQUIRE(Mt == Mt_true);
-  //    return Mt;
-  //  };
-
-  //  if (sz.first == sz.second) {
-  //    oss.str("");
-  //    oss << sz.first << "x" << sz.second;
-  //    oss << " - recursive transpose 8x8 square";
-  //    BENCHMARK(oss.str().c_str()) {
-  //      MatrixXd Mt = M.transposeRecursive(8, true);
-  //      REQUIRE(Mt == Mt_true);
-  //      return Mt;
-  //    };
-  //  }
-
-  //  oss.str("");
-  //  oss << sz.first << "x" << sz.second;
-  //  oss << " - recursive transpose 8x8";
-  //  BENCHMARK(oss.str().c_str()) {
-  //    MatrixXd Mt = M.transposeRecursive(8, false);
-  //    REQUIRE(Mt == Mt_true);
-  //    return Mt;
-  //  };
+  //{
+  //  const int nrows = 2, ncols = 2, tileSize = 2;
+  //  MatrixXd M = generateMatrix(nrows, ncols);
+  //  MatrixXd Mt_true = generateMatrixTranspose(nrows, ncols);
+  //  MatrixXd Mt = M.transposeTiling(tileSize);
+  //  std::cout << "\n(Mt == Mt_true): " << (Mt == Mt_true) << std::endl;
+  //  std::cout << "Mt_true:\n" << Mt_true << std::endl;
+  //  std::cout << "Mt:\n" << Mt << std::endl;
   //}
+  //{
+  //  const int nrows = 1, ncols = 2, tileSize = 2;
+  //  MatrixXd M = generateMatrix(nrows, ncols);
+  //  MatrixXd Mt_true = generateMatrixTranspose(nrows, ncols);
+  //  MatrixXd Mt = M.transposeTiling(tileSize);
+  //  std::cout << "\n(Mt == Mt_true): " << (Mt == Mt_true) << std::endl;
+  //  std::cout << "Mt_true:\n" << Mt_true << std::endl;
+  //  std::cout << "Mt:\n" << Mt << std::endl;
+  //}
+  //{
+  //  const int nrows = 2, ncols = 1, tileSize = 2;
+  //  MatrixXd M = generateMatrix(nrows, ncols);
+  //  MatrixXd Mt_true = generateMatrixTranspose(nrows, ncols);
+  //  MatrixXd Mt = M.transposeTiling(tileSize);
+  //  std::cout << "\n(Mt == Mt_true): " << (Mt == Mt_true) << std::endl;
+  //  std::cout << "Mt_true:\n" << Mt_true << std::endl;
+  //  std::cout << "Mt:\n" << Mt << std::endl;
+  //}
+  //{
+  //  const int nrows = 1, ncols = 1, tileSize = 2;
+  //  MatrixXd M = generateMatrix(nrows, ncols);
+  //  MatrixXd Mt_true = generateMatrixTranspose(nrows, ncols);
+  //  MatrixXd Mt = M.transposeTiling(tileSize);
+  //  std::cout << "\n(Mt == Mt_true): " << (Mt == Mt_true) << std::endl;
+  //  std::cout << "Mt_true:\n" << Mt_true << std::endl;
+  //  std::cout << "Mt:\n" << Mt << std::endl;
+  //}
+  //{
+  //  const int nrows = 2, ncols = 3, tileSize = 2;
+  //  MatrixXd M = generateMatrix(nrows, ncols);
+  //  MatrixXd Mt_true = generateMatrixTranspose(nrows, ncols);
+  //  MatrixXd Mt = M.transposeTiling(tileSize);
+  //  std::cout << "\n(Mt == Mt_true): " << (Mt == Mt_true) << std::endl;
+  //  std::cout << "Mt_true:\n" << Mt_true << std::endl;
+  //  std::cout << "Mt:\n" << Mt << std::endl;
+  //}
+  //{
+  //  const int nrows = 3, ncols = 2, tileSize = 2;
+  //  MatrixXd M = generateMatrix(nrows, ncols);
+  //  MatrixXd Mt_true = generateMatrixTranspose(nrows, ncols);
+  //  MatrixXd Mt = M.transposeTiling(tileSize);
+  //  std::cout << "\n(Mt == Mt_true): " << (Mt == Mt_true) << std::endl;
+  //  std::cout << "Mt_true:\n" << Mt_true << std::endl;
+  //  std::cout << "Mt:\n" << Mt << std::endl;
+  //}
+
+  for (auto sz : sizes) {
+    MatrixXd M = generateMatrix(sz.first, sz.second);
+    MatrixXd Mt_true = generateMatrixTranspose(sz.first, sz.second);
+
+    std::ostringstream oss;
+    oss << sz.first << "x" << sz.second;
+    oss << " - M.t1() - cache optim for src";
+    BENCHMARK(oss.str().c_str()) {
+      MatrixXd Mt = M.t1();
+      REQUIRE(Mt == Mt_true);
+      return Mt;
+    };
+
+    oss.str("");
+    oss << sz.first << "x" << sz.second;
+    oss << " - M.t2() - cache optim for dst";
+    BENCHMARK(oss.str().c_str()) {
+      MatrixXd Mt = M.t2();
+      REQUIRE(Mt == Mt_true);
+      return Mt;
+    };
+
+    oss.str("");
+    oss << sz.first << "x" << sz.second;
+    oss << " - transpose tiling 8x8";
+    BENCHMARK(oss.str().c_str()) {
+      MatrixXd Mt = M.transposeTiling(8);
+      REQUIRE(Mt == Mt_true);
+      return Mt;
+    };
+
+    oss.str("");
+    oss << sz.first << "x" << sz.second;
+    oss << " - transpose tiling SO 8";
+    BENCHMARK(oss.str().c_str()) {
+      MatrixXd Mt = M.transposeTilingSO(8);
+      REQUIRE(Mt == Mt_true);
+      return Mt;
+    };
+
+    //if (sz.first == sz.second) {
+    //  oss.str("");
+    //  oss << sz.first << "x" << sz.second;
+    //  oss << " - recursive transpose 8x8 square";
+    //  BENCHMARK(oss.str().c_str()) {
+    //    MatrixXd Mt = M.transposeRecursive(8, true);
+    //    REQUIRE(Mt == Mt_true);
+    //    return Mt;
+    //  };
+    //}
+
+    oss.str("");
+    oss << sz.first << "x" << sz.second;
+    oss << " - recursive transpose 8x8";
+    BENCHMARK(oss.str().c_str()) {
+      MatrixXd Mt = M.transposeRecursive(8, false);
+      REQUIRE(Mt == Mt_true);
+      return Mt;
+    };
+
+    oss.str("");
+    oss << sz.first << "x" << sz.second;
+    oss << " - transpose tiling 16x16";
+    BENCHMARK(oss.str().c_str()) {
+      MatrixXd Mt = M.transposeTiling(16);
+      REQUIRE(Mt == Mt_true);
+      return Mt;
+    };
+
+    oss.str("");
+    oss << sz.first << "x" << sz.second;
+    oss << " - transpose tiling SO 16";
+    BENCHMARK(oss.str().c_str()) {
+      MatrixXd Mt = M.transposeTilingSO(16);
+      REQUIRE(Mt == Mt_true);
+      return Mt;
+    };
+
+    oss.str("");
+    oss << sz.first << "x" << sz.second;
+    oss << " - recursive transpose 16x16";
+    BENCHMARK(oss.str().c_str()) {
+      MatrixXd Mt = M.transposeRecursive(16, false);
+      REQUIRE(Mt == Mt_true);
+      return Mt;
+    };
+
+    oss.str("");
+    oss << sz.first << "x" << sz.second;
+    oss << " - transpose tiling SO 32";
+    BENCHMARK(oss.str().c_str()) {
+      MatrixXd Mt = M.transposeTilingSO(16);
+      REQUIRE(Mt == Mt_true);
+      return Mt;
+    };
+
+    //oss.str("");
+    //oss << sz.first << "x" << sz.second;
+    //oss << " - RAJA transpose 8x8";
+    //BENCHMARK(oss.str().c_str()) {
+    //  MatrixXd Mt = M.transposeTilingRAJA1(8);
+    //  REQUIRE(Mt == Mt_true);
+    //  return Mt;
+    //};
+
+    //oss.str("");
+    //oss << sz.first << "x" << sz.second;
+    //oss << " - RAJA transpose local array 8x8";
+    //BENCHMARK(oss.str().c_str()) {
+    //  MatrixXd Mt = M.transposeTilingRAJA2(8);
+    //  REQUIRE(Mt == Mt_true);
+    //  return Mt;
+    //};
+  }
 }
 }
 

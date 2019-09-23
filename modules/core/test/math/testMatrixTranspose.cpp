@@ -261,6 +261,9 @@ vpMatrix transposeTiling(const vpMatrix& a, int tileSize = 32)
 
   const int nrows = static_cast<int>(a.getRows());
   const int ncols = static_cast<int>(a.getCols());
+
+#if 0
+  //wrong
   for (int i = 0; i < nrows;) {
     for (; i <= nrows - tileSize; i += tileSize) {
       for (int k = i; k < i + tileSize; k++) {
@@ -284,16 +287,64 @@ vpMatrix transposeTiling(const vpMatrix& a, int tileSize = 32)
       }
     }
   }
+#else
+  for (int i = 0; i < nrows;) {
+    for (; i <= nrows - tileSize; i += tileSize) {
+      int j = 0;
+      for (; j <= ncols - tileSize; j += tileSize) {
+        for (int k = i; k < i + tileSize; k++) {
+          for (int l = j; l < j + tileSize; l++) {
+            b[l][k] = a[k][l];
+          }
+        }
+      }
+
+      for (int k = i; k < i + tileSize; k++) {
+        for (int l = j; l < ncols; l++) {
+          b[l][k] = a[k][l];
+        }
+      }
+    }
+
+    for (; i < nrows; i++) {
+      for (int j = 0; j < ncols; j++) {
+        b[j][i] = a[i][j];
+      }
+    }
+  }
+#endif
 
   return b;
 }
 
+vpMatrix transposeTilingSO(const vpMatrix& a, int tileSize = 32)
+{
+  vpMatrix out;
+  out.resize(a.getCols(), a.getRows(), false, false);
+
+  const int nrows = static_cast<int>(a.getRows());
+  const int ncols = static_cast<int>(a.getCols());
+
+  for (int i = 0; i < nrows; i += tileSize) {
+    for (int j = 0; j < ncols; ++j) {
+      for (int b = 0; b < tileSize && i + b < nrows; ++b) {
+        out.data[j*nrows + i + b] = a.data[(i + b)*ncols + j];
+      }
+    }
+  }
+
+  return out;
+}
+
 TEST_CASE("Benchmark vpMatrix transpose", "[benchmark]") {
-  const std::vector<std::pair<int, int>> sizes = { {65, 65}, {137, 137}, {1201, 1201}, {1024, 1024},
-                                                   {64, 128}, {128, 64}, {512, 1024}, {1024, 512}, {64, 1024}, {1024, 64},
-                                                   {6, 1024}, {1024, 6}, {6, 2048}, {2048, 6},
-                                                   {701, 1503}, {1791, 837}/*,
-                                                   {10000, 10000}*/ };
+  //const std::vector<std::pair<int, int>> sizes = { {65, 65}, {137, 137}, {1201, 1201}, {1024, 1024},
+  //                                                 {64, 128}, {128, 64}, {512, 1024}, {1024, 512}, {64, 1024}, {1024, 64},
+  //                                                 {6, 1024}, {1024, 6}, {6, 2048}, {2048, 6},
+  //                                                 {701, 1503}, {1791, 837}/*,
+  //                                                 {10000, 10000}*/ };
+  const std::vector<std::pair<int, int>> sizes = { {701, 1503}, {1791, 837}, {1201, 1201}, {1024, 1024}, {2000, 2000},
+                                                   {10, 6}, {25, 6}, {100, 6}, {200, 6}, {500, 6}, {1000, 6}, {1500, 6}, {2000, 6},
+                                                   {479, 6}, {1237, 6} };
 
   //{
   //  const int nrows = 2, ncols = 2, tileSize = 2;
@@ -375,8 +426,8 @@ TEST_CASE("Benchmark vpMatrix transpose", "[benchmark]") {
     vpMatrix Mt_true = generateMatrixTranspose(sz.first, sz.second);
 
     std::ostringstream oss;
-    oss << "Benchmark vpMatrix M.t(), size=";
     oss << sz.first << "x" << sz.second;
+    oss << " - M.t()";
     BENCHMARK(oss.str().c_str()) {
       vpMatrix Mt = M.t();
       REQUIRE(Mt == Mt_true);
@@ -384,8 +435,8 @@ TEST_CASE("Benchmark vpMatrix transpose", "[benchmark]") {
     };
 
     oss.str("");
-    oss << "Benchmark vpMatrix M.transpose(), size=";
     oss << sz.first << "x" << sz.second;
+    oss << " - M.transpose()";
     BENCHMARK(oss.str().c_str()) {
       vpMatrix Mt = M.transpose();
       REQUIRE(Mt == Mt_true);
@@ -393,8 +444,8 @@ TEST_CASE("Benchmark vpMatrix transpose", "[benchmark]") {
     };
 
     oss.str("");
-    oss << "Benchmark vpMatrix M.transpose(Mt), size=";
     oss << sz.first << "x" << sz.second;
+    oss << " - M.transpose(Mt)";
     BENCHMARK(oss.str().c_str()) {
       vpMatrix Mt;
       M.transpose(Mt);
@@ -403,30 +454,93 @@ TEST_CASE("Benchmark vpMatrix transpose", "[benchmark]") {
     };
 
     oss.str("");
-    oss << "Benchmark transpose tiling 8x8, size=";
     oss << sz.first << "x" << sz.second;
+    oss << " - tiling 8x8";
     BENCHMARK(oss.str().c_str()) {
       vpMatrix Mt = transposeTiling(M, 8);
       REQUIRE(Mt == Mt_true);
       return Mt;
     };
 
-    if (sz.first == sz.second) {
-      oss.str("");
-      oss << "Benchmark recursive transpose 8x8 square proc, size=";
-      oss << sz.first << "x" << sz.second;
-      BENCHMARK(oss.str().c_str()) {
-        vpMatrix Mt = transposeRecursive(M, 8, true);
-        REQUIRE(Mt == Mt_true);
-        return Mt;
-      };
-    }
+    //if (sz.first == sz.second) {
+    //  oss.str("");
+    //  oss << "Benchmark recursive transpose 8x8 square proc, size=";
+    //  oss << sz.first << "x" << sz.second;
+    //  BENCHMARK(oss.str().c_str()) {
+    //    vpMatrix Mt = transposeRecursive(M, 8, true);
+    //    REQUIRE(Mt == Mt_true);
+    //    return Mt;
+    //  };
+    //}
 
     oss.str("");
-    oss << "Benchmark recursive transpose 8x8, size=";
     oss << sz.first << "x" << sz.second;
+    oss << " - recursive transpose 8x8";
     BENCHMARK(oss.str().c_str()) {
       vpMatrix Mt = transposeRecursive(M, 8, false);
+      REQUIRE(Mt == Mt_true);
+      return Mt;
+    };
+
+    oss.str("");
+    oss << sz.first << "x" << sz.second;
+    oss << " - transpose tiling SO 8";
+    BENCHMARK(oss.str().c_str()) {
+      vpMatrix Mt = transposeTilingSO(M, 8);
+      REQUIRE(Mt == Mt_true);
+      return Mt;
+    };
+
+    oss.str("");
+    oss << sz.first << "x" << sz.second;
+    oss << " - tiling 16x16";
+    BENCHMARK(oss.str().c_str()) {
+      vpMatrix Mt = transposeTiling(M, 16);
+      REQUIRE(Mt == Mt_true);
+      return Mt;
+    };
+
+    oss.str("");
+    oss << sz.first << "x" << sz.second;
+    oss << " - recursive transpose 16x16";
+    BENCHMARK(oss.str().c_str()) {
+      vpMatrix Mt = transposeRecursive(M, 16, false);
+      REQUIRE(Mt == Mt_true);
+      return Mt;
+    };
+
+    oss.str("");
+    oss << sz.first << "x" << sz.second;
+    oss << " - transpose tiling SO 16";
+    BENCHMARK(oss.str().c_str()) {
+      vpMatrix Mt = transposeTilingSO(M, 16);
+      REQUIRE(Mt == Mt_true);
+      return Mt;
+    };
+
+    oss.str("");
+    oss << sz.first << "x" << sz.second;
+    oss << " - tiling 32x32";
+    BENCHMARK(oss.str().c_str()) {
+      vpMatrix Mt = transposeTiling(M, 32);
+      REQUIRE(Mt == Mt_true);
+      return Mt;
+    };
+
+    oss.str("");
+    oss << sz.first << "x" << sz.second;
+    oss << " - recursive transpose 32x32";
+    BENCHMARK(oss.str().c_str()) {
+      vpMatrix Mt = transposeRecursive(M, 32, false);
+      REQUIRE(Mt == Mt_true);
+      return Mt;
+    };
+
+    oss.str("");
+    oss << sz.first << "x" << sz.second;
+    oss << " - transpose tiling SO 32";
+    BENCHMARK(oss.str().c_str()) {
+      vpMatrix Mt = transposeTilingSO(M, 32);
       REQUIRE(Mt == Mt_true);
       return Mt;
     };
