@@ -453,46 +453,20 @@ void vpMatrix::transpose(vpMatrix &At) const
 {
   At.resize(colNum, rowNum, false, false);
 
-  if (rowNum <= 16 || colNum <= 16) {
-    for (unsigned int i = 0; i < rowNum; i++) {
-      for (unsigned int j = 0; j < colNum; j++) {
-        At[j][i] = (*this)[i][j];
-      }
-    }
-  } else {
-    bool haveAVX = vpCPUFeatures::checkAVX();
+  bool haveAVX = vpCPUFeatures::checkAVX();
 #if !VISP_HAVE_AVX
-    haveAVX = false;
+  haveAVX = false;
 #endif
 
-    if (haveAVX) {
-#if VISP_HAVE_AVX
-      // matrix transpose using tiling
-      const int nrows = static_cast<int>(rowNum);
-      const int ncols = static_cast<int>(colNum);
-      const int tileSize = 16;
-
-      for (int i = 0; i < nrows;) {
-        for (; i <= nrows - tileSize; i += tileSize) {
-          int j = 0;
-          for (; j <= ncols - tileSize; j += tileSize) {
-            transpose16x16(*this, At, i, j);
-          }
-
-          for (int k = i; k < i + tileSize; k++) {
-            for (int l = j; l < ncols; l++) {
-              At[l][k] = (*this)[k][l];
-            }
-          }
-        }
-
-        for (; i < nrows; i++) {
-          for (int j = 0; j < ncols; j++) {
-            At[j][i] = (*this)[i][j];
-          }
+  if (rowNum <= 64 || colNum <= 64 || !haveAVX) {
+    if (rowNum <= 64) {
+      // e.g. (6xN)^T
+      // iterate over destination matrix
+      for (unsigned int j = 0; j < colNum; j++) {
+        for (unsigned int i = 0; i < rowNum; i++) {
+          At[j][i] = (*this)[i][j];
         }
       }
-#endif
     } else {
       // StackOverflow matrix transpose
       const int tileSize = 16;
@@ -504,6 +478,34 @@ void vpMatrix::transpose(vpMatrix &At) const
         }
       }
     }
+  } else {
+#if VISP_HAVE_AVX
+    // matrix transpose using tiling
+    const int nrows = static_cast<int>(rowNum);
+    const int ncols = static_cast<int>(colNum);
+    const int tileSize = 16;
+
+    for (int i = 0; i < nrows;) {
+      for (; i <= nrows - tileSize; i += tileSize) {
+        int j = 0;
+        for (; j <= ncols - tileSize; j += tileSize) {
+          transpose16x16(*this, At, i, j);
+        }
+
+        for (int k = i; k < i + tileSize; k++) {
+          for (int l = j; l < ncols; l++) {
+            At[l][k] = (*this)[k][l];
+          }
+        }
+      }
+
+      for (; i < nrows; i++) {
+        for (int j = 0; j < ncols; j++) {
+          At[j][i] = (*this)[i][j];
+        }
+      }
+    }
+#endif
   }
 }
 
