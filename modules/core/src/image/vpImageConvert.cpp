@@ -58,10 +58,37 @@
 #include <pmmintrin.h>
 #define VISP_HAVE_SSE3 1
 #endif
+
 #if defined __SSSE3__ || (defined _MSC_VER && _MSC_VER >= 1500)
 #include <tmmintrin.h>
 #define VISP_HAVE_SSSE3 1
 #endif
+#endif
+
+#if defined __AVX2__
+#include <immintrin.h>
+#define VISP_HAVE_AVX2 1
+#endif
+
+#if VISP_HAVE_AVX2
+#define _mm256_set_m128i(v0, v1)  _mm256_insertf128_si256(_mm256_castsi128_si256(v1), (v0), 1)
+
+namespace {
+//@url=https://stackoverflow.com/questions/30669556/shuffle-elements-of-m256i-vector
+//Workaround to be able to shuffle with cross lane
+const __m256i K0 = _mm256_set_epi8(
+  0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70,
+  0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70);
+
+const __m256i K1 = _mm256_set_epi8(
+  0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0,
+  0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0);
+
+inline const __m256i custom_mm256_shuffle_epi8(const __m256i & value, const __m256i & shuffle) {
+  return _mm256_or_si256(_mm256_shuffle_epi8(value, _mm256_adds_epu8(shuffle, K0)),
+    _mm256_shuffle_epi8(_mm256_permute4x64_epi64(value, 0x4E), _mm256_add_epi8(shuffle, K1)));
+}
+}
 #endif
 
 bool vpImageConvert::YCbCrLUTcomputed = false;
@@ -3527,12 +3554,11 @@ void vpImageConvert::RGBToGrey(unsigned char *rgb, unsigned char *grey, unsigned
     }
   }
 }
-/*!
 
+/*!
   Weights convert from linear RGBa to CIE luminance assuming a
   modern monitor. See Charles Pontyon's Colour FAQ
   http://www.poynton.com/notes/colour_and_gamma/ColorFAQ.html
-
 */
 void vpImageConvert::RGBaToGrey(unsigned char *rgba, unsigned char *grey, unsigned int size)
 {
@@ -3540,8 +3566,46 @@ void vpImageConvert::RGBaToGrey(unsigned char *rgba, unsigned char *grey, unsign
 #if !VISP_HAVE_SSSE3
   checkSSSE3 = false;
 #endif
+  bool checkAVX2 = vpCPUFeatures::checkAVX2();
+#if !VISP_HAVE_AVX2
+  checkAVX2 = false;
+#endif
 
-  if (checkSSSE3) {
+  if (checkAVX2) {
+#if VISP_HAVE_AVX2
+    unsigned int i = 0;
+
+    if (size >= 16) {
+      //// Mask to select R component
+      //const __m128i mask_R1 = _mm_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1, 12, -1, 8, -1, 4, -1, 0, -1);
+      //const __m128i mask_R2 = _mm_set_epi8(12, -1, 8, -1, 4, -1, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+
+      //// Mask to select G component
+      //const __m128i mask_G1 = _mm_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1, 13, -1, 9, -1, 5, -1, 1, -1);
+      //const __m128i mask_G2 = _mm_set_epi8(13, -1, 9, -1, 5, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+
+      //// Mask to select B component
+      //const __m128i mask_B1 = _mm_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1, 14, -1, 10, -1, 6, -1, 2, -1);
+      //const __m128i mask_B2 = _mm_set_epi8(14, -1, 10, -1, 6, -1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+
+      //// Mask to select the gray component
+      //const __m128i mask_low1 = _mm_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1, 15, 13, 11, 9, 7, 5, 3, 1);
+      //const __m128i mask_low2 = _mm_set_epi8(15, 13, 11, 9, 7, 5, 3, 1, -1, -1, -1, -1, -1, -1, -1, -1);
+
+      //Coefficients RGB to Gray
+      const __m256i coeff_R = _mm256_set_epi16(
+        13933, 13933, 13933, 13933, 13933, 13933, 13933, 13933, 13933, 13933, 13933, 13933, 13933, 13933, 13933, 13933
+      );
+      const __m256i coeff_G = _mm256_set_epi16(
+        46871, 46871, 46871, 46871, 46871, 46871, 46871, 46871, 46871, 46871, 46871, 46871, 46871, 46871, 46871, 46871
+      );
+      const __m256i coeff_B = _mm256_set_epi16(
+        4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732
+      );
+
+    }
+#endif
+  } else if (checkSSSE3) {
 #if VISP_HAVE_SSSE3
     unsigned int i = 0;
 
@@ -3565,7 +3629,7 @@ void vpImageConvert::RGBaToGrey(unsigned char *rgba, unsigned char *grey, unsign
       // Coefficients RGB to Gray
       const __m128i coeff_R = _mm_set_epi16(13933, 13933, 13933, 13933, 13933, 13933, 13933, 13933);
       const __m128i coeff_G = _mm_set_epi16((short int)46871, (short int)46871, (short int)46871, (short int)46871,
-                                            (short int)46871, (short int)46871, (short int)46871, (short int)46871);
+        (short int)46871, (short int)46871, (short int)46871, (short int)46871);
       const __m128i coeff_B = _mm_set_epi16(4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732);
 
       for (; i <= size - 16; i += 16) {
@@ -3578,8 +3642,8 @@ void vpImageConvert::RGBaToGrey(unsigned char *rgba, unsigned char *grey, unsign
         const __m128i blue_0_7 = _mm_or_si128(_mm_shuffle_epi8(data1, mask_B1), _mm_shuffle_epi8(data2, mask_B2));
 
         const __m128i grays_0_7 =
-            _mm_adds_epu16(_mm_mulhi_epu16(red_0_7, coeff_R),
-                           _mm_adds_epu16(_mm_mulhi_epu16(green_0_7, coeff_G), _mm_mulhi_epu16(blue_0_7, coeff_B)));
+          _mm_adds_epu16(_mm_mulhi_epu16(red_0_7, coeff_R),
+            _mm_adds_epu16(_mm_mulhi_epu16(green_0_7, coeff_G), _mm_mulhi_epu16(blue_0_7, coeff_B)));
 
         // Process next 2*4 color pixels
         const __m128i data3 = _mm_loadu_si128((const __m128i *)(rgba + 32));
@@ -3590,11 +3654,11 @@ void vpImageConvert::RGBaToGrey(unsigned char *rgba, unsigned char *grey, unsign
         const __m128i blue_8_15 = _mm_or_si128(_mm_shuffle_epi8(data3, mask_B1), _mm_shuffle_epi8(data4, mask_B2));
 
         const __m128i grays_8_15 =
-            _mm_adds_epu16(_mm_mulhi_epu16(red_8_15, coeff_R),
-                           _mm_adds_epu16(_mm_mulhi_epu16(green_8_15, coeff_G), _mm_mulhi_epu16(blue_8_15, coeff_B)));
+          _mm_adds_epu16(_mm_mulhi_epu16(red_8_15, coeff_R),
+            _mm_adds_epu16(_mm_mulhi_epu16(green_8_15, coeff_G), _mm_mulhi_epu16(blue_8_15, coeff_B)));
 
         _mm_storeu_si128((__m128i *)grey,
-                         _mm_or_si128(_mm_shuffle_epi8(grays_0_7, mask_low1), _mm_shuffle_epi8(grays_8_15, mask_low2)));
+          _mm_or_si128(_mm_shuffle_epi8(grays_0_7, mask_low1), _mm_shuffle_epi8(grays_8_15, mask_low2)));
 
         rgba += 64;
         grey += 16;
@@ -3608,7 +3672,8 @@ void vpImageConvert::RGBaToGrey(unsigned char *rgba, unsigned char *grey, unsign
       ++grey;
     }
 #endif
-  } else {
+  }
+  else {
     unsigned char *pt_input = rgba;
     unsigned char *pt_end = rgba + size * 4;
     unsigned char *pt_output = grey;
