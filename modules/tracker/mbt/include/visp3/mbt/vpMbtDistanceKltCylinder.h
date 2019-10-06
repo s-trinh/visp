@@ -48,7 +48,6 @@
 #include <visp3/core/vpCircle.h>
 #include <visp3/core/vpCylinder.h>
 #include <visp3/core/vpDisplay.h>
-#include <visp3/core/vpGEMM.h>
 #include <visp3/core/vpPlane.h>
 #include <visp3/core/vpPolygon3D.h>
 #include <visp3/klt/vpKltOpencv.h>
