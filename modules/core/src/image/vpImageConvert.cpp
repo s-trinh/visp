@@ -52,17 +52,23 @@
 
 #if defined __SSE2__ || defined _M_X64 || (defined _M_IX86_FP && _M_IX86_FP >= 2)
 #include <emmintrin.h>
-#define VISP_HAVE_SSE2 1
+#  define VISP_HAVE_SSE2 1
+#else
+#  define VISP_HAVE_SSE2 0
+#endif
 
 #if defined __SSE3__ || (defined _MSC_VER && _MSC_VER >= 1500)
 #include <pmmintrin.h>
-#define VISP_HAVE_SSE3 1
+#  define VISP_HAVE_SSE3 1
+#else
+#  define VISP_HAVE_SSE3 0
 #endif
 
 #if defined __SSSE3__ || (defined _MSC_VER && _MSC_VER >= 1500)
 #include <tmmintrin.h>
-#define VISP_HAVE_SSSE3 1
-#endif
+#  define VISP_HAVE_SSSE3 1
+#else
+#  define VISP_HAVE_SSSE3 0
 #endif
 
 #if defined __AVX2__
@@ -84,7 +90,7 @@ const __m256i K1 = _mm256_set_epi8(
   0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0,
   0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0);
 
-inline const __m256i custom_mm256_shuffle_epi8(const __m256i & value, const __m256i & shuffle) {
+inline __m256i custom_mm256_shuffle_epi8(const __m256i & value, const __m256i & shuffle) {
   return _mm256_or_si256(_mm256_shuffle_epi8(value, _mm256_adds_epu8(shuffle, K0)),
     _mm256_shuffle_epi8(_mm256_permute4x64_epi64(value, 0x4E), _mm256_add_epi8(shuffle, K1)));
 }
@@ -203,7 +209,7 @@ void vpImageConvert::convert(const vpImage<unsigned char> &src, vpImage<uint16_t
   dest.resize(src.getHeight(), src.getWidth());
 
   for (unsigned int i = 0; i < src.getSize(); i++)
-    dest.bitmap[i] = (src.bitmap[i] << 8);
+    dest.bitmap[i] = static_cast<unsigned char>(src.bitmap[i] << 8);
 }
 
 /*!
@@ -240,7 +246,7 @@ void vpImageConvert::createDepthHistogram(const vpImage<uint16_t> &src_depth, vp
   for (unsigned int i = 0; i < src_depth.getSize(); ++i) {
     uint16_t d = src_depth.bitmap[i];
     if (d) {
-      int f = (int)(histogram[d] * 255 / histogram[0xFFFF]); // 0-255 based on histogram location
+      unsigned char f = (unsigned char)(histogram[d] * 255 / histogram[0xFFFF]); // 0-255 based on histogram location
       dest_rgba.bitmap[i].R = 255 - f;
       dest_rgba.bitmap[i].G = 0;
       dest_rgba.bitmap[i].B = f;
@@ -731,19 +737,19 @@ void vpImageConvert::convert(const cv::Mat &src, vpImage<vpRGBa> &dest, const bo
         // when simplifying range test [-Wstrict-overflow]
         for (; i <= size_vec; i += 16) {
           // Process 16 BGR color pixels
-          const __m128i data1 = _mm_loadu_si128((const __m128i *)bgr);
-          const __m128i data2 = _mm_loadu_si128((const __m128i *)(bgr + 16));
-          const __m128i data3 = _mm_loadu_si128((const __m128i *)(bgr + 32));
+          const __m128i data1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(bgr));
+          const __m128i data2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(bgr + 16));
+          const __m128i data3 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(bgr + 32));
 
           res[0] = _mm_shuffle_epi8(data1, mask_1);
           res[1] = _mm_or_si128(_mm_shuffle_epi8(data1, mask_2), _mm_shuffle_epi8(data2, mask_3));
           res[2] = _mm_or_si128(_mm_shuffle_epi8(data2, mask_4), _mm_shuffle_epi8(data3, mask_5));
           res[3] = _mm_shuffle_epi8(data3, mask_6);
 
-          _mm_storeu_si128((__m128i *)rgba, res[0]);
-          _mm_storeu_si128((__m128i *)(rgba+16), res[1]);
-          _mm_storeu_si128((__m128i *)(rgba+32), res[2]);
-          _mm_storeu_si128((__m128i *)(rgba+48), res[3]);
+          _mm_storeu_si128(reinterpret_cast<__m128i *>(rgba), res[0]);
+          _mm_storeu_si128(reinterpret_cast<__m128i *>(rgba+16), res[1]);
+          _mm_storeu_si128(reinterpret_cast<__m128i *>(rgba+32), res[2]);
+          _mm_storeu_si128(reinterpret_cast<__m128i *>(rgba+48), res[3]);
 
           bgr += 48;
           rgba += 64;
@@ -3507,9 +3513,9 @@ void vpImageConvert::RGBToGrey(unsigned char *rgb, unsigned char *grey, unsigned
 
       for (; i <= size - 16; i += 16) {
         // Process 16 color pixels
-        const __m128i data1 = _mm_loadu_si128((const __m128i *)rgb);
-        const __m128i data2 = _mm_loadu_si128((const __m128i *)(rgb + 16));
-        const __m128i data3 = _mm_loadu_si128((const __m128i *)(rgb + 32));
+        const __m128i data1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(rgb));
+        const __m128i data2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(rgb + 16));
+        const __m128i data3 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(rgb + 32));
 
         const __m128i red_0_7 = _mm_or_si128(_mm_shuffle_epi8(data1, mask_R1), _mm_shuffle_epi8(data2, mask_R2));
         const __m128i green_0_7 = _mm_or_si128(_mm_shuffle_epi8(data1, mask_G1), _mm_shuffle_epi8(data2, mask_G2));
@@ -3527,7 +3533,7 @@ void vpImageConvert::RGBToGrey(unsigned char *rgb, unsigned char *grey, unsigned
             _mm_adds_epu16(_mm_mulhi_epu16(red_8_15, coeff_R),
                            _mm_adds_epu16(_mm_mulhi_epu16(green_8_15, coeff_G), _mm_mulhi_epu16(blue_8_15, coeff_B)));
 
-        _mm_storeu_si128((__m128i *)grey,
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(grey),
                          _mm_or_si128(_mm_shuffle_epi8(grays_0_7, mask_low1), _mm_shuffle_epi8(grays_8_15, mask_low2)));
 
         rgb += 48;
@@ -3567,30 +3573,64 @@ void vpImageConvert::RGBaToGrey(unsigned char *rgba, unsigned char *grey, unsign
   checkSSSE3 = false;
 #endif
   bool checkAVX2 = vpCPUFeatures::checkAVX2();
-#if !VISP_HAVE_AVX2
+//#if !VISP_HAVE_AVX2
+#if 1
   checkAVX2 = false;
 #endif
 
-  if (checkAVX2) {
+#define V0 0
+
+  const bool PIL_version = false;
+  if (PIL_version) {
+    if (size >= 16) {
+      unsigned int x = 0;
+      __m128i coeff = _mm_set_epi16(0, 3735, 19235, 9798, 0, 3735, 19235, 9798);
+      for (; x < size - 3; x += 4, rgba += 16) {
+        __m128i pix0, pix1;
+        __m128i source = _mm_loadu_si128(reinterpret_cast<const __m128i*>(rgba));
+        pix0 = _mm_unpacklo_epi8(source, _mm_setzero_si128());
+        pix1 = _mm_unpackhi_epi8(source, _mm_setzero_si128());
+        pix0 = _mm_madd_epi16(pix0, coeff);
+        pix1 = _mm_madd_epi16(pix1, coeff);
+        pix0 = _mm_hadd_epi32(pix0, pix1);
+        pix0 = _mm_srli_epi32(pix0, 15);
+        pix0 = _mm_packus_epi32(pix0, pix0);
+        pix0 = _mm_packus_epi16(pix0, pix0);
+        *(uint32_t*)&grey[x] = _mm_cvtsi128_si32(pix0);
+      }
+      for (; x < size; x++, rgba += 4, ++grey) {
+        *grey = (unsigned char)(0.2126 * (*rgba) + 0.7152 * (*(rgba + 1)) + 0.0722 * (*(rgba + 2)));
+      }
+    }
+  } else if (checkAVX2) {
 #if VISP_HAVE_AVX2
     unsigned int i = 0;
 
+#if V0
     if (size >= 16) {
-      //// Mask to select R component
-      //const __m128i mask_R1 = _mm_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1, 12, -1, 8, -1, 4, -1, 0, -1);
-      //const __m128i mask_R2 = _mm_set_epi8(12, -1, 8, -1, 4, -1, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+      // Mask to select R component
+      const __m256i mask_R1 = _mm256_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                              28, -1, 24, -1, 20, -1, 16, -1, 12, -1, 8, -1, 4, -1, 0, -1);
+      const __m256i mask_R2 = _mm256_set_epi8(28, -1, 24, -1, 20, -1, 16, -1, 12, -1, 8, -1, 4, -1, 0, -1,
+                                              -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
 
-      //// Mask to select G component
-      //const __m128i mask_G1 = _mm_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1, 13, -1, 9, -1, 5, -1, 1, -1);
-      //const __m128i mask_G2 = _mm_set_epi8(13, -1, 9, -1, 5, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+      // Mask to select G component
+      const __m256i mask_G1 = _mm256_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                              29, -1, 25, -1, 21, -1, 17, -1, 13, -1, 9, -1, 5, -1, 1, -1);
+      const __m256i mask_G2 = _mm256_set_epi8(29, -1, 25, -1, 21, -1, 17, -1, 13, -1, 9, -1, 5, -1, 1, -1,
+                                              -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
 
-      //// Mask to select B component
-      //const __m128i mask_B1 = _mm_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1, 14, -1, 10, -1, 6, -1, 2, -1);
-      //const __m128i mask_B2 = _mm_set_epi8(14, -1, 10, -1, 6, -1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+      // Mask to select B component
+      const __m256i mask_B1 = _mm256_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                              30, -1, 26, -1, 22, -1, 18, -1, 14, -1, 10, -1, 6, -1, 2, -1);
+      const __m256i mask_B2 = _mm256_set_epi8(30, -1, 26, -1, 22, -1, 18, -1, 14, -1, 10, -1, 6, -1, 2, -1,
+                                              -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
 
-      //// Mask to select the gray component
-      //const __m128i mask_low1 = _mm_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1, 15, 13, 11, 9, 7, 5, 3, 1);
-      //const __m128i mask_low2 = _mm_set_epi8(15, 13, 11, 9, 7, 5, 3, 1, -1, -1, -1, -1, -1, -1, -1, -1);
+      // Mask to select the gray component
+      const __m256i mask_low1 = _mm256_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                                31, 29, 27, 25, 23, 21, 19, 17, 15, 13, 11, 9, 7, 5, 3, 1);
+      const __m256i mask_low2 = _mm256_set_epi8(31, 29, 27, 25, 23, 21, 19, 17, 15, 13, 11, 9, 7, 5, 3, 1,
+                                                -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
 
       //Coefficients RGB to Gray
       const __m256i coeff_R = _mm256_set_epi16(
@@ -3603,6 +3643,223 @@ void vpImageConvert::RGBaToGrey(unsigned char *rgba, unsigned char *grey, unsign
         4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732
       );
 
+      for (; i <= size - 32; i += 32) {
+#if 0
+        // Process 2*8 color pixels
+        const __m256i data1 = _mm256_loadu_si256((const __m256i *)rgba);
+        const __m256i data2 = _mm256_loadu_si256((const __m256i *)(rgba + 32));
+
+        const __m256i red_0_15 = _mm256_or_si256(custom_mm256_shuffle_epi8(data1, mask_R1), custom_mm256_shuffle_epi8(data2, mask_R2));
+        const __m256i green_0_15 = _mm256_or_si256(custom_mm256_shuffle_epi8(data1, mask_G1), custom_mm256_shuffle_epi8(data2, mask_G2));
+        const __m256i blue_0_15 = _mm256_or_si256(custom_mm256_shuffle_epi8(data1, mask_B1), custom_mm256_shuffle_epi8(data2, mask_B2));
+
+        const __m256i grays_0_15 =
+          _mm256_adds_epu16(_mm256_mulhi_epu16(red_0_15, coeff_R),
+            _mm256_adds_epu16(_mm256_mulhi_epu16(green_0_15, coeff_G), _mm256_mulhi_epu16(blue_0_15, coeff_B)));
+
+        // Process next 2*8 color pixels
+        const __m256i data3 = _mm256_loadu_si256((const __m256i *)(rgba + 64));
+        const __m256i data4 = _mm256_loadu_si256((const __m256i *)(rgba + 96));
+
+        const __m256i red_16_31 = _mm256_or_si256(custom_mm256_shuffle_epi8(data3, mask_R1), custom_mm256_shuffle_epi8(data4, mask_R2));
+        const __m256i green_16_31 = _mm256_or_si256(custom_mm256_shuffle_epi8(data3, mask_G1), custom_mm256_shuffle_epi8(data4, mask_G2));
+        const __m256i blue_16_31 = _mm256_or_si256(custom_mm256_shuffle_epi8(data3, mask_B1), custom_mm256_shuffle_epi8(data4, mask_B2));
+
+        const __m256i grays_16_31 =
+          _mm256_adds_epu16(_mm256_mulhi_epu16(red_16_31, coeff_R),
+            _mm256_adds_epu16(_mm256_mulhi_epu16(green_16_31, coeff_G), _mm256_mulhi_epu16(blue_16_31, coeff_B)));
+
+        _mm256_storeu_si256((__m256i *)grey,
+          _mm256_or_si256(custom_mm256_shuffle_epi8(grays_0_15, mask_low1), custom_mm256_shuffle_epi8(grays_16_31, mask_low2)));
+#else
+        // Process 2*8 color pixels
+        __m256i data1 = _mm256_loadu_si256((const __m256i *)rgba);
+        __m256i data2 = _mm256_loadu_si256((const __m256i *)(rgba + 32));
+
+        __m256i red_0_15 = _mm256_or_si256(custom_mm256_shuffle_epi8(data1, mask_R1), custom_mm256_shuffle_epi8(data2, mask_R2));
+        __m256i green_0_15 = _mm256_or_si256(custom_mm256_shuffle_epi8(data1, mask_G1), custom_mm256_shuffle_epi8(data2, mask_G2));
+        __m256i blue_0_15 = _mm256_or_si256(custom_mm256_shuffle_epi8(data1, mask_B1), custom_mm256_shuffle_epi8(data2, mask_B2));
+
+        const __m256i grays_0_15 =
+          _mm256_adds_epu16(_mm256_mulhi_epu16(red_0_15, coeff_R),
+            _mm256_adds_epu16(_mm256_mulhi_epu16(green_0_15, coeff_G), _mm256_mulhi_epu16(blue_0_15, coeff_B)));
+
+        // Process next 2*8 color pixels
+        data1 = _mm256_loadu_si256((const __m256i *)(rgba + 64));
+        data2 = _mm256_loadu_si256((const __m256i *)(rgba + 96));
+
+        red_0_15 = _mm256_or_si256(custom_mm256_shuffle_epi8(data1, mask_R1), custom_mm256_shuffle_epi8(data2, mask_R2));
+        green_0_15 = _mm256_or_si256(custom_mm256_shuffle_epi8(data1, mask_G1), custom_mm256_shuffle_epi8(data2, mask_G2));
+        blue_0_15 = _mm256_or_si256(custom_mm256_shuffle_epi8(data1, mask_B1), custom_mm256_shuffle_epi8(data2, mask_B2));
+
+        const __m256i grays_16_31 =
+          _mm256_adds_epu16(_mm256_mulhi_epu16(red_0_15, coeff_R),
+            _mm256_adds_epu16(_mm256_mulhi_epu16(green_0_15, coeff_G), _mm256_mulhi_epu16(blue_0_15, coeff_B)));
+
+        _mm256_storeu_si256((__m256i *)grey,
+          _mm256_or_si256(custom_mm256_shuffle_epi8(grays_0_15, mask_low1), custom_mm256_shuffle_epi8(grays_16_31, mask_low2)));
+#endif
+
+        rgba += 128;
+        grey += 32;
+      }
+    }
+#else
+    if (size >= 16) {
+      // Mask to select RG component
+      const __m256i mask_RG = _mm256_set_epi8(29, -1, 25, -1, 21, -1, 17, -1, 28, -1, 24, -1, 20, -1, 16, -1,
+                                              13, -1, 9, -1, 5, -1, 1, -1, 12, -1, 8, -1, 4, -1, 0, -1);
+
+      // Mask to select BA component
+      const __m256i mask_GA = _mm256_set_epi8(31, -1, 27, -1, 23, -1, 19, -1, 30, -1, 26, -1, 22, -1, 18, -1,
+                                              15, -1, 11, -1, 7, -1, 3, -1, 14, -1, 10, -1, 6, -1, 2, -1);
+
+      // Mask to select the gray component
+      const __m128i mask_low1 = _mm_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1, 15, 11, 7, 3, 13, 9, 5, 1);
+      const __m128i mask_low2 = _mm_set_epi8(15, 11, 7, 3, 13, 9, 5, 1, -1, -1, -1, -1, -1, -1, -1, -1);
+
+      //Coefficients RGB to Gray
+      const __m256i coeff_RG = _mm256_set_epi16(13933, 13933, 13933, 13933, 13933, 13933, 13933, 13933,
+                                                46871, 46871, 46871, 46871, 46871, 46871, 46871, 46871);
+      const __m256i coeff_BA = _mm256_set_epi16(4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732,
+                                                0, 0, 0, 0, 0, 0, 0, 0);
+
+#if 0
+      for (; i <= size - 16; i += 16) {
+        // Process 2*8 color pixels
+        const __m256i data1 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(rgba));
+        const __m256i data2 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(rgba + 32));
+
+        __m256i red_green_0_7 = _mm256_mulhi_epu16(_mm256_shuffle_epi8(data1, mask_RG), coeff_RG);
+        __m256i blue_alpha_0_7 = _mm256_mulhi_epu16(_mm256_shuffle_epi8(data1, mask_GA), coeff_BA);
+
+        __m128i red_green_0_3 = _mm256_extracti128_si256(red_green_0_7, 0);
+        __m128i red_green_4_7 = _mm256_extracti128_si256(red_green_0_7, 1);
+        __m128i blue_alpha_0_3 = _mm256_extracti128_si256(blue_alpha_0_7, 0);
+        __m128i blue_alpha_4_7 = _mm256_extracti128_si256(blue_alpha_0_7, 1);
+
+        __m128i red_0_7 = _mm_unpacklo_epi16(red_green_0_3, red_green_4_7);
+        __m128i green_0_7 = _mm_unpackhi_epi16(red_green_0_3, red_green_4_7);
+        __m128i blue_0_7 = _mm_unpacklo_epi16(blue_alpha_0_3, blue_alpha_4_7);
+
+        const __m128i gray_0_7 = _mm_adds_epu16(red_0_7, _mm_adds_epu16(green_0_7, blue_0_7));
+
+
+        red_green_0_7 = _mm256_mulhi_epu16(_mm256_shuffle_epi8(data2, mask_RG), coeff_RG);
+        blue_alpha_0_7 = _mm256_mulhi_epu16(_mm256_shuffle_epi8(data2, mask_GA), coeff_BA);
+
+        red_green_0_3 = _mm256_extracti128_si256(red_green_0_7, 0);
+        red_green_4_7 = _mm256_extracti128_si256(red_green_0_7, 1);
+        blue_alpha_0_3 = _mm256_extracti128_si256(blue_alpha_0_7, 0);
+        blue_alpha_4_7 = _mm256_extracti128_si256(blue_alpha_0_7, 1);
+
+        red_0_7 = _mm_unpacklo_epi16(red_green_0_3, red_green_4_7);
+        green_0_7 = _mm_unpackhi_epi16(red_green_0_3, red_green_4_7);
+        blue_0_7 = _mm_unpacklo_epi16(blue_alpha_0_3, blue_alpha_4_7);
+
+        const __m128i gray_8_15 = _mm_adds_epu16(red_0_7, _mm_adds_epu16(green_0_7, blue_0_7));
+
+        const __m128i gray_0_15 = _mm_or_si128(_mm_shuffle_epi8(gray_0_7, mask_low1),
+                                               _mm_shuffle_epi8(gray_8_15, mask_low2));
+
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(grey),
+                         gray_0_15);
+
+        rgba += 64;
+        grey += 16;
+      }
+#else
+      for (; i <= size - 32; i += 32) {
+        // Process 2*8 color pixels
+        const __m256i data1 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(rgba));
+        const __m256i data2 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(rgba + 32));
+        const __m256i data3 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(rgba + 64));
+        const __m256i data4 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(rgba + 96));
+
+        __m256i red_green_0_7 = _mm256_mulhi_epu16(_mm256_shuffle_epi8(data1, mask_RG), coeff_RG);
+        __m256i blue_alpha_0_7 = _mm256_mulhi_epu16(_mm256_shuffle_epi8(data1, mask_GA), coeff_BA);
+
+        __m128i red_green_0_3 = _mm256_extracti128_si256(red_green_0_7, 0);
+        __m128i red_green_4_7 = _mm256_extracti128_si256(red_green_0_7, 1);
+        __m128i blue_alpha_0_3 = _mm256_extracti128_si256(blue_alpha_0_7, 0);
+        __m128i blue_alpha_4_7 = _mm256_extracti128_si256(blue_alpha_0_7, 1);
+
+        __m128i red_0_7 = _mm_unpacklo_epi16(red_green_0_3, red_green_4_7);
+        __m128i green_0_7 = _mm_unpackhi_epi16(red_green_0_3, red_green_4_7);
+        __m128i blue_0_7 = _mm_unpacklo_epi16(blue_alpha_0_3, blue_alpha_4_7);
+
+        __m128i gray_0_7 = _mm_adds_epu16(red_0_7, _mm_adds_epu16(green_0_7, blue_0_7));
+
+
+        red_green_0_7 = _mm256_mulhi_epu16(_mm256_shuffle_epi8(data2, mask_RG), coeff_RG);
+        blue_alpha_0_7 = _mm256_mulhi_epu16(_mm256_shuffle_epi8(data2, mask_GA), coeff_BA);
+
+        red_green_0_3 = _mm256_extracti128_si256(red_green_0_7, 0);
+        red_green_4_7 = _mm256_extracti128_si256(red_green_0_7, 1);
+        blue_alpha_0_3 = _mm256_extracti128_si256(blue_alpha_0_7, 0);
+        blue_alpha_4_7 = _mm256_extracti128_si256(blue_alpha_0_7, 1);
+
+        red_0_7 = _mm_unpacklo_epi16(red_green_0_3, red_green_4_7);
+        green_0_7 = _mm_unpackhi_epi16(red_green_0_3, red_green_4_7);
+        blue_0_7 = _mm_unpacklo_epi16(blue_alpha_0_3, blue_alpha_4_7);
+
+        __m128i gray_8_15 = _mm_adds_epu16(red_0_7, _mm_adds_epu16(green_0_7, blue_0_7));
+
+        __m128i gray_0_15 = _mm_or_si128(_mm_shuffle_epi8(gray_0_7, mask_low1),
+                                         _mm_shuffle_epi8(gray_8_15, mask_low2));
+        __m256i gray_0_31 = _mm256_setzero_si256();
+        gray_0_31 = _mm256_inserti128_si256(gray_0_31, gray_0_15, 0);
+
+
+        red_green_0_7 = _mm256_mulhi_epu16(_mm256_shuffle_epi8(data3, mask_RG), coeff_RG);
+        blue_alpha_0_7 = _mm256_mulhi_epu16(_mm256_shuffle_epi8(data3, mask_GA), coeff_BA);
+
+        red_green_0_3 = _mm256_extracti128_si256(red_green_0_7, 0);
+        red_green_4_7 = _mm256_extracti128_si256(red_green_0_7, 1);
+        blue_alpha_0_3 = _mm256_extracti128_si256(blue_alpha_0_7, 0);
+        blue_alpha_4_7 = _mm256_extracti128_si256(blue_alpha_0_7, 1);
+
+        red_0_7 = _mm_unpacklo_epi16(red_green_0_3, red_green_4_7);
+        green_0_7 = _mm_unpackhi_epi16(red_green_0_3, red_green_4_7);
+        blue_0_7 = _mm_unpacklo_epi16(blue_alpha_0_3, blue_alpha_4_7);
+
+        gray_0_7 = _mm_adds_epu16(red_0_7, _mm_adds_epu16(green_0_7, blue_0_7));
+
+
+        red_green_0_7 = _mm256_mulhi_epu16(_mm256_shuffle_epi8(data4, mask_RG), coeff_RG);
+        blue_alpha_0_7 = _mm256_mulhi_epu16(_mm256_shuffle_epi8(data4, mask_GA), coeff_BA);
+
+        red_green_0_3 = _mm256_extracti128_si256(red_green_0_7, 0);
+        red_green_4_7 = _mm256_extracti128_si256(red_green_0_7, 1);
+        blue_alpha_0_3 = _mm256_extracti128_si256(blue_alpha_0_7, 0);
+        blue_alpha_4_7 = _mm256_extracti128_si256(blue_alpha_0_7, 1);
+
+        red_0_7 = _mm_unpacklo_epi16(red_green_0_3, red_green_4_7);
+        green_0_7 = _mm_unpackhi_epi16(red_green_0_3, red_green_4_7);
+        blue_0_7 = _mm_unpacklo_epi16(blue_alpha_0_3, blue_alpha_4_7);
+
+        gray_8_15 = _mm_adds_epu16(red_0_7, _mm_adds_epu16(green_0_7, blue_0_7));
+
+        gray_0_15 = _mm_or_si128(_mm_shuffle_epi8(gray_0_7, mask_low1),
+                                  _mm_shuffle_epi8(gray_8_15, mask_low2));
+
+        gray_0_31 = _mm256_inserti128_si256(gray_0_31, gray_0_15, 1);
+
+        _mm256_storeu_si256(reinterpret_cast<__m256i *>(grey), gray_0_31);
+
+
+        rgba += 128;
+        grey += 32;
+      }
+#endif
+    }
+#endif
+
+    for (; i < size; i++) {
+      *grey = (unsigned char)(0.2126 * (*rgba) + 0.7152 * (*(rgba + 1)) + 0.0722 * (*(rgba + 2)));
+
+      rgba += 4;
+      ++grey;
     }
 #endif
   } else if (checkSSSE3) {
@@ -3629,13 +3886,13 @@ void vpImageConvert::RGBaToGrey(unsigned char *rgba, unsigned char *grey, unsign
       // Coefficients RGB to Gray
       const __m128i coeff_R = _mm_set_epi16(13933, 13933, 13933, 13933, 13933, 13933, 13933, 13933);
       const __m128i coeff_G = _mm_set_epi16((short int)46871, (short int)46871, (short int)46871, (short int)46871,
-        (short int)46871, (short int)46871, (short int)46871, (short int)46871);
+                                            (short int)46871, (short int)46871, (short int)46871, (short int)46871);
       const __m128i coeff_B = _mm_set_epi16(4732, 4732, 4732, 4732, 4732, 4732, 4732, 4732);
 
       for (; i <= size - 16; i += 16) {
         // Process 2*4 color pixels
-        const __m128i data1 = _mm_loadu_si128((const __m128i *)rgba);
-        const __m128i data2 = _mm_loadu_si128((const __m128i *)(rgba + 16));
+        const __m128i data1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(rgba));
+        const __m128i data2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(rgba + 16));
 
         const __m128i red_0_7 = _mm_or_si128(_mm_shuffle_epi8(data1, mask_R1), _mm_shuffle_epi8(data2, mask_R2));
         const __m128i green_0_7 = _mm_or_si128(_mm_shuffle_epi8(data1, mask_G1), _mm_shuffle_epi8(data2, mask_G2));
@@ -3646,8 +3903,8 @@ void vpImageConvert::RGBaToGrey(unsigned char *rgba, unsigned char *grey, unsign
             _mm_adds_epu16(_mm_mulhi_epu16(green_0_7, coeff_G), _mm_mulhi_epu16(blue_0_7, coeff_B)));
 
         // Process next 2*4 color pixels
-        const __m128i data3 = _mm_loadu_si128((const __m128i *)(rgba + 32));
-        const __m128i data4 = _mm_loadu_si128((const __m128i *)(rgba + 48));
+        const __m128i data3 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(rgba + 32));
+        const __m128i data4 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(rgba + 48));
 
         const __m128i red_8_15 = _mm_or_si128(_mm_shuffle_epi8(data3, mask_R1), _mm_shuffle_epi8(data4, mask_R2));
         const __m128i green_8_15 = _mm_or_si128(_mm_shuffle_epi8(data3, mask_G1), _mm_shuffle_epi8(data4, mask_G2));
@@ -3657,7 +3914,7 @@ void vpImageConvert::RGBaToGrey(unsigned char *rgba, unsigned char *grey, unsign
           _mm_adds_epu16(_mm_mulhi_epu16(red_8_15, coeff_R),
             _mm_adds_epu16(_mm_mulhi_epu16(green_8_15, coeff_G), _mm_mulhi_epu16(blue_8_15, coeff_B)));
 
-        _mm_storeu_si128((__m128i *)grey,
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(grey),
           _mm_or_si128(_mm_shuffle_epi8(grays_0_7, mask_low1), _mm_shuffle_epi8(grays_8_15, mask_low2)));
 
         rgba += 64;
@@ -3839,9 +4096,9 @@ void vpImageConvert::BGRToGrey(unsigned char *bgr, unsigned char *grey, unsigned
 
           for (; j <= width - 16; j += 16) {
             // Process 16 color pixels
-            const __m128i data1 = _mm_loadu_si128((const __m128i *)bgr);
-            const __m128i data2 = _mm_loadu_si128((const __m128i *)(bgr + 16));
-            const __m128i data3 = _mm_loadu_si128((const __m128i *)(bgr + 32));
+            const __m128i data1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(bgr));
+            const __m128i data2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(bgr + 16));
+            const __m128i data3 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(bgr + 32));
 
             const __m128i red_0_7 = _mm_or_si128(_mm_shuffle_epi8(data1, mask_R1), _mm_shuffle_epi8(data2, mask_R2));
             const __m128i green_0_7 = _mm_or_si128(_mm_shuffle_epi8(data1, mask_G1), _mm_shuffle_epi8(data2, mask_G2));
@@ -3859,8 +4116,8 @@ void vpImageConvert::BGRToGrey(unsigned char *bgr, unsigned char *grey, unsigned
                 _mm_adds_epu16(_mm_mulhi_epu16(red_8_15, coeff_R), _mm_adds_epu16(_mm_mulhi_epu16(green_8_15, coeff_G),
                                                                                   _mm_mulhi_epu16(blue_8_15, coeff_B)));
 
-            _mm_storeu_si128((__m128i *)grey, _mm_or_si128(_mm_shuffle_epi8(grays_0_7, mask_low1),
-                                                           _mm_shuffle_epi8(grays_8_15, mask_low2)));
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(grey), _mm_or_si128(_mm_shuffle_epi8(grays_0_7, mask_low1),
+                                                                             _mm_shuffle_epi8(grays_8_15, mask_low2)));
 
             bgr += 48;
             grey += 16;
@@ -3896,9 +4153,9 @@ void vpImageConvert::BGRToGrey(unsigned char *bgr, unsigned char *grey, unsigned
       if (size >= 16) {
         for (; i <= size - 16; i += 16) {
           // Process 16 color pixels
-          const __m128i data1 = _mm_loadu_si128((const __m128i *)bgr);
-          const __m128i data2 = _mm_loadu_si128((const __m128i *)(bgr + 16));
-          const __m128i data3 = _mm_loadu_si128((const __m128i *)(bgr + 32));
+          const __m128i data1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(bgr));
+          const __m128i data2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(bgr + 16));
+          const __m128i data3 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(bgr + 32));
 
           const __m128i red_0_7 = _mm_or_si128(_mm_shuffle_epi8(data1, mask_R1), _mm_shuffle_epi8(data2, mask_R2));
           const __m128i green_0_7 = _mm_or_si128(_mm_shuffle_epi8(data1, mask_G1), _mm_shuffle_epi8(data2, mask_G2));
@@ -3916,8 +4173,8 @@ void vpImageConvert::BGRToGrey(unsigned char *bgr, unsigned char *grey, unsigned
               _mm_adds_epu16(_mm_mulhi_epu16(red_8_15, coeff_R),
                              _mm_adds_epu16(_mm_mulhi_epu16(green_8_15, coeff_G), _mm_mulhi_epu16(blue_8_15, coeff_B)));
 
-          _mm_storeu_si128((__m128i *)grey, _mm_or_si128(_mm_shuffle_epi8(grays_0_7, mask_low1),
-                                                         _mm_shuffle_epi8(grays_8_15, mask_low2)));
+          _mm_storeu_si128(reinterpret_cast<__m128i *>(grey), _mm_or_si128(_mm_shuffle_epi8(grays_0_7, mask_low1),
+                                                                           _mm_shuffle_epi8(grays_8_15, mask_low2)));
 
           bgr += 48;
           grey += 16;
@@ -4043,9 +4300,9 @@ void vpImageConvert::RGBToGrey(unsigned char *rgb, unsigned char *grey, unsigned
 
           for (; j <= width - 16; j += 16) {
             // Process 16 color pixels
-            const __m128i data1 = _mm_loadu_si128((const __m128i *)rgb);
-            const __m128i data2 = _mm_loadu_si128((const __m128i *)(rgb + 16));
-            const __m128i data3 = _mm_loadu_si128((const __m128i *)(rgb + 32));
+            const __m128i data1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(rgb));
+            const __m128i data2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(rgb + 16));
+            const __m128i data3 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(rgb + 32));
 
             const __m128i red_0_7 = _mm_or_si128(_mm_shuffle_epi8(data1, mask_R1), _mm_shuffle_epi8(data2, mask_R2));
             const __m128i green_0_7 = _mm_or_si128(_mm_shuffle_epi8(data1, mask_G1), _mm_shuffle_epi8(data2, mask_G2));
@@ -4063,8 +4320,8 @@ void vpImageConvert::RGBToGrey(unsigned char *rgb, unsigned char *grey, unsigned
                 _mm_adds_epu16(_mm_mulhi_epu16(red_8_15, coeff_R), _mm_adds_epu16(_mm_mulhi_epu16(green_8_15, coeff_G),
                                                                                   _mm_mulhi_epu16(blue_8_15, coeff_B)));
 
-            _mm_storeu_si128((__m128i *)grey, _mm_or_si128(_mm_shuffle_epi8(grays_0_7, mask_low1),
-                                                           _mm_shuffle_epi8(grays_8_15, mask_low2)));
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(grey), _mm_or_si128(_mm_shuffle_epi8(grays_0_7, mask_low1),
+                                                                             _mm_shuffle_epi8(grays_8_15, mask_low2)));
 
             rgb += 48;
             grey += 16;

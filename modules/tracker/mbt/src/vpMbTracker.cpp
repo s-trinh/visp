@@ -94,7 +94,16 @@
 
 #if defined __SSE2__ || defined _M_X64 || (defined _M_IX86_FP && _M_IX86_FP >= 2)
 #include <emmintrin.h>
-#define VISP_HAVE_SSE2 1
+#  define VISP_HAVE_SSE2 1
+#else
+#  define VISP_HAVE_SSE2 0
+#endif
+
+#if defined __AVX__
+#include <immintrin.h>
+#  define VISP_HAVE_AVX 1
+#else
+#  define VISP_HAVE_AVX 0
 #endif
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -2864,7 +2873,31 @@ void vpMbTracker::computeJTR(const vpMatrix &interaction, const vpColVector &err
   checkSSE2 = false;
 #endif
 
-  if (checkSSE2) {
+  bool checkAVX = vpCPUFeatures::checkAVX();
+#if !VISP_HAVE_AVX
+  checkAVX = false;
+#endif
+
+  if (checkAVX) {
+#if VISP_HAVE_AVX
+    __m256d v_JTR_0_3 = _mm256_setzero_pd();
+    __m128d v_JTR_4_5 = _mm_setzero_pd();
+
+    for (unsigned int i = 0; i < interaction.getRows(); i++) {
+      const __m256d v_error = _mm256_set1_pd(error[i]);
+      const __m128d v_error2 = _mm_set1_pd(error[i]);
+
+      __m256d v_interaction = _mm256_loadu_pd(&interaction[i][0]);
+      v_JTR_0_3 = _mm256_add_pd(v_JTR_0_3, _mm256_mul_pd(v_interaction, v_error));
+
+      __m128d v_interaction2 = _mm_loadu_pd(&interaction[i][4]);
+      v_JTR_4_5 = _mm_add_pd(v_JTR_4_5, _mm_mul_pd(v_interaction2, v_error2));
+    }
+
+    _mm256_storeu_pd(JTR.data, v_JTR_0_3);
+    _mm_storeu_pd(JTR.data + 4, v_JTR_4_5);
+#endif
+  } else if (checkSSE2) {
 #if VISP_HAVE_SSE2
     __m128d v_JTR_0_1 = _mm_setzero_pd();
     __m128d v_JTR_2_3 = _mm_setzero_pd();

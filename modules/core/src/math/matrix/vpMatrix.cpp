@@ -65,20 +65,27 @@
 #include <visp3/core/vpMath.h>
 #include <visp3/core/vpMatrix.h>
 #include <visp3/core/vpTranslationVector.h>
+#include <visp3/core/vpGEMM.h>
 
 #define USE_SSE_CODE 1
 #if defined __SSE2__ || defined _M_X64 || (defined _M_IX86_FP && _M_IX86_FP >= 2)
 #include <emmintrin.h>
-#define VISP_HAVE_SSE2 1
+#  define VISP_HAVE_SSE2 1
+#else
+#  define VISP_HAVE_SSE2 0
 #endif
 
 #if VISP_HAVE_SSE2 && USE_SSE_CODE
-#define USE_SSE 1
+#  define USE_SSE 1
+#else
+#  define USE_SSE 0
 #endif
 
 #if defined __AVX__
 #include <immintrin.h>
-#define VISP_HAVE_AVX 1
+#  define VISP_HAVE_AVX 1
+#else
+#  define VISP_HAVE_AVX 0
 #endif
 
 #if VISP_HAVE_AVX
@@ -505,6 +512,8 @@ void vpMatrix::transpose(vpMatrix &At) const
         }
       }
     }
+
+    _mm256_zeroall();
 #endif
   }
 }
@@ -570,16 +579,14 @@ void vpMatrix::AAt(vpMatrix &B) const
 */
 void vpMatrix::AtA(vpMatrix &B) const
 {
-  if ((B.rowNum != colNum) || (B.colNum != colNum))
+  if ((B.rowNum != colNum) || (B.colNum != colNum)) {
     B.resize(colNum, colNum, false, false);
+  }
 
 #if defined(VISP_HAVE_LAPACK) && !defined(VISP_HAVE_LAPACK_BUILT_IN)
-  double alpha = 1.0;
-  double beta = 0.0;
-  char transa = 'n';
-  char transb = 't';
-
-  vpMatrix::blas_dgemm(transa, transb, colNum, colNum, rowNum, alpha, data, colNum, data, colNum, beta, B.data, colNum);
+  const double alpha = 1.0, beta = 0.0;
+  vpBLAS blas;
+  blas.dgemm(*this, *this, alpha, B, beta, VP_GEMM_A_T);
 #else
   unsigned int i, j, k;
   double s;
@@ -949,16 +956,15 @@ void vpMatrix::multMatrixVector(const vpMatrix &A, const vpColVector &v, vpColVe
                       A.getRows(), A.getCols(), v.getRows()));
   }
 
-  if (A.rowNum != w.rowNum)
+  if (A.rowNum != w.rowNum) {
     w.resize(A.rowNum, false);
+  }
 
 #if defined(VISP_HAVE_LAPACK) && !defined(VISP_HAVE_LAPACK_BUILT_IN)
-  double alpha = 1.0;
-  double beta = 0.0;
-  char trans = 't';
-  int incr = 1;
+  const double alpha = 1.0, beta = 0.0;
+  vpBLAS blas;
+  blas.dgemv(A, alpha, v, beta, w);
 
-  vpMatrix::blas_dgemv(trans, A.colNum, A.rowNum, alpha, A.data, A.colNum, v.data, incr, beta, w.data, incr);
 #else
   w = 0.0;
   for (unsigned int j = 0; j < A.colNum; j++) {
@@ -985,8 +991,9 @@ void vpMatrix::multMatrixVector(const vpMatrix &A, const vpColVector &v, vpColVe
 */
 void vpMatrix::mult2Matrices(const vpMatrix &A, const vpMatrix &B, vpMatrix &C)
 {
-  if ((A.rowNum != C.rowNum) || (B.colNum != C.colNum))
+  if ((A.rowNum != C.rowNum) || (B.colNum != C.colNum)) {
     C.resize(A.rowNum, B.colNum, false, false);
+  }
 
   if (A.colNum != B.rowNum) {
     throw(vpException(vpException::dimensionError, "Cannot multiply (%dx%d) matrix by (%dx%d) matrix", A.getRows(),
@@ -994,12 +1001,9 @@ void vpMatrix::mult2Matrices(const vpMatrix &A, const vpMatrix &B, vpMatrix &C)
   }
 
 #if defined(VISP_HAVE_LAPACK) && !defined(VISP_HAVE_LAPACK_BUILT_IN)
-  double alpha = 1.0;
-  double beta = 0.0;
-  char trans = 'n';
-
-  vpMatrix::blas_dgemm(trans, trans, B.colNum, A.rowNum, A.colNum, alpha, B.data, B.colNum, A.data, A.colNum, beta,
-                       C.data, B.colNum);
+  const double alpha = 1.0, beta = 0.0;
+  vpBLAS blas;
+  blas.dgemm(A, B, alpha, C, beta);
 #else
   // 5/12/06 some "very" simple optimization to avoid indexation
   unsigned int BcolNum = B.colNum;
@@ -1168,12 +1172,9 @@ vpMatrix vpMatrix::operator*(const vpVelocityTwistMatrix &V) const
   M.resize(rowNum, 6, false, false);
 
 #if defined(VISP_HAVE_LAPACK) && !defined(VISP_HAVE_LAPACK_BUILT_IN)
-  double alpha = 1.0;
-  double beta = 0.0;
-  char trans = 'n';
-
-  vpMatrix::blas_dgemm(trans, trans, V.colNum, rowNum, colNum, alpha, V.data, V.colNum, data, colNum, beta, M.data,
-                       V.colNum);
+  const double alpha = 1.0, beta = 0.0;
+  vpBLAS blas;
+  blas.dgemm(*this, V, alpha, M, beta);
 #else
   bool checkSSE2 = vpCPUFeatures::checkSSE2();
 #if !USE_SSE

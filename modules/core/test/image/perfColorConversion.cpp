@@ -94,6 +94,12 @@ TEST_CASE("Benchmark rgba to grayscale (naive code)", "[benchmark]") {
 
   vpImage<unsigned char> I_gray(I.getHeight(), I.getWidth());
 
+  {
+    computeRegularRGBaToGrayscale(reinterpret_cast<unsigned char *>(I.bitmap),
+                                  I_gray.bitmap, I.getSize());
+    vpImageIo::write(I_gray, "RGBa_to_gray_naive.png");
+  }
+
   BENCHMARK("Benchmark rgba to grayscale Klimt (naive code)") {
     computeRegularRGBaToGrayscale(reinterpret_cast<unsigned char *>(I.bitmap),
                                   I_gray.bitmap, I.getSize());
@@ -107,6 +113,11 @@ TEST_CASE("Benchmark rgba to grayscale (ViSP)", "[benchmark]") {
   vpImageIo::read(I, imagePath);
 
   vpImage<unsigned char> I_gray(I.getHeight(), I.getWidth());
+
+  {
+    vpImageConvert::convert(I, I_gray);
+    vpImageIo::write(I_gray, "RGBa_to_gray_SIMD.png");
+  }
 
   BENCHMARK("Benchmark rgba to grayscale Klimt (ViSP)") {
     vpImageConvert::convert(I, I_gray);
