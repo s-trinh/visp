@@ -25,6 +25,9 @@ jobs:
     - name: Clone ViSP-images
       run: git clone --depth 1 https://github.com/lagadic/ViSP-images ${HOME}/ViSP-images
 
+    - name: Set VISP_INPUT_IMAGE_PATH env
+      run: echo "VISP_INPUT_IMAGE_PATH=$HOME" >> $GITHUB_ENV
+
     # Openblas location is exported explicitly because openblas is keg-only,
     # which means it was not symlinked into /usr/local/.
     - name: Configure CMake
@@ -45,5 +48,3 @@ jobs:
     - name: Run unit tests
       working-directory: build
       run: ctest --output-on-failure
-      env:
-        VISP_INPUT_IMAGE_PATH: ${{ HOME }}
