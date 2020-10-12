@@ -6,17 +6,21 @@ jobs:
   build-macos:
     name: MacOS 10.15
     runs-on: macos-10.15
+    env:
+      VISP_INPUT_IMAGE_PATH: ${HOME}
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-      
     - name: Print system information
       run: sysctl -a | grep machdep.cpu
 
     - name: Install dependencies
       run: brew install cmake opencv libdc1394 ant
+
+    - name: Clone ViSP-images
+      run: git clone --depth 1 https://github.com/lagadic/ViSP-images ${HOME}/ViSP-images
 
     # Openblas location is exported explicitly because openblas is keg-only,
     # which means it was not symlinked into /usr/local/.
@@ -28,6 +32,8 @@ jobs:
         cd build
         cmake ..
         cat ViSP-third-party.txt
+        echo ${HOME}
+        echo ${VISP_INPUT_IMAGE_PATH}
 
     - name: Compile
       working-directory: build
