@@ -27,7 +27,6 @@ jobs:
         mkdir -p build
         cd build
         cmake ..
-    # Show 3rd parties that are detected
         cat ViSP-third-party.txt
 
     - name: Compile
