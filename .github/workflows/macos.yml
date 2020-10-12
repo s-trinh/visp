@@ -36,7 +36,7 @@ jobs:
         export CPPFLAGS="-I/usr/local/opt/openblas/include"
         mkdir -p build
         cd build
-        cmake ..
+        cmake .. -DCMAKE_FIND_FRAMEWORK=LAST
         cat ViSP-third-party.txt
         echo ${HOME}
         echo ${VISP_INPUT_IMAGE_PATH}
