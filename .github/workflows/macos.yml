@@ -7,7 +7,7 @@ jobs:
     name: MacOS 10.15
     runs-on: macos-10.15
     env:
-      VISP_INPUT_IMAGE_PATH: ${HOME}
+      VISP_INPUT_IMAGE_PATH: ${{ HOME }}
 
     steps:
     - name: Checkout repository
