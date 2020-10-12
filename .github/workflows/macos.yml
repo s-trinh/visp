@@ -20,7 +20,7 @@ jobs:
       run: sysctl -a | grep machdep.cpu
 
     - name: Install dependencies
-      run: brew install cmake opencv libdc1394 ant
+      run: brew install cmake libpng libjpeg opencv libdc1394 ant
 
     - name: Clone ViSP-images
       run: git clone --depth 1 https://github.com/lagadic/ViSP-images ${HOME}/ViSP-images
