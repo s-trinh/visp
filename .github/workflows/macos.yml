@@ -4,10 +4,14 @@ on: [push, pull_request]
 
 jobs:
   build-macos:
-    name: MacOS 10.15
-    runs-on: macos-10.15
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-10.15, macos-11.0]
+        compiler: [gcc, clang]
 
     steps:
+    # https://github.com/marketplace/actions/cancel-workflow-action
     - name: Cancel Previous Runs
       uses: styfle/cancel-workflow-action@0.5.0
       with:
@@ -19,8 +23,11 @@ jobs:
     - name: Print system information
       run: sysctl -a | grep machdep.cpu
 
+    - name: Print OS information
+      run: system_profiler SPSoftwareDataType
+
     - name: Install dependencies
-      run: brew install cmake libpng libjpeg opencv libdc1394 ant
+      run: brew install libpng libjpeg libdc1394 opencv
 
     - name: Clone ViSP-images
       run: git clone --depth 1 https://github.com/lagadic/ViSP-images ${HOME}/ViSP-images
@@ -36,6 +43,7 @@ jobs:
         export CPPFLAGS="-I/usr/local/opt/openblas/include"
         mkdir -p build
         cd build
+        CC=/usr/bin/gcc-${{ matrix.compiler }} CXX=/usr/bin/g++-${{ matrix.compiler }}
         cmake .. -DCMAKE_FIND_FRAMEWORK=LAST
         cat ViSP-third-party.txt
         echo ${HOME}
