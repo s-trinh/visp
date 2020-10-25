@@ -8,7 +8,10 @@ jobs:
     strategy:
       matrix:
         os: [macos-10.15, macos-11.0]
-        compiler: [gcc-8, gcc-9, clang]
+        compiler: [8, 9, clang]
+      include:
+        - os: macos-10.15
+        -
 
     steps:
     # https://github.com/marketplace/actions/cancel-workflow-action
@@ -38,12 +41,13 @@ jobs:
     # Openblas location is exported explicitly because openblas is keg-only,
     # which means it was not symlinked into /usr/local/.
     - name: Configure CMake
+      if: ${{ matrix.compiler }} != 'clang'
+      run: CC=/usr/bin/gcc-${{ matrix.compiler }} CXX=/usr/bin/g++-${{ matrix.compiler }}
       run: |
         export LDFLAGS="-L/usr/local/opt/openblas/lib"
         export CPPFLAGS="-I/usr/local/opt/openblas/include"
         mkdir -p build
         cd build
-        CC=/usr/bin/gcc-${{ matrix.compiler }} CXX=/usr/bin/g++-${{ matrix.compiler }}
         cmake .. -DCMAKE_FIND_FRAMEWORK=LAST
         cat ViSP-third-party.txt
         echo ${HOME}
