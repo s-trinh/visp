@@ -35,11 +35,13 @@ jobs:
     - name: Set VISP_INPUT_IMAGE_PATH env
       run: echo "VISP_INPUT_IMAGE_PATH=$HOME" >> $GITHUB_ENV
 
+    - name: Configure gcc
+      if: ${{ matrix.compiler }} != 'clang'
+      run: CC=/usr/bin/gcc-${{ matrix.compiler }} CXX=/usr/bin/g++-${{ matrix.compiler }}
+
     # Openblas location is exported explicitly because openblas is keg-only,
     # which means it was not symlinked into /usr/local/.
     - name: Configure CMake
-      if: ${{ matrix.compiler }} != 'clang'
-      run: CC=/usr/bin/gcc-${{ matrix.compiler }} CXX=/usr/bin/g++-${{ matrix.compiler }}
       run: |
         export LDFLAGS="-L/usr/local/opt/openblas/lib"
         export CPPFLAGS="-I/usr/local/opt/openblas/include"
