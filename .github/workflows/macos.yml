@@ -9,9 +9,6 @@ jobs:
       matrix:
         os: [macos-10.15, macos-11.0]
         compiler: [8, 9, clang]
-      include:
-        - os: macos-10.15
-        -
 
     steps:
     # https://github.com/marketplace/actions/cancel-workflow-action
