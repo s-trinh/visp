@@ -40,8 +40,8 @@ jobs:
       run: |
         which gcc-8
         which gcc-9
-        CC=/usr/bin/gcc-${{ matrix.compiler }}
-        CXX=/usr/bin/g++-${{ matrix.compiler }}
+        CC=/usr/local/bin/gcc-${{ matrix.compiler }}
+        CXX=/usr/local/bin/g++-${{ matrix.compiler }}
 
     # Openblas location is exported explicitly because openblas is keg-only,
     # which means it was not symlinked into /usr/local/.
