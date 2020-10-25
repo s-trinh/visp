@@ -37,7 +37,11 @@ jobs:
 
     - name: Configure gcc
       if: ${{ matrix.compiler }} != 'clang'
-      run: CC=/usr/bin/gcc-${{ matrix.compiler }} CXX=/usr/bin/g++-${{ matrix.compiler }}
+      run: |
+        which gcc-8
+        which gcc-9
+        CC=/usr/bin/gcc-${{ matrix.compiler }}
+        CXX=/usr/bin/g++-${{ matrix.compiler }}
 
     # Openblas location is exported explicitly because openblas is keg-only,
     # which means it was not symlinked into /usr/local/.
