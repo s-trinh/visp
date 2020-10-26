@@ -35,17 +35,14 @@ jobs:
     - name: Set VISP_INPUT_IMAGE_PATH env
       run: echo "VISP_INPUT_IMAGE_PATH=$HOME" >> $GITHUB_ENV
 
-    - name: Configure gcc
-      run: |
-        which gcc-8
-        which gcc-9
-        CC=/usr/bin/gcc-${{ matrix.compiler }}
-        CXX=/usr/bin/g++-${{ matrix.compiler }}
-
     - name: Configure CMake
       run: |
         mkdir -p build
         cd build
+        CC=/usr/bin/gcc-${{ matrix.compiler }}
+        CXX=/usr/bin/g++-${{ matrix.compiler }}
+        echo "CC: $CC"
+        echo "CXX: $CXX"
         cmake ..
         cat ViSP-third-party.txt
         echo ${HOME}
