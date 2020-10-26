@@ -1,4 +1,4 @@
-name: MacOS
+name: Ubuntu
 
 on: [push, pull_request]
 
@@ -7,7 +7,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-10.15, macos-11.0]
+        os: [ubuntu-16.04, ubuntu-18.04, ubuntu-20.04]
+        compiler: [8, 9]
 
     steps:
     # https://github.com/marketplace/actions/cancel-workflow-action
@@ -20,13 +21,13 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Print system information
-      run: sysctl -a | grep machdep.cpu
+      run: lscpu
 
     - name: Print OS information
-      run: system_profiler SPSoftwareDataType
+      run: lsb_release -a
 
     - name: Install dependencies
-      run: brew install libpng libjpeg libdc1394 opencv
+      run: sudo apt-get install -y libpng libjpeg libdc1394 opencv
 
     - name: Clone ViSP-images
       run: git clone --depth 1 https://github.com/lagadic/ViSP-images ${HOME}/ViSP-images
@@ -34,15 +35,18 @@ jobs:
     - name: Set VISP_INPUT_IMAGE_PATH env
       run: echo "VISP_INPUT_IMAGE_PATH=$HOME" >> $GITHUB_ENV
 
-    # Openblas location is exported explicitly because openblas is keg-only,
-    # which means it was not symlinked into /usr/local/.
+    - name: Configure gcc
+      run: |
+        which gcc-8
+        which gcc-9
+        CC=/usr/bin/gcc-${{ matrix.compiler }}
+        CXX=/usr/bin/g++-${{ matrix.compiler }}
+
     - name: Configure CMake
       run: |
-        export LDFLAGS="-L/usr/local/opt/openblas/lib"
-        export CPPFLAGS="-I/usr/local/opt/openblas/include"
         mkdir -p build
         cd build
-        cmake .. -DCMAKE_FIND_FRAMEWORK=LAST
+        cmake ..
         cat ViSP-third-party.txt
         echo ${HOME}
         echo ${VISP_INPUT_IMAGE_PATH}
