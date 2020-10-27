@@ -8,6 +8,7 @@ jobs:
     strategy:
       matrix:
         flags: ["-fsanitize=address", "-fsanitize=leak", "-fsanitize=thread", "-fsanitize=undefined"]
+        fail-fast: false
 
     steps:
     # https://github.com/marketplace/actions/cancel-workflow-action
