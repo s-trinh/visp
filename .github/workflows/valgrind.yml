@@ -1,0 +1,51 @@
+name: Ubuntu-valgrind
+
+on: [push, pull_request]
+
+jobs:
+  build-ubuntu-valgrind:
+    runs-on: ubuntu-latest
+
+    steps:
+    # https://github.com/marketplace/actions/cancel-workflow-action
+    - name: Cancel Previous Runs
+      uses: styfle/cancel-workflow-action@0.5.0
+      with:
+        access_token: ${{ github.token }}
+
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Print system information
+      run: lscpu
+
+    - name: Print OS information
+      run: lsb_release -a
+
+    - name: Install dependencies
+      run: sudo apt-get install -y libdc1394-22-dev libopencv-dev libopenblas-dev
+
+    - name: Clone ViSP-images
+      run: git clone --depth 1 https://github.com/lagadic/ViSP-images ${HOME}/ViSP-images
+
+    - name: Set VISP_INPUT_IMAGE_PATH env
+      run: echo "VISP_INPUT_IMAGE_PATH=$HOME" >> $GITHUB_ENV
+
+    - name: Configure CMake
+      run: |
+        mkdir -p build
+        cd build
+        cmake ..
+        cat ViSP-third-party.txt
+        echo ${HOME}
+        echo ${VISP_INPUT_IMAGE_PATH}
+
+    - name: Compile
+      working-directory: build
+      run: make -j2
+
+    - name: Run unit tests
+      working-directory: build
+      run: ctest --overwrite MemoryCheckCommandOptions="--leak-check=full --error-exitcode=100" \
+        --overwrite MemoryCheckSuppressionFile=${HOME}/visp/platforms/scripts/valgrind \
+        -T memcheck
