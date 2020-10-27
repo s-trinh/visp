@@ -1,10 +1,13 @@
-name: Ubuntu-valgrind
+name: Ubuntu-sanitizers
 
 on: [push, pull_request]
 
 jobs:
-  build-ubuntu-valgrind:
+  build-ubuntu-sanitizers:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        flags: ["-fsanitize=address", "-fsanitize=leak"]
 
     steps:
     # https://github.com/marketplace/actions/cancel-workflow-action
@@ -23,7 +26,7 @@ jobs:
       run: lsb_release -a
 
     - name: Install dependencies
-      run: sudo apt-get install -y libdc1394-22-dev libopencv-dev libopenblas-dev valgrind
+      run: sudo apt-get install -y libdc1394-22-dev libopencv-dev libopenblas-dev
 
     - name: Clone ViSP-images
       run: git clone --depth 1 https://github.com/lagadic/ViSP-images ${HOME}/ViSP-images
@@ -35,7 +38,7 @@ jobs:
       run: |
         mkdir -p build
         cd build
-        cmake ..
+        cmake .. -DCMAKE_C_FLAGS=${{ matrix.flags }} -DCMAKE_CXX_FLAGS=${{ matrix.flags }} -DCMAKE_LDFLAGS=${{ matrix.flags }} -DCMAKE_BUILD_TYPE=Debug
         cat ViSP-third-party.txt
         echo ${HOME}
         echo ${VISP_INPUT_IMAGE_PATH}
@@ -46,9 +49,4 @@ jobs:
 
     - name: Run unit tests
       working-directory: build
-      run: ctest --overwrite MemoryCheckCommandOptions="--leak-check=full --error-exitcode=100" \
-        --overwrite MemoryCheckSuppressionFile=${HOME}/visp/platforms/scripts/valgrind/valgrind_visp.supp \
-        --overwrite MemoryCheckSuppressionFile=${HOME}/visp/platforms/scripts/valgrind/valgrind_visp_3rdparty.supp \
-        --overwrite MemoryCheckSuppressionFile=${HOME}/visp/platforms/scripts/valgrind/valgrind_opencv.supp \
-        --overwrite MemoryCheckSuppressionFile=${HOME}/visp/platforms/scripts/valgrind/valgrind_opencv_3rdparty.supp \
-        -T memcheck
+      run: ctest --output-on-failure
