@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        flags: ["-fsanitize=address", "-fsanitize=leak"]
+        flags: ["-fsanitize=address", "-fsanitize=leak", "-fsanitize=thread", "-fsanitize=undefined"]
 
     steps:
     # https://github.com/marketplace/actions/cancel-workflow-action
@@ -26,7 +26,7 @@ jobs:
       run: lsb_release -a
 
     - name: Install dependencies
-      run: sudo apt-get install -y libdc1394-22-dev libopencv-dev libopenblas-dev
+      run: sudo apt-get install -y libdc1394-22-dev libopenblas-dev
 
     - name: Clone ViSP-images
       run: git clone --depth 1 https://github.com/lagadic/ViSP-images ${HOME}/ViSP-images

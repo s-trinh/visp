@@ -46,9 +46,4 @@ jobs:
 
     - name: Run unit tests
       working-directory: build
-      run: ctest --overwrite MemoryCheckCommandOptions="--leak-check=full --error-exitcode=100" \
-        --overwrite MemoryCheckSuppressionFile=${HOME}/visp/platforms/scripts/valgrind/valgrind_visp.supp \
-        --overwrite MemoryCheckSuppressionFile=${HOME}/visp/platforms/scripts/valgrind/valgrind_visp_3rdparty.supp \
-        --overwrite MemoryCheckSuppressionFile=${HOME}/visp/platforms/scripts/valgrind/valgrind_opencv.supp \
-        --overwrite MemoryCheckSuppressionFile=${HOME}/visp/platforms/scripts/valgrind/valgrind_opencv_3rdparty.supp \
-        -T memcheck
+      run: ctest -T memcheck
