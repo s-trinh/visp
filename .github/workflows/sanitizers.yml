@@ -6,9 +6,9 @@ jobs:
   build-ubuntu-sanitizers:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         flags: ["-fsanitize=address", "-fsanitize=leak", "-fsanitize=thread", "-fsanitize=undefined"]
-        fail-fast: false
 
     steps:
     # https://github.com/marketplace/actions/cancel-workflow-action
