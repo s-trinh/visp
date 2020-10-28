@@ -32,6 +32,10 @@ set(OpenBLAS_LIB_SEARCH_PATHS
 
 find_path(OpenBLAS_INCLUDE_DIR NAMES cblas.h PATHS ${OpenBLAS_INCLUDE_SEARCH_PATHS} NO_DEFAULT_PATH)
 
+if(OpenBLAS_INCLUDE_DIR-NOTFOUND)
+  find_path(OpenBLAS_INCLUDE_DIR NAMES cblas.h PATHS ${OpenBLAS_INCLUDE_SEARCH_PATHS})
+endif()
+
 # Here we are looking for lapack library to be able to switch between OpenBLAS, Atlas and Netlib
 # with update-alternatives --config libblas.so.3-<multiarch>
 # and also for openblas library to be sure that openblas is installed
@@ -39,6 +43,9 @@ if(UNIX AND NOT APPLE)
   find_library(OpenBLAS_LAPACK_LIB NAMES lapack PATHS ${OpenBLAS_LIB_SEARCH_PATHS})
 endif()
 find_library(OpenBLAS_LIB NAMES openblas PATHS ${OpenBLAS_LIB_SEARCH_PATHS} NO_DEFAULT_PATH)
+if(OpenBLAS_LIB-NOTFOUND)
+  find_library(OpenBLAS_LIB NAMES openblas PATHS ${OpenBLAS_LIB_SEARCH_PATHS})
+endif()
 
 set(OpenBLAS_FOUND ON)
 
@@ -65,7 +72,10 @@ if(OpenBLAS_FOUND)
     message(STATUS "Found OpenBLAS include: ${OpenBLAS_INCLUDE_DIR}")
   endif()
   get_filename_component(OpenBLAS_LIB_DIR ${OpenBLAS_LIB} PATH)
-  vp_get_version_from_pkg2(openblas "${OpenBLAS_LIB_DIR}/pkgconfig" OpenBLAS_VERSION)
+  vp_get_version_from_pkg2(blas-openblas "${OpenBLAS_LIB_DIR}/pkgconfig" OpenBLAS_VERSION)
+  if(NOT OpenBLAS_VERSION)
+    vp_get_version_from_pkg2(openblas "${OpenBLAS_LIB_DIR}/pkgconfig" OpenBLAS_VERSION)
+  endif()
 else()
   if(OpenBLAS_FIND_REQUIRED)
     message(FATAL_ERROR "Could not find OpenBLAS")
