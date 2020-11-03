@@ -29,10 +29,9 @@ jobs:
       run: brew install libpng libjpeg libdc1394 opencv
 
     - name: Clone ViSP-images
-      run: git clone --depth 1 https://github.com/lagadic/ViSP-images ${HOME}/ViSP-images
-
-    - name: Set VISP_INPUT_IMAGE_PATH env
-      run: echo "VISP_INPUT_IMAGE_PATH=$HOME" >> $GITHUB_ENV
+      run: |
+        git clone --depth 1 https://github.com/lagadic/ViSP-images ${HOME}/ViSP-images
+        echo "VISP_INPUT_IMAGE_PATH=$HOME" >> $GITHUB_ENV
 
     # Openblas location is exported explicitly because openblas is keg-only,
     # which means it was not symlinked into /usr/local/.

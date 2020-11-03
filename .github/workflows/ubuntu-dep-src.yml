@@ -27,7 +27,7 @@ jobs:
       run: lsb_release -a
 
     - name: Install dependencies
-      run: sudo apt-get install -y libx11-dev libdc1394-dev libv4l-dev gfortran liblapack-dev
+      run: sudo apt-get install -y libx11-dev libdc1394-22-dev libv4l-dev gfortran liblapack-dev libeigen3-dev
 
     - name: Build OpenBLAS from source
       run: |
@@ -61,11 +61,7 @@ jobs:
       run: |
         mkdir -p build
         cd build
-        CC=/usr/bin/gcc-${{ matrix.compiler }}
-        CXX=/usr/bin/g++-${{ matrix.compiler }}
-        echo "CC: $CC"
-        echo "CXX: $CXX"
-        cmake .. -DCMAKE_C_COMPILER="${CC}" -DCMAKE_CXX_COMPILER="${CXX}"
+        cmake ..
         cat ViSP-third-party.txt
         echo ${HOME}
         echo ${VISP_INPUT_IMAGE_PATH}
