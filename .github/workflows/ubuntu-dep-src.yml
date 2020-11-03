@@ -32,25 +32,25 @@ jobs:
     - name: Build OpenBLAS from source
       run: |
         pwd
-        git clone --depth 1 https://github.com/xianyi/OpenBLAS.git
-        cd OpenBLAS
+        echo $GITHUB_WORKSPACE
+        git clone --depth 1 https://github.com/xianyi/OpenBLAS.git ${HOME}/OpenBLAS
+        cd ${HOME}/OpenBLAS
         mkdir install
         make -j2
         make install PREFIX=$(pwd)/install
         echo "OpenBLAS_HOME=$(pwd)/install" >> $GITHUB_ENV
         echo $OpenBLAS_HOME
-        cd ..
 
     - name: Build OpenCV from source
       run: |
-        git clone --depth 1 https://github.com/opencv/opencv.git
-        cd opencv
+        pwd
+        git clone --depth 1 https://github.com/opencv/opencv.git ${HOME}/opencv
+        cd ${HOME}/opencv
         mkdir build && cd build && mkdir install
-        cmake .. -DCMAKE_INSTALL_PREFIX=$(pwd)/install
+        cmake .. -DBUILD_EXAMPLES=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=$(pwd)/install
         make -j2 install
         echo "OpenCV_DIR=$(pwd)/install" >> $GITHUB_ENV
         echo $OpenCV_DIR
-        cd ..
 
     - name: Clone ViSP-images
       run: |
@@ -59,8 +59,9 @@ jobs:
 
     - name: Configure CMake
       run: |
-        mkdir -p build
-        cd build
+        pwd
+        cd $GITHUB_WORKSPACE
+        mkdir build && cd build
         cmake ..
         cat ViSP-third-party.txt
         echo ${HOME}
