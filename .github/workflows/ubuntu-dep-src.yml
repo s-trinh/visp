@@ -1,0 +1,79 @@
+name: Ubuntu-dep-src
+
+on: [push, pull_request]
+
+jobs:
+  build-ubuntu-dep-src:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04]
+
+    steps:
+    # https://github.com/marketplace/actions/cancel-workflow-action
+    - name: Cancel Previous Runs
+      uses: styfle/cancel-workflow-action@0.5.0
+      with:
+        access_token: ${{ github.token }}
+
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Print system information
+      run: lscpu
+
+    - name: Print OS information
+      run: lsb_release -a
+
+    - name: Install dependencies
+      run: sudo apt-get install -y libx11-dev libdc1394-dev libv4l-dev gfortran liblapack-dev
+
+    - name: Build OpenBLAS from source
+      run: |
+        pwd
+        git clone --depth 1 https://github.com/xianyi/OpenBLAS.git
+        cd OpenBLAS
+        mkdir install
+        make -j2
+        make install PREFIX=$(pwd)/install
+        echo "OpenBLAS_HOME=$(pwd)/install" >> $GITHUB_ENV
+        echo $OpenBLAS_HOME
+        cd ..
+
+    - name: Build OpenCV from source
+      run: |
+        git clone --depth 1 https://github.com/opencv/opencv.git
+        cd opencv
+        mkdir build && cd build && mkdir install
+        cmake .. -DCMAKE_INSTALL_PREFIX=$(pwd)/install
+        make -j2 install
+        echo "OpenCV_DIR=$(pwd)/install" >> $GITHUB_ENV
+        echo $OpenCV_DIR
+        cd ..
+
+    - name: Clone ViSP-images
+      run: |
+        git clone --depth 1 https://github.com/lagadic/ViSP-images ${HOME}/ViSP-images
+        echo "VISP_INPUT_IMAGE_PATH=$HOME" >> $GITHUB_ENV
+
+    - name: Configure CMake
+      run: |
+        mkdir -p build
+        cd build
+        CC=/usr/bin/gcc-${{ matrix.compiler }}
+        CXX=/usr/bin/g++-${{ matrix.compiler }}
+        echo "CC: $CC"
+        echo "CXX: $CXX"
+        cmake .. -DCMAKE_C_COMPILER="${CC}" -DCMAKE_CXX_COMPILER="${CXX}"
+        cat ViSP-third-party.txt
+        echo ${HOME}
+        echo ${VISP_INPUT_IMAGE_PATH}
+
+    - name: Compile
+      working-directory: build
+      run: make -j2
+
+    - name: Run unit tests
+      working-directory: build
+      run: ctest --output-on-failure
