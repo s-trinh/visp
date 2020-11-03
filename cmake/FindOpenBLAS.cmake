@@ -32,7 +32,7 @@ set(OpenBLAS_LIB_SEARCH_PATHS
 
 find_path(OpenBLAS_INCLUDE_DIR NAMES cblas.h PATHS ${OpenBLAS_INCLUDE_SEARCH_PATHS} NO_DEFAULT_PATH)
 
-if(OpenBLAS_INCLUDE_DIR-NOTFOUND)
+if(NOT OpenBLAS_INCLUDE_DIR)
   find_path(OpenBLAS_INCLUDE_DIR NAMES cblas.h PATHS ${OpenBLAS_INCLUDE_SEARCH_PATHS})
 endif()
 
@@ -43,7 +43,7 @@ if(UNIX AND NOT APPLE)
   find_library(OpenBLAS_LAPACK_LIB NAMES lapack PATHS ${OpenBLAS_LIB_SEARCH_PATHS})
 endif()
 find_library(OpenBLAS_LIB NAMES openblas PATHS ${OpenBLAS_LIB_SEARCH_PATHS} NO_DEFAULT_PATH)
-if(OpenBLAS_LIB-NOTFOUND)
+if(NOT OpenBLAS_LIB)
   find_library(OpenBLAS_LIB NAMES openblas PATHS ${OpenBLAS_LIB_SEARCH_PATHS})
 endif()
 
@@ -74,7 +74,14 @@ if(OpenBLAS_FOUND)
   get_filename_component(OpenBLAS_LIB_DIR ${OpenBLAS_LIB} PATH)
   vp_get_version_from_pkg2(blas-openblas "${OpenBLAS_LIB_DIR}/pkgconfig" OpenBLAS_VERSION)
   if(NOT OpenBLAS_VERSION)
+    vp_get_version_from_pkg(blas-openblas "${OpenBLAS_LIB_DIR}/pkgconfig" OpenBLAS_VERSION)
+  endif()
+
+  if(NOT OpenBLAS_VERSION)
     vp_get_version_from_pkg2(openblas "${OpenBLAS_LIB_DIR}/pkgconfig" OpenBLAS_VERSION)
+  endif()
+  if(NOT OpenBLAS_VERSION)
+    vp_get_version_from_pkg(openblas "${OpenBLAS_LIB_DIR}/pkgconfig" OpenBLAS_VERSION)
   endif()
 else()
   if(OpenBLAS_FIND_REQUIRED)
