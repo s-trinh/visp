@@ -33,20 +33,19 @@ jobs:
       run: |
         git clone --depth 1 https://github.com/lagadic/ViSP-images ${HOME}/ViSP-images
         echo "VISP_INPUT_IMAGE_PATH=$HOME" >> $GITHUB_ENV
+        echo ${VISP_INPUT_IMAGE_PATH}
 
     - name: Configure CMake
       run: |
-        mkdir -p build
+        mkdir build
         cd build
         cmake .. -DCMAKE_C_FLAGS=${{ matrix.flags }} -DCMAKE_CXX_FLAGS=${{ matrix.flags }} -DCMAKE_LDFLAGS=${{ matrix.flags }} -DCMAKE_BUILD_TYPE=Debug
         cat ViSP-third-party.txt
-        echo ${HOME}
-        echo ${VISP_INPUT_IMAGE_PATH}
 
     - name: Compile
       working-directory: build
       run: make -j2
 
-    - name: Run unit tests
+    - name: Run unit tests with sanitizers
       working-directory: build
       run: ctest --output-on-failure

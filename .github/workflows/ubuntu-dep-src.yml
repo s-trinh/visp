@@ -27,7 +27,10 @@ jobs:
       run: lsb_release -a
 
     - name: Install dependencies
-      run: sudo apt-get install -y libx11-dev libdc1394-22-dev libv4l-dev gfortran liblapack-dev libeigen3-dev
+      run: |
+        sudo apt-get install -y libx11-dev libdc1394-22-dev libv4l-dev gfortran liblapack-dev libeigen3-dev
+      # for librealsense
+        sudo apt-get install -y libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev
 
     - name: Build OpenBLAS from source
       run: |
@@ -47,25 +50,34 @@ jobs:
         git clone --depth 1 https://github.com/opencv/opencv.git ${HOME}/opencv
         cd ${HOME}/opencv
         mkdir build && cd build && mkdir install
-        cmake .. -DBUILD_EXAMPLES=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=$(pwd)/install
+        cmake .. -DBUILD_EXAMPLES=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/install
         make -j2 install
         echo "OpenCV_DIR=$(pwd)/install" >> $GITHUB_ENV
         echo $OpenCV_DIR
+
+    - name: Build librealsense2 from source
+      run: |
+        pwd
+        git clone --depth 1 https://github.com/IntelRealSense/librealsense.git ${HOME}/librealsense
+        cd ${HOME}/librealsense
+        mkdir build && cd build && mkdir install
+        cmake .. -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/install
+        make -j2 install
+        echo "REALSENSE2_DIR=$(pwd)/install" >> $GITHUB_ENV
+        echo $REALSENSE2_DIR
 
     - name: Clone ViSP-images
       run: |
         git clone --depth 1 https://github.com/lagadic/ViSP-images ${HOME}/ViSP-images
         echo "VISP_INPUT_IMAGE_PATH=$HOME" >> $GITHUB_ENV
+        echo ${VISP_INPUT_IMAGE_PATH}
 
     - name: Configure CMake
       run: |
         pwd
-        cd $GITHUB_WORKSPACE
         mkdir build && cd build
         cmake ..
         cat ViSP-third-party.txt
-        echo ${HOME}
-        echo ${VISP_INPUT_IMAGE_PATH}
 
     - name: Compile
       working-directory: build
