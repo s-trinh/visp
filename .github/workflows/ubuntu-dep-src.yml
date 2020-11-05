@@ -38,7 +38,7 @@ jobs:
         git clone --depth 1 https://github.com/xianyi/OpenBLAS.git ${HOME}/OpenBLAS
         cd ${HOME}/OpenBLAS
         mkdir install
-        make -j2
+        make
         make install PREFIX=$(pwd)/install
         echo "OpenBLAS_HOME=$(pwd)/install" >> $GITHUB_ENV
         echo $OpenBLAS_HOME

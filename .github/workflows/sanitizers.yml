@@ -1,6 +1,10 @@
 name: Ubuntu-sanitizers
 
-on: [push, pull_request]
+on:
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    # everyday at 2 am
+    - cron:  '0 2 * * *'
 
 jobs:
   build-ubuntu-sanitizers:
