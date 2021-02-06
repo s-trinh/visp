@@ -54,16 +54,31 @@ jobs:
         cmake --build . --config Release --target install
         setx OpenCV_DIR "$env:VISP_WS\opencv\build"
 
-    # - name: Build librealsense2 from source
-    #   run: |
-    #     pwd
-    #     git clone --depth 1 https://github.com/IntelRealSense/librealsense.git ${HOME}/librealsense
-    #     cd ${HOME}/librealsense
-    #     mkdir build && cd build && mkdir install
-    #     cmake .. -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/install
-    #     make -j2 install
-    #     echo "REALSENSE2_DIR=$(pwd)/install" >> $GITHUB_ENV
-    #     echo $REALSENSE2_DIR
+    - name: Clone librealsense from source
+      run: |
+        pwd
+        git clone --depth 1 https://github.com/IntelRealSense/librealsense.git $env:VISP_WS/librealsense
+        mkdir $env:VISP_WS\librealsense\build
+        cd $env:VISP_WS\librealsense\build
+
+    - name: Configure and build librealsense from source (VS2017)
+      if: matrix.os == 'windows-2016'
+      run: |
+        pwd
+        cd $env:VISP_WS\librealsense\build
+        cmake -G "Visual Studio 15 2017" -A "x64" $env:VISP_WS\librealsense -DCMAKE_INSTALL_PREFIX=$env:VISP_WS\librealsense\build
+
+    - name: Configure and build librealsense from source (VS2019)
+      if: matrix.os == 'windows-2019'
+      run: |
+        pwd
+        cd $env:VISP_WS\librealsense\build
+        cmake -G "Visual Studio 16 2019" -A "x64" $env:VISP_WS\librealsense -DCMAKE_INSTALL_PREFIX=$env:VISP_WS\librealsense\build
+
+    - name: Build librealsense from source
+      run: |
+        cmake --build . --config Release --target install
+        setx REALSENSE2_DIR "$env:VISP_WS\librealsense\build\install"
 
     - name: Clone ViSP-images
       run: |
@@ -91,10 +106,14 @@ jobs:
         pwd
         cd build
         cmake --build . --config Release --target install
-      # - if: matrix.os == 'windows-2016'
-      #   run: setx Path "%Path%:$env:VISP_WS\visp-build-vc16\install\x64\vc16\bin"
-      # - if: matrix.os == 'windows-2019'
-      #   run: setx Path "%Path%:$env:VISP_WS\visp-build-vc16\install\x64\vc16\bin"
+
+    - name: Set ViSP path (VS2017)
+      if: matrix.os == 'windows-2016'
+      run: setx Path "%Path%:$env:GITHUB_WORKSPACE\visp\build\install\x64\vc15\bin"
+
+    - name: Set ViSP path (VS2019)
+      if: matrix.os == 'windows-2019'
+      run: setx Path "%Path%:$env:GITHUB_WORKSPACE\visp\build\install\x64\vc16\bin"
 
     - name: Run unit tests
       working-directory: build
