@@ -1,0 +1,83 @@
+name: Windows-dep-src
+
+# https://www.jeffgeerling.com/blog/2020/running-github-actions-workflow-on-schedule-and-other-events
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 2 * * SUN'
+
+jobs:
+  build-windows-dep-src:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2016, windows-2019]
+
+    steps:
+    # https://github.com/marketplace/actions/cancel-workflow-action
+    - name: Cancel Previous Runs
+      uses: styfle/cancel-workflow-action@0.5.0
+      with:
+        access_token: ${{ github.token }}
+
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Create a workspace
+      run: setx VISP_WS "C:\visp-ws"
+
+    - name: Clone OpenCV from source
+      run: |
+        pwd
+        git clone --depth 1 https://github.com/opencv/opencv.git %VISP_WS%/opencv
+        mkdir %VISP_WS%\opencv\build
+        cd %VISP_WS%\opencv\build
+
+    - name: Configure and build OpenCV from source
+      run: |
+        pwd
+        cd %VISP_WS%\opencv\build
+      - if: matrix.os == 'windows-2016'
+        run: cmake -G "Visual Studio 15 2017" -A "x64" %VISP_WS%\opencv -DCMAKE_INSTALL_PREFIX=%VISP_WS%\opencv\build
+      - if: matrix.os == 'windows-2019'
+        run: cmake -G "Visual Studio 16 2019" -A "x64" %VISP_WS%\opencv -DCMAKE_INSTALL_PREFIX=%VISP_WS%\opencv\build
+      run: |
+        cmake --build . --config Release --target install
+        setx OpenCV_DIR "%VISP_WS%\opencv\build"
+
+    # - name: Build librealsense2 from source
+    #   run: |
+    #     pwd
+    #     git clone --depth 1 https://github.com/IntelRealSense/librealsense.git ${HOME}/librealsense
+    #     cd ${HOME}/librealsense
+    #     mkdir build && cd build && mkdir install
+    #     cmake .. -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/install
+    #     make -j2 install
+    #     echo "REALSENSE2_DIR=$(pwd)/install" >> $GITHUB_ENV
+    #     echo $REALSENSE2_DIR
+
+    - name: Clone ViSP-images
+      run: |
+        git clone --depth 1 https://github.com/lagadic/ViSP-images %VISP_WS%\ViSP-images
+        setx VISP_INPUT_IMAGE_PATH " %VISP_WS%\ViSP-images"
+
+    - name: Configure CMake and build ViSP
+      run: |
+        pwd
+        mkdir build
+        cd build
+      - if: matrix.os == 'windows-2016'
+        run: cmake -G "Visual Studio 15 2017" -A "x64" ..
+      - if: matrix.os == 'windows-2019'
+        run: cmake -G "Visual Studio 16 2019" -A "x64" ..
+      run: cmake --build . --config Release --target install
+      # - if: matrix.os == 'windows-2016'
+      #   run: setx Path "%Path%:%VISP_WS%\visp-build-vc16\install\x64\vc16\bin"
+      # - if: matrix.os == 'windows-2019'
+      #   run: setx Path "%Path%:%VISP_WS%\visp-build-vc16\install\x64\vc16\bin"
+
+    - name: Run unit tests
+      working-directory: build
+      run: ctest --output-on-failure
