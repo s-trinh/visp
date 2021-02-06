@@ -36,13 +36,18 @@ jobs:
         cd %VISP_WS%\opencv\build
 
     - name: Configure and build OpenCV from source
-      run: |
-        pwd
-        cd %VISP_WS%\opencv\build
       - if: matrix.os == 'windows-2016'
-        run: cmake -G "Visual Studio 15 2017" -A "x64" %VISP_WS%\opencv -DCMAKE_INSTALL_PREFIX=%VISP_WS%\opencv\build
+        run: |
+          pwd
+          cd %VISP_WS%\opencv\build
+          cmake -G "Visual Studio 15 2017" -A "x64" %VISP_WS%\opencv -DCMAKE_INSTALL_PREFIX=%VISP_WS%\opencv\build
       - if: matrix.os == 'windows-2019'
-        run: cmake -G "Visual Studio 16 2019" -A "x64" %VISP_WS%\opencv -DCMAKE_INSTALL_PREFIX=%VISP_WS%\opencv\build
+        run: |
+          pwd
+          cd %VISP_WS%\opencv\build
+          cmake -G "Visual Studio 16 2019" -A "x64" %VISP_WS%\opencv -DCMAKE_INSTALL_PREFIX=%VISP_WS%\opencv\build
+
+    - name: Build OpenCV from source
       run: |
         cmake --build . --config Release --target install
         setx OpenCV_DIR "%VISP_WS%\opencv\build"
