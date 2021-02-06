@@ -36,12 +36,12 @@ jobs:
         cd %VISP_WS%\opencv\build
 
     - name: Configure and build OpenCV from source
-      - if: matrix.os == 'windows-2016'
+      if: matrix.os == 'windows-2016'
         run: |
           pwd
           cd %VISP_WS%\opencv\build
           cmake -G "Visual Studio 15 2017" -A "x64" %VISP_WS%\opencv -DCMAKE_INSTALL_PREFIX=%VISP_WS%\opencv\build
-      - if: matrix.os == 'windows-2019'
+      if: matrix.os == 'windows-2019'
         run: |
           pwd
           cd %VISP_WS%\opencv\build
