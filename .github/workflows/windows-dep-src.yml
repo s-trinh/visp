@@ -51,6 +51,7 @@ jobs:
 
     - name: Build OpenCV from source
       run: |
+        cd $env:VISP_WS\opencv\build
         cmake --build . --config Release --target install
         setx OpenCV_DIR "$env:VISP_WS\opencv\build"
 
@@ -77,6 +78,7 @@ jobs:
 
     - name: Build librealsense from source
       run: |
+        cd $env:VISP_WS\librealsense\build
         cmake --build . --config Release --target install
         setx REALSENSE2_DIR "$env:VISP_WS\librealsense\build\install"
 
