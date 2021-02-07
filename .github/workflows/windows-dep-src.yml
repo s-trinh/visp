@@ -26,7 +26,9 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Create a workspace
-      run: setx VISP_WS "C:\visp-ws"
+      run: |
+        set VISP_WS "C:\visp-ws"
+        mkdir %VISP_WS%
 
     - name: Clone OpenCV from source
       run: |
@@ -53,7 +55,7 @@ jobs:
       run: |
         cd $env:VISP_WS\opencv\build
         cmake --build . --config Release --target install
-        setx OpenCV_DIR "$env:VISP_WS\opencv\build"
+        set OpenCV_DIR "$env:VISP_WS\opencv\build"
 
     - name: Clone librealsense from source
       run: |
@@ -80,12 +82,12 @@ jobs:
       run: |
         cd $env:VISP_WS\librealsense\build
         cmake --build . --config Release --target install
-        setx REALSENSE2_DIR "$env:VISP_WS\librealsense\build\install"
+        set REALSENSE2_DIR "$env:VISP_WS\librealsense\build\install"
 
     - name: Clone ViSP-images
       run: |
         git clone --depth 1 https://github.com/lagadic/ViSP-images $env:VISP_WS\ViSP-images
-        setx VISP_INPUT_IMAGE_PATH " $env:VISP_WS\ViSP-images"
+        set VISP_INPUT_IMAGE_PATH " $env:VISP_WS\ViSP-images"
 
     - name: Configure CMake and build ViSP (VS2017)
       if: matrix.os == 'windows-2016'
@@ -111,11 +113,11 @@ jobs:
 
     - name: Set ViSP path (VS2017)
       if: matrix.os == 'windows-2016'
-      run: setx Path "%Path%:$env:GITHUB_WORKSPACE\visp\build\install\x64\vc15\bin"
+      run: set Path "%Path%:$env:GITHUB_WORKSPACE\visp\build\install\x64\vc15\bin"
 
     - name: Set ViSP path (VS2019)
       if: matrix.os == 'windows-2019'
-      run: setx Path "%Path%:$env:GITHUB_WORKSPACE\visp\build\install\x64\vc16\bin"
+      run: set Path "%Path%:$env:GITHUB_WORKSPACE\visp\build\install\x64\vc16\bin"
 
     - name: Run unit tests
       working-directory: build
