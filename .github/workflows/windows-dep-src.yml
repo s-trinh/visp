@@ -33,7 +33,7 @@ jobs:
     - name: Clone OpenCV from source
       run: |
         pwd
-        git clone --depth 1 https://github.com/opencv/opencv.git $env:VISP_WS/opencv
+        git clone --depth 1 https://github.com/opencv/opencv.git $VISP_WS/opencv
         mkdir $env:VISP_WS\opencv\build
         cd $env:VISP_WS\opencv\build
 
