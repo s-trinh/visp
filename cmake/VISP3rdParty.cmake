@@ -92,7 +92,7 @@ set(TOOJPEG_INCLUDE_DIRS "${VISP_SOURCE_DIR}/3rdparty/toojpeg")
 set(TOOJPEG_LIBRARIES ${TOOJPEG_LIBRARY})
 set(TOOJPEG_VERSION ${TOOJPEG_MAJOR_VERSION}.${TOOJPEG_MINOR_VERSION})
 
-#TODO: check for toojpeg availability for miniz
+#TODO: check if it can always be available for better PNG compression?
 # miniz is always enabled
 set(MINIZ_LIBRARY visp_miniz)
 add_subdirectory("${VISP_SOURCE_DIR}/3rdparty/miniz")

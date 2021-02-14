@@ -71,7 +71,7 @@ endif()
 # toojpeg is private and always available
 include_directories(${TOOJPEG_INCLUDE_DIRS})
 
-#TODO: check for toojpeg availability for miniz
+#TODO: check if it can always be available for better PNG compression?
 # miniz is private and always available
 include_directories(${MINIZ_INCLUDE_DIRS})
 
