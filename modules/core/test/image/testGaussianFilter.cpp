@@ -49,6 +49,8 @@
 #include <visp3/core/vpIoTools.h>
 #include <visp3/io/vpImageIo.h>
 
+#include <visp3/gui/vpDisplayX.h>
+
 TEST_CASE("Test vpGaussianFilter (unsigned char)") {
   const std::string filepath = vpIoTools::createFilePath(vpIoTools::getViSPImagesDataPath(),
                                                          "Klimt/Klimt.pgm");
@@ -163,17 +165,59 @@ TEST_CASE("Test vpGaussianFilter (vpRGBa + deinterleave)") {
 
 int main(int argc, char *argv[])
 {
-  Catch::Session session; // There must be exactly one instance
+#if 0
+  vpImage<unsigned char> I;
+  const std::string filepath = vpIoTools::createFilePath(vpIoTools::getViSPImagesDataPath(), "Klimt/Klimt.pgm");
+  vpImageIo::read(I, filepath);
 
-  // Let Catch (using Clara) parse the command line
-  session.applyCommandLine(argc, argv);
+  std::vector<unsigned char> data;
+  vpImageIo::writeToMemory(I, data);
+  std::cout << "data: " << data.size() << std::endl;
 
-  int numFailed = session.run();
+  vpImage<unsigned char> I_mem;
+  vpImageIo::readFromMemory(I_mem, data);
+  std::cout << "I_mem: " << I_mem.getWidth() << "x" << I_mem.getHeight() << std::endl;
 
-  // numFailed is clamped to 255 as some unices only use the lower 8 bits.
-  // This clamping has already been applied, so just return it here
-  // You can also do any post run clean-up here
-  return numFailed;
+  vpDisplayX d(I_mem);
+
+  vpDisplay::display(I_mem);
+  vpDisplay::flush(I_mem);
+  vpDisplay::getClick(I_mem);
+#else
+//  vpImage<vpRGBa> I;
+//  const std::string filepath = vpIoTools::createFilePath(vpIoTools::getViSPImagesDataPath(), "Klimt/Klimt.ppm");
+//  vpImageIo::read(I, filepath);
+
+//  std::vector<unsigned char> data;
+//  vpImageIo::writeImageToMemory(I, data);
+//  std::cout << "data: " << data.size() << std::endl;
+
+//  vpImage<vpRGBa> I_mem;
+//  vpImageIo::readImageFromMemory(data, I_mem);
+//  std::cout << "I_mem: " << I_mem.getWidth() << "x" << I_mem.getHeight() << std::endl;
+
+//  vpDisplayX d(I_mem);
+
+//  vpDisplay::display(I_mem);
+//  vpDisplay::flush(I_mem);
+//  vpDisplay::getClick(I_mem);
+#endif
+
+  return 0;
+
+
+
+//  Catch::Session session; // There must be exactly one instance
+
+//  // Let Catch (using Clara) parse the command line
+//  session.applyCommandLine(argc, argv);
+
+//  int numFailed = session.run();
+
+//  // numFailed is clamped to 255 as some unices only use the lower 8 bits.
+//  // This clamping has already been applied, so just return it here
+//  // You can also do any post run clean-up here
+//  return numFailed;
 }
 #else
 int main()

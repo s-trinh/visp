@@ -57,10 +57,23 @@ if(USE_PNG)
   add_definitions(${PNG_DEFINITIONS})
 endif()
 
+if(WITH_CATCH2)
+  # catch2 is private
+  include_directories(${CATCH2_INCLUDE_DIRS})
+endif()
+
 if(WITH_STBIMAGE)
   # stb_image is private
   include_directories(${STBIMAGE_INCLUDE_DIRS})
 endif()
+
+#TODO: check for C++11 availability for toojpeg
+# toojpeg is private and always available
+include_directories(${TOOJPEG_INCLUDE_DIRS})
+
+#TODO: check for toojpeg availability for miniz
+# miniz is private and always available
+include_directories(${MINIZ_INCLUDE_DIRS})
 
 # OpenCV
 if(USE_OPENCV)
@@ -170,9 +183,9 @@ if(USE_OPENCV)
 endif(USE_OPENCV)
 
 if(ANDROID)
-  vp_add_module(io visp_core)
+  vp_add_module(io visp_core PRIVATE_OPTIONAL ${TOOJPEG_LIBRARIES} ${MINIZ_LIBRARIES})
 else()
-  vp_add_module(io visp_core WRAP java)
+  vp_add_module(io visp_core PRIVATE_OPTIONAL ${TOOJPEG_LIBRARIES} ${MINIZ_LIBRARIES} WRAP java)
 endif()
 
 vp_glob_module_sources()
@@ -181,4 +194,5 @@ vp_create_module(${opt_libs})
 vp_add_tests(DEPENDS_ON visp_features)
 
 vp_set_source_file_compile_flag(src/tools/vpParseArgv.cpp -Wno-strict-overflow)
+vp_add_tests(DEPENDS_ON visp_core visp_gui visp_io)
 

@@ -51,6 +51,7 @@
 
 #include <iostream>
 #include <stdio.h>
+#include <map>
 
 /*!
   \class vpImageIo
@@ -123,12 +124,42 @@ private:
   static vpImageFormatType getFormat(const std::string &filename);
   static std::string getExtension(const std::string &filename);
 
+  static void writeJPEGToMemorySTB(const vpImage<unsigned char>& I, std::vector<unsigned char>& data, int quality=90);
+  static void writeJPEGToMemoryTooJpeg(const vpImage<unsigned char>& I, std::vector<unsigned char>& data, int quality=90);
+
+  static void writePNGToMemorySTB(const vpImage<unsigned char> &I, std::vector<unsigned char>& data, int compression);
+
 public:
+  enum vpImageType {
+    TYPE_JPEG,
+    TYPE_PNG
+  };
+
   static void read(vpImage<unsigned char> &I, const std::string &filename);
   static void read(vpImage<vpRGBa> &I, const std::string &filename);
 
   static void write(const vpImage<unsigned char> &I, const std::string &filename);
   static void write(const vpImage<vpRGBa> &I, const std::string &filename);
+
+  static void readImageFromMemory(const std::vector<unsigned char>& data, vpImage<unsigned char>& I);
+  static void writeImageToMemory(const vpImageType& type, const vpImage<unsigned char>& I, std::vector<unsigned char>& data,
+                                 const std::map<std::string, int>& params=std::map<std::string, int>());
+
+  static void readJPEGFromMemory(vpImage<unsigned char> &I, const std::vector<unsigned char>& data);
+  static void readJPEGFromMemory(vpImage<vpRGBa> &I, const std::vector<unsigned char>& data);
+
+  static void readJPEGFromMemory2(vpImage<unsigned char> &I, const std::vector<unsigned char>& data);
+  static void readJPEGFromMemory2(vpImage<vpRGBa> &I, const std::vector<unsigned char>& data);
+
+  static void writeJPEGToMemory(const vpImage<unsigned char> &I, std::vector<unsigned char>& data, int quality=90);
+  static void writeJPEGToMemory(const vpImage<vpRGBa> &I, std::vector<unsigned char>& data, int quality=90);
+
+  static void writeJPEGToMemory2(const vpImage<unsigned char> &I, std::vector<unsigned char>& data, int quality=90);
+  static void writeJPEGToMemory2(const vpImage<vpRGBa> &I, std::vector<unsigned char>& data, int quality=90);
+
+  static void readPNGFromMemory(vpImage<unsigned char> &I, const std::vector<unsigned char>& data);
+
+  static void writePNGToMemory(const vpImage<unsigned char> &I, std::vector<unsigned char>& data);
 
   static void readPFM(vpImage<float> &I, const std::string &filename);
 

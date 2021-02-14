@@ -674,11 +674,13 @@ VP_OPTION(WITH_QBDEVICE   ""           ""    "Build qbdevice-api as built-in lib
 VP_OPTION(WITH_TAKKTILE2  ""           ""    "Build Right Hand takktile2 driver as built-in library"   "" ON IF (VISP_CXX_STANDARD GREATER VISP_CXX_STANDARD_98) AND (NOT WIN32) AND (NOT WINRT) AND (NOT IOS))
 
 # Use stb_image as built-in library only when OpenCV, libjpeg and libpng not available
-if(NOT USE_OPENCV AND (NOT USE_PNG OR NOT USE_JPEG))
-  set(WITH_STBIMAGE ON)
-else()
-  set(WITH_STBIMAGE OFF)
-endif()
+#TODO:
+set(WITH_STBIMAGE ON)
+#if(NOT USE_OPENCV AND (NOT USE_PNG OR NOT USE_JPEG))
+#  set(WITH_STBIMAGE ON)
+#else()
+#  set(WITH_STBIMAGE OFF)
+#endif()
 
 VP_OPTION(WITH_CATCH2   ""           ""    "Use catch2" "" ON IF (VISP_CXX_STANDARD GREATER VISP_CXX_STANDARD_98))
 
@@ -1487,6 +1489,8 @@ status("    Use PNG:"                USE_PNG          THEN "yes (ver ${PNG_VERSI
 status("    \\- Use ZLIB:"           USE_ZLIB         THEN "yes (ver ${ZLIB_VERSION_STRING})" ELSE "no")
 status("    Use OpenCV:"             USE_OPENCV       THEN "yes (ver ${OpenCV_VERSION})" ELSE "no")
 status("    Use stb_image (built-in):" WITH_STBIMAGE  THEN "yes (ver ${STBIMAGE_VERSION})" ELSE "no")
+status("    Use miniz (built-in):"                         "yes (ver ${MINIZ_VERSION})")
+status("    Use toojpeg (built-in):"                       "yes (ver ${TOOJPEG_VERSION})")
 status("")
 status("  Real robots: ")
 status("    Use Afma4:"              USE_AFMA4        THEN "yes" ELSE "no")

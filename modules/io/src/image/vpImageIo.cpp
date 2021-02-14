@@ -62,24 +62,69 @@
 #include <png.h>
 #endif
 
-#if !defined(VISP_HAVE_OPENCV)
-#if !defined(VISP_HAVE_JPEG) || !defined(VISP_HAVE_PNG)
-
-#if defined __SSE2__ || defined _M_X64 || (defined _M_IX86_FP && _M_IX86_FP >= 2)
-#  define VISP_HAVE_SSE2 1
-#endif
-
-#ifndef VISP_HAVE_SSE2
-#  define STBI_NO_SIMD
-#endif
-
+//TODO:
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+
+#define MINIZ_NO_ZLIB_COMPATIBLE_NAMES // prevent conflict with libpng/zlib
+#include "miniz.c"
+
+static unsigned char*
+my_stbi_zlib_compress( unsigned char *data, int data_len,
+                       int *out_len, int quality )
+{
+  mz_ulong buflen = mz_compressBound(data_len);
+  // Note that the returned buffer will be free'd by stbi_write_png*()
+  // with STBIW_FREE(), so if you have overridden that (+ STBIW_MALLOC()),
+  // adjust the next malloc() call accordingly:
+  unsigned char* buf = (unsigned char*)malloc(buflen);
+  if( buf == NULL
+      || mz_compress2(buf, &buflen, data, data_len, quality) != 0 )
+  {
+      free(buf); // .. yes, this would have to be adjusted as well.
+      return NULL;
+  }
+  *out_len = static_cast<int>(buflen);
+  return buf;
+}
+
+#define STBIW_ZLIB_COMPRESS  my_stbi_zlib_compress
 #include <stb_image_write.h>
+
+#include <toojpeg.hpp>
+
+#ifdef VISP_PREFERABLE_BACKEND_STB
+#define USE_BACKEND_STB
 #endif
+
+#ifdef VISP_PREFERABLE_BACKEND_TOOJPEG
+#define USE_BACKEND_TOOJPEG
 #endif
+
+#if !defined(USE_BACKEND_STB) && !defined(VISP_PREFERABLE_BACKEND_TOOJPEG)
+#define USE_BACKEND_STB //default backend that should be always available
+#endif
+
+//#if !defined(VISP_HAVE_OPENCV)
+//#if !defined(VISP_HAVE_JPEG) || !defined(VISP_HAVE_PNG)
+
+//#if defined __SSE2__ || defined _M_X64 || (defined _M_IX86_FP && _M_IX86_FP >= 2)
+//#  define VISP_HAVE_SSE2 1
+//#endif
+
+//#ifndef VISP_HAVE_SSE2
+//#  define STBI_NO_SIMD
+//#endif
+
+//#define STB_IMAGE_IMPLEMENTATION
+//#include <stb_image.h>
+
+//#define STB_IMAGE_WRITE_IMPLEMENTATION
+//#include <stb_image_write.h>
+//#endif
+//#endif
 
 void vp_decodeHeaderPNM(const std::string &filename, std::ifstream &fd, const std::string &magic, unsigned int &w,
                         unsigned int &h, unsigned int &maxval);
@@ -102,7 +147,7 @@ void vp_decodeHeaderPNM(const std::string &filename, std::ifstream &fd, const st
   while (cpt_elt != nb_elt) {
     // Skip empty lines or lines starting with # (comment)
     while (std::getline(fd, line) && (line.compare(0, 1, "#") == 0 || line.size() == 0)) {
-    };
+    }
 
     if (fd.eof()) {
       fd.close();
@@ -2236,3 +2281,222 @@ void vpImageIo::writePNG(const vpImage<vpRGBa> &I, const std::string &filename)
   }
 }
 #endif
+
+void vpImageIo::readImageFromMemory(const std::vector<unsigned char>& data, vpImage<unsigned char> &I)
+{
+  int x = 0, y = 0, channels = 0;
+  unsigned char *img = stbi_load_from_memory(data.data(), static_cast<int>(data.size()), &x, &y, &channels, STBI_grey);
+
+  I.resize(y, x);
+//  for (int i = 0; i < y; i++) {
+//    for (int j = 0; j < x; j++) {
+//      I[i][j] = img[i*x + j];
+//    }
+//  }
+  memcpy(I.bitmap, img, x*y);
+
+  free(img);
+}
+
+void vpImageIo::writeImageToMemory(const vpImageType& type, const vpImage<unsigned char>& I, std::vector<unsigned char>& data, const std::map<std::string, int>& params)
+{
+  if (type == TYPE_JPEG) {
+    int quality = 90;
+    std::map<std::string, int>::const_iterator it_find = params.find("quality");
+    if (it_find != params.end()) {
+      quality = it_find->second;
+    }
+
+#ifdef USE_BACKEND_TOOJPEG
+    writeJPEGToMemoryTooJpeg(I, data, quality);
+#else
+    writeJPEGToMemorySTB(I, data, quality);
+#endif
+  } else if (type == TYPE_PNG) {
+    int compression = 8;
+    std::map<std::string, int>::const_iterator it_find = params.find("compression");
+    if (it_find != params.end()) {
+      compression = it_find->second;
+    }
+
+    writePNGToMemorySTB(I, data, compression);
+  }
+}
+
+void vpImageIo::readJPEGFromMemory(vpImage<unsigned char> &I, const std::vector<unsigned char>& data)
+{
+  int x = 0, y = 0, channels = 0;
+  unsigned char *img = stbi_load_from_memory(data.data(), static_cast<int>(data.size()), &x, &y, &channels, STBI_grey);
+
+  std::cout << "x: " << x << " ; y: " << y << " ; channels: " << channels << std::endl;
+
+  I.resize(y, x);
+  for (int i = 0; i < y; i++) {
+    for (int j = 0; j < x; j++) {
+      I[i][j] = img[i*x + j];
+    }
+  }
+
+  free(img);
+}
+
+void vpImageIo::readJPEGFromMemory(vpImage<vpRGBa> &I, const std::vector<unsigned char>& data)
+{
+  int x = 0, y = 0, channels = 0;
+  unsigned char *img = stbi_load_from_memory(data.data(), static_cast<int>(data.size()), &x, &y, &channels, STBI_rgb_alpha);
+
+  std::cout << "x: " << x << " ; y: " << y << " ; channels: " << channels << std::endl;
+
+  I.resize(y, x);
+  for (int i = 0; i < y; i++) {
+    for (int j = 0; j < x; j++) {
+//      I[i][j] = vpRGBa(img[(i*x + j) * 3 + 0], img[(i*x + j) * 3 + 1], img[(i*x + j) * 3 + 2]);
+      I[i][j].R = img[(i*x + j) * 4 + 0];
+      I[i][j].G = img[(i*x + j) * 4 + 1];
+      I[i][j].B = img[(i*x + j) * 4 + 2];
+      I[i][j].A = img[(i*x + j) * 4 + 3];
+    }
+  }
+
+  free(img);
+}
+
+void write_to_memory(void *context, void *data, int size)
+{
+  std::vector<unsigned char> *ptrVec = reinterpret_cast<std::vector<unsigned char> *>(context);
+  ptrVec->reserve(size);
+
+  unsigned char *ptrData = reinterpret_cast<unsigned char *>(data);
+  for (int i = 0; i < size; i++) {
+    ptrVec->push_back(ptrData[i]);
+  }
+}
+
+void vpImageIo::writeJPEGToMemorySTB(const vpImage<unsigned char>& I, std::vector<unsigned char>& data, int quality)
+{
+  int res = stbi_write_jpg_to_func(write_to_memory, &data, static_cast<int>(I.getWidth()), static_cast<int>(I.getHeight()),
+                                   STBI_grey, reinterpret_cast<void*>(I.bitmap), quality);
+  if (res == 0) {
+    throw(vpImageException(vpImageException::ioError, "JPEG write to memory error using stb backend"));
+  }
+}
+
+void vpImageIo::writeJPEGToMemoryTooJpeg(const vpImage<unsigned char>& I, std::vector<unsigned char>& data, int quality)
+{
+  auto myOutput = [](unsigned char oneByte, void *context) {
+    reinterpret_cast<std::vector<unsigned char>*>(context)->push_back(oneByte);
+  };
+
+  const bool isRGB = false;
+  const bool downsample = true;
+  auto ok = TooJpeg::writeJpeg(myOutput, reinterpret_cast<void*>(&data), I.bitmap, static_cast<unsigned short>(I.getWidth()), static_cast<unsigned short>(I.getHeight()),
+                               isRGB, static_cast<unsigned char>(quality), downsample, nullptr);
+
+  if (!ok) {
+    throw(vpImageException(vpImageException::ioError, "JPEG write to memory error using TooJpeg backend"));
+  }
+}
+
+void vpImageIo::writeJPEGToMemory(const vpImage<unsigned char> &I, std::vector<unsigned char>& data, int quality)
+{
+  writeJPEGToMemorySTB(I, data, quality);
+}
+
+void vpImageIo::writeJPEGToMemory(const vpImage<vpRGBa> &I, std::vector<unsigned char>& data, int quality)
+{
+  int res = stbi_write_jpg_to_func(write_to_memory, &data, static_cast<int>(I.getWidth()), static_cast<int>(I.getHeight()),
+                                   STBI_rgb_alpha, reinterpret_cast<void*>(I.bitmap), quality);
+  if (res == 0) {
+    throw(vpImageException(vpImageException::ioError, "JPEG write to memory error"));
+  }
+}
+
+void vpImageIo::readJPEGFromMemory2(vpImage<unsigned char> &I, const std::vector<unsigned char>& data)
+{
+  int x = 0, y = 0, channels = 0;
+  unsigned char *img = stbi_load_from_memory(data.data(), static_cast<int>(data.size()), &x, &y, &channels, STBI_grey);
+
+  std::cout << "x: " << x << " ; y: " << y << " ; channels: " << channels << std::endl;
+
+  I.resize(y, x);
+  for (int i = 0; i < y; i++) {
+    for (int j = 0; j < x; j++) {
+      I[i][j] = img[i*x + j];
+    }
+  }
+
+  free(img);
+}
+
+void vpImageIo::readJPEGFromMemory2(vpImage<vpRGBa> &I, const std::vector<unsigned char>& data)
+{
+  int x = 0, y = 0, channels = 0;
+  unsigned char *img = stbi_load_from_memory(data.data(), static_cast<int>(data.size()), &x, &y, &channels, STBI_rgb);
+
+  std::cout << "x: " << x << " ; y: " << y << " ; channels: " << channels << std::endl;
+
+  I.resize(y, x);
+  for (int i = 0; i < y; i++) {
+    for (int j = 0; j < x; j++) {
+//      I[i][j] = vpRGBa(img[(i*x + j) * 3 + 0], img[(i*x + j) * 3 + 1], img[(i*x + j) * 3 + 2]);
+      I[i][j].R = img[(i*x + j) * 3 + 0];
+      I[i][j].G = img[(i*x + j) * 3 + 1];
+      I[i][j].B = img[(i*x + j) * 3 + 2];
+    }
+  }
+
+  free(img);
+}
+
+void vpImageIo::writeJPEGToMemory2(const vpImage<unsigned char> &I, std::vector<unsigned char>& data, int quality)
+{
+  writeJPEGToMemoryTooJpeg(I, data, quality);
+}
+
+void vpImageIo::writeJPEGToMemory2(const vpImage<vpRGBa> &I_rgba, std::vector<unsigned char>& data, int quality)
+{
+  auto myOutput = [](unsigned char oneByte, void *context) {
+    reinterpret_cast<std::vector<unsigned char>*>(context)->push_back(oneByte);
+  };
+
+  std::vector<unsigned char> rgb(I_rgba.getSize()*3);
+  vpImageConvert::RGBaToRGB(reinterpret_cast<unsigned char *>(I_rgba.bitmap), rgb.data(), I_rgba.getSize());
+
+  const bool isRGB = true;
+  const bool downsample = true;
+  auto ok = TooJpeg::writeJpeg(myOutput, reinterpret_cast<void*>(&data), rgb.data(), I_rgba.getWidth(), I_rgba.getHeight(), isRGB, quality, downsample, nullptr);
+
+  if (!ok) {
+    throw(vpImageException(vpImageException::ioError, "JPEG write to memory error"));
+  }
+}
+
+void vpImageIo::readPNGFromMemory(vpImage<unsigned char> &I, const std::vector<unsigned char>& data)
+{
+  int x = 0, y = 0, channels = 0;
+  unsigned char *img = stbi_load_from_memory(data.data(), static_cast<int>(data.size()), &x, &y, &channels, STBI_grey);
+  I.resize(y, x);
+  for (int i = 0; i < y; i++) {
+    for (int j = 0; j < x; j++) {
+      I[i][j] = img[i*x + j];
+    }
+  }
+
+  free(img);
+}
+
+void vpImageIo::writePNGToMemorySTB(const vpImage<unsigned char> &I, std::vector<unsigned char>& data, int compression)
+{
+  stbi_write_png_compression_level = compression;
+  int res = stbi_write_png_to_func(write_to_memory, &data, static_cast<int>(I.getWidth()), static_cast<int>(I.getHeight()),
+                                   STBI_grey, reinterpret_cast<void*>(I.bitmap), static_cast<int>(I.getWidth()));
+  if (res == 0) {
+    throw(vpImageException(vpImageException::ioError, "PNG write to memory error"));
+  }
+}
+
+void vpImageIo::writePNGToMemory(const vpImage<unsigned char> &I, std::vector<unsigned char>& data)
+{
+  const int compression = 8;
+  writePNGToMemorySTB(I, data, compression);
+}

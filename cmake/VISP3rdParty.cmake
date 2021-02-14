@@ -83,3 +83,19 @@ if(WITH_CATCH2)
   set(CATCH2_INCLUDE_DIRS "${VISP_SOURCE_DIR}/3rdparty/catch2")
   set(CATCH2_VERSION ${CATCH2_MAJOR_VERSION}.${CATCH2_MINOR_VERSION}.${CATCH2_PATCH_VERSION})
 endif()
+
+#TODO: check for C++11 availability for toojpeg
+# toojpeg is always enabled
+set(TOOJPEG_LIBRARY visp_toojpeg)
+add_subdirectory("${VISP_SOURCE_DIR}/3rdparty/toojpeg")
+set(TOOJPEG_INCLUDE_DIRS "${VISP_SOURCE_DIR}/3rdparty/toojpeg")
+set(TOOJPEG_LIBRARIES ${TOOJPEG_LIBRARY})
+set(TOOJPEG_VERSION ${TOOJPEG_MAJOR_VERSION}.${TOOJPEG_MINOR_VERSION})
+
+#TODO: check for toojpeg availability for miniz
+# miniz is always enabled
+set(MINIZ_LIBRARY visp_miniz)
+add_subdirectory("${VISP_SOURCE_DIR}/3rdparty/miniz")
+set(MINIZ_INCLUDE_DIRS "${VISP_SOURCE_DIR}/3rdparty/miniz")
+set(MINIZ_LIBRARIES ${MINIZ_LIBRARY})
+set(MINIZ_VERSION ${MINIZ_MAJOR_VERSION}.${MINIZ_MINOR_VERSION}.${MINIZ_PATCH_VERSION})
