@@ -50,6 +50,7 @@ jobs:
         run: |
           lscpu
 
+          sudo apt-get update && sudo apt-get install -y  lsb-release
           lsb_release -a
 
           sudo apt-get update && sudo apt-get install -y libx11-dev libdc1394-22-dev libv4l-dev gfortran liblapack-dev libeigen3-dev
