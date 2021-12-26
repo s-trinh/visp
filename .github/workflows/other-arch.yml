@@ -43,6 +43,7 @@ jobs:
     - name: Run on arch
       uses: uraimo/run-on-arch-action@v2.0.5
       with:
+        access_token: ${{ github.token }}
         arch: ${{ matrix.arch }}
         distro: ${{ matrix.distro }}
 
