@@ -50,7 +50,7 @@ jobs:
         run: |
           lscpu
 
-          apt-get update && apt-get install -y  lsb-release git
+          apt-get update && apt-get install -y  lsb-release git build-essential
           lsb_release -a
 
           apt-get update && apt-get install -y libx11-dev libdc1394-22-dev libv4l-dev gfortran liblapack-dev libeigen3-dev
