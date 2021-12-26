@@ -20,7 +20,7 @@ jobs:
       matrix:
         include:
           - arch: armv6
-            distro: bullseye
+            distro: buster #bullseye
           - arch: armv7
             distro: ubuntu20.04
           - arch: aarch64
@@ -50,7 +50,7 @@ jobs:
         run: |
           lscpu
 
-          apt-get update && apt-get install -y  lsb-release
+          apt-get update && apt-get install -y  lsb-release git
           lsb_release -a
 
           apt-get update && apt-get install -y libx11-dev libdc1394-22-dev libv4l-dev gfortran liblapack-dev libeigen3-dev
