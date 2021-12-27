@@ -66,8 +66,8 @@ jobs:
           git clone --depth 1 https://github.com/xianyi/OpenBLAS.git ${HOME}/OpenBLAS
           cd ${HOME}/OpenBLAS
           mkdir install
-          make
-          make install PREFIX=$(pwd)/install TARGET=${{ matrix.target }}
+          make TARGET=${{ matrix.target }}
+          make install PREFIX=$(pwd)/install
           export OpenBLAS_HOME=$(pwd)/install
           echo $OpenBLAS_HOME
 
