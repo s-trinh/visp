@@ -21,14 +21,19 @@ jobs:
         include:
           - arch: armv6
             distro: buster #bullseye
+            target: ARMV6
           - arch: armv7
             distro: ubuntu20.04
+            target: ARMV7
           - arch: aarch64
             distro: ubuntu20.04 #fedora_latest
+            target: ARMV8
           - arch: ppc64le
             distro: ubuntu20.04
+            target: POWER8
           - arch: s390x
             distro: ubuntu20.04
+            target: Z13
 
     steps:
     # https://github.com/marketplace/actions/cancel-workflow-action
@@ -62,8 +67,8 @@ jobs:
           cd ${HOME}/OpenBLAS
           mkdir install
           make
-          make install PREFIX=$(pwd)/install
-          echo "OpenBLAS_HOME=$(pwd)/install" >> $GITHUB_ENV
+          make install PREFIX=$(pwd)/install TARGET=${{ matrix.target }}
+          export OpenBLAS_HOME=$(pwd)/install
           echo $OpenBLAS_HOME
 
           pwd
@@ -72,20 +77,11 @@ jobs:
           mkdir build && cd build && mkdir install
           cmake .. -DBUILD_EXAMPLES=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/install
           make -j2 install
-          echo "OpenCV_DIR=$(pwd)/install" >> $GITHUB_ENV
+          export OpenCV_DIR=$(pwd)/install
           echo $OpenCV_DIR
 
-          pwd
-          git clone --depth 1 https://github.com/IntelRealSense/librealsense.git ${HOME}/librealsense
-          cd ${HOME}/librealsense
-          mkdir build && cd build && mkdir install
-          cmake .. -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/install
-          make -j2 install
-          echo "REALSENSE2_DIR=$(pwd)/install" >> $GITHUB_ENV
-          echo $REALSENSE2_DIR
-
           git clone --depth 1 https://github.com/lagadic/ViSP-images ${HOME}/ViSP-images
-          echo "VISP_INPUT_IMAGE_PATH=$HOME" >> $GITHUB_ENV
+          export VISP_INPUT_IMAGE_PATH=$HOME
           echo ${VISP_INPUT_IMAGE_PATH}
 
           pwd
