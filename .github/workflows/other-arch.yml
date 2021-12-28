@@ -67,7 +67,7 @@ jobs:
 
           pwd
           mkdir build && cd build
-          cmake ..
+          cmake .. -DBUILD_DEMOS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_TUTORIALS=OFF -DBUILD_JAVA=OFF -DBUILD_MODULE_visp_java=OFF -DBUILD_MODULE_visp_java_binding=OFF
           cat ViSP-third-party.txt
 
           make -j2
