@@ -55,7 +55,7 @@ jobs:
         run: |
           lscpu
 
-          apt-get update && apt-get install -y  lsb-release git build-essential cmake
+          apt-get update && apt-get install -y  lsb-release git build-essential cmake g++
           lsb_release -a
 
           apt-get update && apt-get install -y libx11-dev libdc1394-22-dev libv4l-dev gfortran liblapack-dev libopenblas-dev libeigen3-dev libopencv-dev
