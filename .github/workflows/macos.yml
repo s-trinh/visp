@@ -32,7 +32,7 @@ jobs:
       run: system_profiler SPSoftwareDataType
 
     - name: Install dependencies
-      run: brew install libpng libjpeg libdc1394 opencv
+      run: brew install libpng libjpeg libdc1394 opencv gdb
 
     - name: Clone ViSP-images
       run: |
@@ -48,13 +48,15 @@ jobs:
         export CPPFLAGS="-I/usr/local/opt/openblas/include"
         mkdir build
         cd build
-        cmake .. -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_BUILD_TYPE=Release
+        cmake .. -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_BUILD_TYPE=RelWithDebInfo
         cat ViSP-third-party.txt
 
     - name: Compile
       working-directory: build
       run: make -j2
 
-    - name: Run unit tests
+    - name: Debug SIFT OpenCV 4.5.4 macos-11
       working-directory: build
-      run: ctest --output-on-failure
+      run: |
+        cd modules/vision
+        gdb -ex run ./testKeyPoint-7
