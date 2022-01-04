@@ -32,7 +32,7 @@ jobs:
       run: system_profiler SPSoftwareDataType
 
     - name: Install dependencies
-      run: brew install libpng libjpeg libdc1394 opencv gdb
+      run: brew install libpng libjpeg libdc1394 opencv
 
     - name: Clone ViSP-images
       run: |
@@ -48,7 +48,7 @@ jobs:
         export CPPFLAGS="-I/usr/local/opt/openblas/include"
         mkdir build
         cd build
-        cmake .. -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        cmake .. -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_DEMOS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_TUTORIALS=OFF
         cat ViSP-third-party.txt
 
     - name: Compile
@@ -59,4 +59,6 @@ jobs:
       working-directory: build
       run: |
         cd modules/vision
+        ./testKeyPoint-7
+        brew install domq/gdb/gdb
         gdb -ex run ./testKeyPoint-7
