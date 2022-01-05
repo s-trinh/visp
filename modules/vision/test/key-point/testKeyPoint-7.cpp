@@ -10,10 +10,10 @@ int main()
 {
   std::cout << cv::getBuildInformation() << std::endl;
 
-  cv::Mat mask = cv::Mat::ones(img.rows, img.cols, CV_8U) * 255;
   {
     std::cout << "\nColor image:" << std::endl;
     cv::Mat img = cv::imread("/Users/runner/ViSP-images/Klimt/Klimt.ppm", cv::IMREAD_COLOR);
+    cv::Mat mask = cv::Mat::ones(img.rows, img.cols, CV_8U) * 255;
 
     cv::Ptr<cv::FeatureDetector> detector = cv::SiftFeatureDetector::create();
     {
@@ -32,6 +32,7 @@ int main()
   {
     std::cout << "\nGrayscale image:" << std::endl;
     cv::Mat img = cv::imread("/Users/runner/ViSP-images/Klimt/Klimt.pgm", cv::IMREAD_GRAYSCALE);
+    cv::Mat mask = cv::Mat::ones(img.rows, img.cols, CV_8U) * 255;
 
     cv::Ptr<cv::FeatureDetector> detector = cv::SiftFeatureDetector::create();
     {
