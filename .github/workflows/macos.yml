@@ -48,7 +48,7 @@ jobs:
         export CPPFLAGS="-I/usr/local/opt/openblas/include"
         mkdir build
         cd build
-        export CXXFLAGS=-mmacosx-version-min=10.x
+        export CXXFLAGS=-mmacosx-version-min=10.15
         cmake .. -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_DEMOS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_TUTORIALS=OFF -DBUILD_JAVA=OFF -DBUILD_MODULE_visp_java_bindings_generator=OFF
         cat ViSP-third-party.txt
 
