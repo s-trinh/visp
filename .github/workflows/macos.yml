@@ -48,12 +48,13 @@ jobs:
         export CPPFLAGS="-I/usr/local/opt/openblas/include"
         mkdir build
         cd build
+        export CXXFLAGS=-mmacosx-version-min=10.x
         cmake .. -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_DEMOS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_TUTORIALS=OFF -DBUILD_JAVA=OFF -DBUILD_MODULE_visp_java_bindings_generator=OFF
         cat ViSP-third-party.txt
 
     - name: Compile
       working-directory: build
-      run: make -j2
+      run: make VERBOSE=1 -j2
 
     - name: Debug SIFT OpenCV 4.5.4 macos-11
       working-directory: build
