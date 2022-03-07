@@ -53,7 +53,7 @@
 
 // Debug trace
 #include <math.h>
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 
 /*!
   Initialize the rotation matrix as identity.

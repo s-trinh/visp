@@ -36,7 +36,7 @@
  *
  *****************************************************************************/
 
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 #include <visp3/robot/vpRobot.h>
 #include <visp3/robot/vpRobotException.h>
 

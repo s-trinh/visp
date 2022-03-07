@@ -51,8 +51,8 @@
 #define DEBUG_LEVEL2 0
 
 #ifdef DEBUG_LEVEL2
-#include <visp3/core/vpColor.h>
-#include <visp3/core/vpDisplay.h>
+// #include <visp3/core/vpColor.h>
+// #include <visp3/core/vpDisplay.h>
 #endif
 
 void vpMeTracker::init()

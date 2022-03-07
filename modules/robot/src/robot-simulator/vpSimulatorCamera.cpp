@@ -41,7 +41,7 @@
   \brief class that defines the simplest robot : a free flying camera
 */
 
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpExponentialMap.h>
 #include <visp3/core/vpHomogeneousMatrix.h>
 #include <visp3/robot/vpRobotException.h>

@@ -42,7 +42,7 @@
 #include "visp3/core/vpLine.h"                              // for vpLine
 #include "visp3/core/vpMath.h"                              // for vpMath
 #include "visp3/core/vpPoint.h"                             // for vpPoint
-#include "visp3/core/vpRobust.h"                            // for vpRobust
+// #include "visp3/core/vpRobust.h"                            // for vpRobust
 #include "visp3/core/vpSphere.h"                            // for vpSphere
 #include "visp3/visual_features/vpFeatureBuilder.h"         // for vpFeature...
 #include "visp3/visual_features/vpFeatureEllipse.h"         // for vpFeature...

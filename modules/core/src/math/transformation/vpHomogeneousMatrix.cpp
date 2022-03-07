@@ -42,7 +42,7 @@
   the particular case of an homogeneous matrix.
 */
 
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpException.h>
 #include <visp3/core/vpHomogeneousMatrix.h>
 #include <visp3/core/vpMatrix.h>

@@ -47,7 +47,7 @@
 #include <visp3/core/vpMatrixException.h>
 
 // Debug trace
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 
 #if (VISP_HAVE_OPENCV_VERSION >= 0x020101) // Require opencv >= 2.1.1
 #include <opencv2/core/core.hpp>

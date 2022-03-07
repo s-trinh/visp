@@ -40,7 +40,7 @@
 #include <limits> // numeric_limits
 
 #include <visp3/core/vpColVector.h>
-#include <visp3/core/vpConfig.h>
+// #include <visp3/core/vpConfig.h>
 #include <visp3/core/vpHomogeneousMatrix.h>
 #include <visp3/core/vpMatrix.h>
 #include <visp3/core/vpMatrixException.h>

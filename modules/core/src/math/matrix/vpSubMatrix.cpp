@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <stdlib.h>
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 // #include <visp3/core/vpException.h>
 #include <visp3/core/vpMatrixException.h>
 #include <visp3/core/vpSubMatrix.h>

@@ -51,7 +51,7 @@
 #include <visp3/core/vpMatrixException.h>
 
 // Debug trace
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 
 #ifdef VISP_HAVE_LAPACK
 #  ifdef VISP_HAVE_GSL

@@ -40,17 +40,21 @@
 #ifndef vpDisplay_h
 #define vpDisplay_h
 
-#include <sstream>
+// #include <sstream>
 #include <string>
 #include <list>
 
-#include <visp3/core/vpCameraParameters.h>
+// #include <visp3/core/vpCameraParameters.h>
 #include <visp3/core/vpColor.h>
 #include <visp3/core/vpHomogeneousMatrix.h>
-#include <visp3/core/vpImage.h>
-#include <visp3/core/vpImagePoint.h>
+// #include <visp3/core/vpImage.h>
+// #include <visp3/core/vpImagePoint.h>
 #include <visp3/core/vpMouseButton.h>
 #include <visp3/core/vpRect.h>
+
+class vpCameraParameters;
+class vpImagePoint;
+template <class Type> class vpImage;
 
 /*!
   \file vpDisplay.h

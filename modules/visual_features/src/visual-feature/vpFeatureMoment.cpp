@@ -46,7 +46,7 @@
 // #include <visp3/visual_features/vpFeatureException.h>
 
 #include <vector>
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 
 // class vpBasicFeature;
 

@@ -48,7 +48,7 @@
 #if defined(_MSC_VER) && (_MSC_VER < 1700)
 typedef unsigned short uint16_t;
 #else
-#  include <inttypes.h>
+// #  include <inttypes.h>
 #endif
 #include <stdint.h> //for uint32_t related types ; works also with >= VS2010 / _MSC_VER >= 1600
 #include <visp3/core/vpConfig.h>

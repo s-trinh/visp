@@ -45,7 +45,7 @@
 
 #include <string>
 
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpFrameGrabber.h>
 // #include <visp3/core/vpRGBa.h>
 // #include <visp3/io/vpImageIo.h>

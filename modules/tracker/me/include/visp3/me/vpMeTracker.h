@@ -45,14 +45,14 @@
 #ifndef vpMeTracker_HH
 #define vpMeTracker_HH
 
-#include <visp3/core/vpColVector.h>
+// #include <visp3/core/vpColVector.h>
 #include <visp3/core/vpTracker.h>
-#include <visp3/me/vpMe.h>
+// #include <visp3/me/vpMe.h>
 #include <visp3/me/vpMeSite.h>
 
-#include <iostream>
+// #include <iostream>
 #include <list>
-#include <math.h>
+// #include <math.h>
 
 /*!
   \class vpMeTracker

@@ -48,7 +48,7 @@
 #include "vpScene.h"
 
 #include <visp3/core/vpException.h>
-#include <visp3/core/vpPoint.h>
+// #include <visp3/core/vpPoint.h>
 
 /*
   Get the extension of the file and return it

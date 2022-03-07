@@ -40,7 +40,7 @@
 
 #if defined(VISP_HAVE_MODULE_GUI) && ((defined(_WIN32) && !defined(WINRT_8_0)) || defined(VISP_HAVE_PTHREAD))
 #include <visp3/robot/vpRobotWireFrameSimulator.h>
-#include <visp3/robot/vpSimulatorViper850.h>
+// #include <visp3/robot/vpSimulatorViper850.h>
 
 #include "../wireframe-simulator/vpBound.h"
 #include "../wireframe-simulator/vpScene.h"

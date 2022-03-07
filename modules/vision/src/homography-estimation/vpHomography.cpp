@@ -45,7 +45,7 @@
 
 #include <stdio.h>
 
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpMatrix.h>
 #include <visp3/core/vpRobust.h>
 #include <visp3/vision/vpHomography.h>

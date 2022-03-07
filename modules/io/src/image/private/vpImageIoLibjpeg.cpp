@@ -42,7 +42,7 @@
 #include <visp3/core/vpImageConvert.h>
 
 #if defined(VISP_HAVE_JPEG)
-#include <jerror.h>
+// #include <jerror.h>
 #include <jpeglib.h>
 #endif
 

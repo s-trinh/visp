@@ -45,10 +45,10 @@
 #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpException.h>
 
-#include <iomanip>
-#include <sstream>
+// #include <iomanip>
+// #include <sstream>
 #include <string>
-#include <typeinfo>
+// #include <typeinfo>
 
 /*!
   Basic constructor.

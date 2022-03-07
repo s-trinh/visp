@@ -38,7 +38,7 @@
 
 #include <visp3/core/vpLine.h>
 
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 // #include <visp3/core/vpMath.h>
 
 #include <visp3/core/vpFeatureDisplay.h>

@@ -45,7 +45,7 @@
 #include <assert.h>
 // #include <cmath>  // std::fabs
 #include <limits> // numeric_limits
-#include <math.h>
+// #include <math.h>
 // #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,7 +53,7 @@
 
 // #include <visp3/core/vpCPUFeatures.h>
 #include <visp3/core/vpColVector.h>
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpException.h>
 #include <visp3/core/vpMath.h>
 #include <visp3/core/vpRotationVector.h>

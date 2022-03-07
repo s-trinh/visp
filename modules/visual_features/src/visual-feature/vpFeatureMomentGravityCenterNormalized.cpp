@@ -40,7 +40,7 @@
 
 #ifdef VISP_MOMENTS_COMBINE_MATRICES
 
-#include <limits>
+// #include <limits>
 #include <vector>
 
 #include <visp3/core/vpMomentAreaNormalized.h>
@@ -48,7 +48,7 @@
 #include <visp3/core/vpMomentGravityCenter.h>
 #include <visp3/core/vpMomentObject.h>
 #include <visp3/visual_features/vpFeatureMomentAreaNormalized.h>
-#include <visp3/visual_features/vpFeatureMomentDatabase.h>
+// #include <visp3/visual_features/vpFeatureMomentDatabase.h>
 #include <visp3/visual_features/vpFeatureMomentGravityCenter.h>
 #include <visp3/visual_features/vpFeatureMomentGravityCenterNormalized.h>
 
@@ -101,14 +101,14 @@ void vpFeatureMomentGravityCenterNormalized::compute_interaction()
 
 #else
 
-#include <limits>
+// #include <limits>
 #include <vector>
 
 #include <visp3/core/vpMomentAreaNormalized.h>
 #include <visp3/core/vpMomentCentered.h>
 #include <visp3/core/vpMomentGravityCenter.h>
 #include <visp3/core/vpMomentObject.h>
-#include <visp3/visual_features/vpFeatureMomentDatabase.h>
+// #include <visp3/visual_features/vpFeatureMomentDatabase.h>
 #include <visp3/visual_features/vpFeatureMomentGravityCenterNormalized.h>
 
 #include "visp3/core/vpMomentDatabase.h"                          // for vpM...

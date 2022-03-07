@@ -53,7 +53,7 @@
 #include <string.h>
 #include <sys/stat.h>
 // #include <sys/types.h>
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 // #include <visp3/core/vpEndian.h>
 #include <visp3/core/vpIoException.h>
 #include <visp3/core/vpIoTools.h>

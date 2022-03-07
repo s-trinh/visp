@@ -48,6 +48,7 @@
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 #include "vpClipping.h"
 #include "vpView.h"
+#include "wireframe-simulator/vpBound.h"  // for free_huge_Bound, malloc_hug...
 
 #include <cmath>
 #include <limits>

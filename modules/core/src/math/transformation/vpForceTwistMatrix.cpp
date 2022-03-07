@@ -40,7 +40,7 @@
 #include <assert.h>
 #include <sstream>
 
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpException.h>
 #include <visp3/core/vpForceTwistMatrix.h>
 

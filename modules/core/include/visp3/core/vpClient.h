@@ -45,6 +45,7 @@
 #include <visp3/core/vpNetwork.h>
 // #include <visp3/core/vpRequest.h>
 // #include <visp3/core/vpTime.h>
+#include <string>                  // for string
 
 // inet_ntop() not supported on win XP
 #ifdef VISP_HAVE_FUNC_INET_NTOP

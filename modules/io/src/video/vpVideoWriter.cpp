@@ -42,7 +42,7 @@
   \brief Write image sequences.
 */
 
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 #include <visp3/io/vpVideoWriter.h>
 
 #if VISP_HAVE_OPENCV_VERSION >= 0x020200

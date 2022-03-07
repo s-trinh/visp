@@ -41,7 +41,7 @@
 
 /* --- VISP --- */
 #include <visp3/core/vpColVector.h>
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 #include <visp3/vs/vpAdaptiveGain.h>
 
 #include <cmath> // std::fabs

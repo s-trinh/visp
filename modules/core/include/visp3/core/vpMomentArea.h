@@ -40,8 +40,8 @@
 
 #include <visp3/core/vpMoment.h>
 
-class vpMomentObject;
-class vpMomentCentered; // Required for discrete case of vpMomentObject
+// class vpMomentObject;
+// class vpMomentCentered; // Required for discrete case of vpMomentObject
 
 /*!
   \class vpMomentArea

@@ -36,7 +36,7 @@
  *
  *****************************************************************************/
 
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpFeatureDisplay.h>
 #include <visp3/core/vpPoint.h>
 

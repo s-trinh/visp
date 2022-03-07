@@ -45,7 +45,7 @@
 
 #if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
 
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpExponentialMap.h>
 #include <visp3/core/vpHomogeneousMatrix.h>
 #include <visp3/robot/vpRobotException.h>

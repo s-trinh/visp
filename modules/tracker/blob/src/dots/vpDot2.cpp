@@ -54,7 +54,7 @@
 // #include <cmath> // std::fabs
 #include <iostream>
 #include <limits> // numeric_limits
-#include <math.h>
+// #include <math.h>
 #include <visp3/blob/vpDot2.h>
 
 /******************************************************************************

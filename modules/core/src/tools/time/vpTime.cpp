@@ -39,7 +39,7 @@
 
 #include <ctime>
 
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpTime.h>
 
 //https://devblogs.microsoft.com/cppblog/c14-stl-features-fixes-and-breaking-changes-in-visual-studio-14-ctp1/

@@ -42,7 +42,7 @@
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-#include "vpBound.h"
+// #include "vpBound.h"
 #include <visp3/core/vpHomogeneousMatrix.h>
 #include <visp3/robot/vpWireFrameSimulatorTypes.h>
 

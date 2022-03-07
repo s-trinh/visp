@@ -57,7 +57,7 @@
 #include <visp3/visual_features/vpFeatureMomentGravityCenterNormalized.h>
 
 class vpMomentDatabase;
-class vpServo;
+// class vpServo;
 /*!
   \class vpFeatureMomentCommon
 

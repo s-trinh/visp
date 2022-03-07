@@ -44,7 +44,7 @@
 #ifndef vpTemplateTrackerSSDInverseCompositional_hh
 #define vpTemplateTrackerSSDInverseCompositional_hh
 
-#include <vector>
+// #include <vector>
 
 #include <visp3/tt/vpTemplateTrackerSSD.h>
 

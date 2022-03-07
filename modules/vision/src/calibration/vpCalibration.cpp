@@ -43,7 +43,7 @@
   \brief Tools for camera calibration.
 */
 
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpPixelMeterConversion.h>
 #include <visp3/vision/vpCalibration.h>
 #include <visp3/vision/vpPose.h>
