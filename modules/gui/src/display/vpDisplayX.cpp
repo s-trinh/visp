@@ -46,7 +46,7 @@
 #ifdef VISP_HAVE_X11
 
 #include <cmath> // std::fabs
-#include <iostream>
+// #include <iostream>
 #include <limits> // numeric_limits
 #include <stdio.h>
 #include <stdlib.h>

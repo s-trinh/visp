@@ -41,6 +41,8 @@
 #include <visp3/core/vpMomentCentered.h>
 #include <visp3/core/vpMomentObject.h>
 
+#include "visp3/core/vpMomentDatabase.h"  // for vpMomentDatabase
+
 /*!
   Default constructor.
   (option to use a different calculation mode for sx and sy)

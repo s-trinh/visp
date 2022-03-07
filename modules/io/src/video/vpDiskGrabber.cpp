@@ -38,6 +38,8 @@
 
 #include <visp3/io/vpDiskGrabber.h>
 
+#include "visp3/io/vpImageIo.h"  // for vpImageIo
+
 /*!
   Elementary constructor.
 */

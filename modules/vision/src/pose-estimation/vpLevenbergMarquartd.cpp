@@ -39,7 +39,7 @@
 
 #include <algorithm> // (std::min)
 #include <cmath>     // std::fabs
-#include <iostream>
+// #include <iostream>
 #include <limits> // numeric_limits
 
 #include <visp3/core/vpMath.h>

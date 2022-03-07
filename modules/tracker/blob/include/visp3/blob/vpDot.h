@@ -46,8 +46,8 @@
 #define vpDot_hh
 
 #include <visp3/core/vpConfig.h>
-#include <visp3/core/vpDisplay.h>
-#include <visp3/core/vpImage.h>
+// #include <visp3/core/vpDisplay.h>
+// #include <visp3/core/vpImage.h>
 #include <visp3/core/vpImagePoint.h>
 #include <visp3/core/vpPolygon.h>
 #include <visp3/core/vpRect.h>
@@ -55,7 +55,7 @@
 
 #include <fstream>
 #include <list>
-#include <math.h>
+// #include <math.h>
 #include <vector>
 
 #ifdef VISP_USE_MSVC

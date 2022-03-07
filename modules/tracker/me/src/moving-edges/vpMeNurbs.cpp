@@ -44,13 +44,13 @@
 #include <cmath>  // std::fabs
 #include <limits> // numeric_limits
 #include <stdlib.h>
-#include <visp3/core/vpImageConvert.h>
-#include <visp3/core/vpImageFilter.h>
+// #include <visp3/core/vpImageConvert.h>
+// #include <visp3/core/vpImageFilter.h>
 #include <visp3/core/vpImagePoint.h>
-#include <visp3/core/vpImageTools.h>
+// #include <visp3/core/vpImageTools.h>
 #include <visp3/core/vpMath.h>
-#include <visp3/core/vpRect.h>
-#include <visp3/core/vpRobust.h>
+// #include <visp3/core/vpRect.h>
+// #include <visp3/core/vpRobust.h>
 #include <visp3/core/vpTrackingException.h>
 #include <visp3/me/vpMe.h>
 #include <visp3/me/vpMeNurbs.h>

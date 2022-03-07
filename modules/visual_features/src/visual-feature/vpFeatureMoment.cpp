@@ -36,19 +36,19 @@
  *
  *****************************************************************************/
 
-#include <visp3/core/vpMath.h>
+// #include <visp3/core/vpMath.h>
 #include <visp3/core/vpMoment.h>
 #include <visp3/core/vpMomentDatabase.h>
 #include <visp3/visual_features/vpFeatureMoment.h>
 #include <visp3/visual_features/vpFeatureMomentDatabase.h>
 
 #include <visp3/core/vpException.h>
-#include <visp3/visual_features/vpFeatureException.h>
+// #include <visp3/visual_features/vpFeatureException.h>
 
 #include <vector>
 #include <visp3/core/vpDebug.h>
 
-class vpBasicFeature;
+// class vpBasicFeature;
 
 /*!
   Initialize common parameters for moment features.

@@ -51,12 +51,12 @@
 #include <iostream>
 #include <limits> // numeric_limits
 #include <stdio.h>
-#include <stdlib.h>
+// #include <stdlib.h>
 
 // Display stuff
 #include <visp3/core/vpDisplay.h>
-#include <visp3/core/vpImageTools.h>
-#include <visp3/core/vpIoTools.h>
+// #include <visp3/core/vpImageTools.h>
+// #include <visp3/core/vpIoTools.h>
 #include <visp3/core/vpMath.h>
 #include <visp3/gui/vpDisplayOpenCV.h>
 

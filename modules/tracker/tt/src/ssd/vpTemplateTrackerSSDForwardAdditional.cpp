@@ -40,8 +40,11 @@
 
 #include <limits> // numeric_limits
 
-#include <visp3/core/vpImageTools.h>
+// #include <visp3/core/vpImageTools.h>
 #include <visp3/tt/vpTemplateTrackerSSDForwardAdditional.h>
+
+#include "visp3/tt/vpTemplateTrackerWarp.h"    // for vpTemplateTrackerWarp
+#include "visp3/core/vpTrackingException.h"                     // for vpTra...
 
 vpTemplateTrackerSSDForwardAdditional::vpTemplateTrackerSSDForwardAdditional(vpTemplateTrackerWarp *warp)
   : vpTemplateTrackerSSD(warp), minimizationMethod(USE_NEWTON), p_prec(), G_prec(), KQuasiNewton()

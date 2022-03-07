@@ -40,12 +40,12 @@
 #ifndef vpTemplateTrackerMIESM_hh
 #define vpTemplateTrackerMIESM_hh
 
-#include <visp3/core/vpImageFilter.h>
-#include <visp3/tt/vpTemplateTracker.h>
-#include <visp3/tt/vpTemplateTrackerHeader.h>
+// #include <visp3/core/vpImageFilter.h>
+// #include <visp3/tt/vpTemplateTracker.h>
+// #include <visp3/tt/vpTemplateTrackerHeader.h>
 
 #include <visp3/tt_mi/vpTemplateTrackerMI.h>
-#include <visp3/tt_mi/vpTemplateTrackerMIBSpline.h>
+// #include <visp3/tt_mi/vpTemplateTrackerMIBSpline.h>
 
 /*!
   \class vpTemplateTrackerMIESM

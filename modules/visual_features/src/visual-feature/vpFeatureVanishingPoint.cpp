@@ -44,14 +44,14 @@
 #include <visp3/visual_features/vpFeatureVanishingPoint.h>
 
 // Exception
-#include <visp3/core/vpException.h>
-#include <visp3/visual_features/vpFeatureException.h>
+// #include <visp3/core/vpException.h>
+// #include <visp3/visual_features/vpFeatureException.h>
 
 // Debug trace
 #include <visp3/core/vpDebug.h>
 
 // math
-#include <visp3/core/vpMath.h>
+// #include <visp3/core/vpMath.h>
 
 #include <visp3/core/vpFeatureDisplay.h>
 

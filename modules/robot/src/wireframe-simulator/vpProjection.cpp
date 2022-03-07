@@ -41,7 +41,7 @@
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 #include "vpProjection.h"
-#include <math.h>
+// #include <math.h>
 #include <stdio.h>
 
 /*

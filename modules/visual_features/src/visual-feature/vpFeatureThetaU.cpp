@@ -42,7 +42,7 @@
 #include <visp3/visual_features/vpFeatureThetaU.h>
 
 // Exception
-#include <visp3/core/vpException.h>
+// #include <visp3/core/vpException.h>
 #include <visp3/visual_features/vpFeatureException.h>
 
 // Debug trace

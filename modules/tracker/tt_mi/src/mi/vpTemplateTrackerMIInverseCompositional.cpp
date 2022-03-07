@@ -40,7 +40,10 @@
 #include <visp3/core/vpTrackingException.h>
 #include <visp3/tt_mi/vpTemplateTrackerMIInverseCompositional.h>
 
-#include <memory>
+#include "visp3/tt/vpTemplateTrackerWarp.h"    // for vpTemplateTrackerWarp
+#include "visp3/tt/vpTemplateTrackerBSpline.h"  // for vpTemplateTrackerBSpline
+
+// #include <memory>
 
 vpTemplateTrackerMIInverseCompositional::vpTemplateTrackerMIInverseCompositional(vpTemplateTrackerWarp *_warp)
   : vpTemplateTrackerMI(_warp), minimizationMethod(USE_LMA), CompoInitialised(false), useTemplateSelect(false),

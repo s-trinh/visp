@@ -45,7 +45,9 @@
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 #include "vpArit.h"
-#include "vpBound.h"
+// #include "vpBound.h"
+
+#include "wireframe-simulator/vpMy.h"               // for Byte
 
 void open_display(void);
 void close_display(void);

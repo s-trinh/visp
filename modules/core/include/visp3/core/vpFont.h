@@ -42,8 +42,14 @@
   \brief Draw text in an image.
 */
 
-#include <visp3/core/vpImage.h>
-#include <visp3/core/vpColor.h>
+// #include <visp3/core/vpImage.h>
+// #include <visp3/core/vpColor.h>
+
+#include "visp3/core/vpImagePoint.h"  // for vpImagePoint
+
+class vpColor;
+class vpRGBa;
+template <class Type> class vpImage;
 
 /*!
   \class vpFont

@@ -38,7 +38,7 @@
 
 #include <visp3/core/vpConfig.h>
 
-#include <limits>
+// #include <limits>
 #include <vector>
 
 #include <visp3/core/vpMomentCentered.h>
@@ -46,8 +46,8 @@
 #include <visp3/core/vpMomentObject.h>
 #include <visp3/visual_features/vpFeatureMomentBasic.h>
 #include <visp3/visual_features/vpFeatureMomentCentered.h>
-#include <visp3/visual_features/vpFeatureMomentDatabase.h>
-#include <visp3/visual_features/vpFeatureMomentGravityCenter.h>
+// #include <visp3/visual_features/vpFeatureMomentDatabase.h>
+// #include <visp3/visual_features/vpFeatureMomentGravityCenter.h>
 
 /*!
   Default constructor

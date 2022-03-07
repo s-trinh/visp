@@ -44,7 +44,7 @@
 */
 
 #include <map>
-#include <sstream>
+// #include <sstream>
 
 #if defined _OPENMP
 #include <omp.h>
@@ -53,8 +53,10 @@
 // image
 #include "private/vpBayerConversion.h"
 #include "private/vpImageConvert_impl.h"
-#include <Simd/SimdLib.hpp>
+// #include <Simd/SimdLib.hpp>
 #include <visp3/core/vpImageConvert.h>
+
+#include "Simd/SimdLib.h"                 // for SimdGrayToBgra, SimdRgbToBgra
 
 bool vpImageConvert::YCbCrLUTcomputed = false;
 int vpImageConvert::vpCrr[256];

@@ -41,11 +41,11 @@
 #include <visp3/core/vpException.h>
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-#include "vpArit.h"
+// #include "vpArit.h"
 #include "vpBound.h"
 #include "vpMy.h"
-#include <errno.h>
-#include <math.h>
+// #include <errno.h>
+// #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -37,8 +37,8 @@
  *****************************************************************************/
 
 #include <algorithm>
-#include <stdio.h>
-#include <string.h>
+// #include <stdio.h>
+// #include <string.h>
 #include <visp3/core/vpMath.h>
 #include <visp3/core/vpQuaternionVector.h>
 

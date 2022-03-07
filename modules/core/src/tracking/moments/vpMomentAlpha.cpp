@@ -39,7 +39,10 @@
 #include <cmath>
 #include <visp3/core/vpMomentAlpha.h>
 #include <visp3/core/vpMomentCentered.h>
-#include <visp3/core/vpMomentGravityCenter.h>
+// #include <visp3/core/vpMomentGravityCenter.h>
+
+#include "visp3/core/vpMath.h"            // for vpMath
+#include "visp3/core/vpMomentDatabase.h"  // for vpMomentDatabase
 
 /*!
   Empty constructor. Initializes alpha moment as a reference alpha with a

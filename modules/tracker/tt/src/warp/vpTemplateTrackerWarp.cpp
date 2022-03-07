@@ -39,6 +39,10 @@
  *****************************************************************************/
 #include <visp3/tt/vpTemplateTrackerWarp.h>
 
+#include "visp3/core/vpDebug.h"                  // for vpCTRACE
+#include "visp3/tt/vpTemplateTrackerTriangle.h"  // for vpTemplateTrackerTri...
+#include "visp3/tt/vpTemplateTrackerZone.h"      // for vpTemplateTrackerZone
+
 void vpTemplateTrackerWarp::warpTriangle(const vpTemplateTrackerTriangle &in, const vpColVector &p,
                                          vpTemplateTrackerTriangle &out)
 {

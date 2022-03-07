@@ -45,12 +45,12 @@
 
 */
 #include <visp3/core/vpImage.h>
-#include <visp3/core/vpImageException.h>
-#include <visp3/core/vpMatrix.h>
+// #include <visp3/core/vpImageException.h>
+// #include <visp3/core/vpMatrix.h>
 
-#include <fstream>
+// #include <fstream>
 #include <iostream>
-#include <math.h>
+// #include <math.h>
 #include <string.h>
 
 /*!

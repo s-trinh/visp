@@ -48,6 +48,8 @@
 // Debug trace
 #include <visp3/core/vpDebug.h>
 
+#include "visp3/vs/vpServoException.h"             // for vpServoException
+
 /*!
   \file vpServo.cpp
   \brief  Class required to compute the visual servoing control law

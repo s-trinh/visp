@@ -41,7 +41,12 @@
 #ifndef vpGaussianFilter_H
 #define vpGaussianFilter_H
 
-#include <visp3/core/vpImage.h>
+// #include <visp3/core/vpImage.h>
+
+#include "visp3/core/vpConfig.h"  // for VISP_EXPORT
+
+class vpRGBa;
+template <class Type> class vpImage;
 
 /*!
   \class vpGaussianFilter

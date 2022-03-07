@@ -46,7 +46,7 @@
 #include <visp3/core/vpMomentArea.h>
 #include <visp3/core/vpMomentAreaNormalized.h>
 #include <visp3/core/vpMomentBasic.h>
-#include <visp3/core/vpMomentCInvariant.h>
+// #include <visp3/core/vpMomentCInvariant.h>
 #include <visp3/core/vpMomentCentered.h>
 #include <visp3/core/vpMomentDatabase.h>
 #include <visp3/core/vpMomentGravityCenter.h>
@@ -54,6 +54,7 @@
 
 #include <vector>
 
+class vpMomentCInvariant;
 class vpMomentObject;
 
 /*!

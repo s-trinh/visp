@@ -39,6 +39,11 @@
  *****************************************************************************/
 #include <visp3/tt_mi/vpTemplateTrackerMIForwardCompositional.h>
 
+#include "visp3/tt/vpTemplateTrackerWarp.h"    // for vpTemplateTrackerWarp
+#include "visp3/core/vpTrackingException.h"                     // for vpTra...
+#include "visp3/tt_mi/vpTemplateTrackerMIBSpline.h"  // for vpTemplateTracke...
+#include "visp3/tt/vpTemplateTrackerBSpline.h"  // for vpTemplateTrackerBSpline
+
 vpTemplateTrackerMIForwardCompositional::vpTemplateTrackerMIForwardCompositional(vpTemplateTrackerWarp *_warp)
   : vpTemplateTrackerMI(_warp), CompoInitialised(false)
 {

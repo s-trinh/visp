@@ -41,7 +41,7 @@
   \brief  conversion between tracker
   and visual feature Point
 */
-#include <visp3/core/vpException.h>
+// #include <visp3/core/vpException.h>
 #include <visp3/visual_features/vpFeatureBuilder.h>
 #include <visp3/visual_features/vpFeatureException.h>
 

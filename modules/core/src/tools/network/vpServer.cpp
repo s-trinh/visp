@@ -38,6 +38,8 @@
 
 #include <visp3/core/vpServer.h>
 
+#include <unistd.h>                // for close, ssize_t
+
 // inet_ntop() not supported on win XP
 #ifdef VISP_HAVE_FUNC_INET_NTOP
 

@@ -44,7 +44,7 @@
  \brief Implements a polygon of the model used by the model-based tracker.
 */
 
-#include <visp3/core/vpPolygon.h>
+// #include <visp3/core/vpPolygon.h>
 #include <visp3/core/vpPolygon3D.h>
 
 /*!

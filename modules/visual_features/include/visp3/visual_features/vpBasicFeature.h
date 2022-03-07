@@ -51,12 +51,16 @@
 // Display Issue
 
 // Meter/pixel conversion
-#include <visp3/core/vpCameraParameters.h>
+// #include <visp3/core/vpCameraParameters.h>
 
 // Color / image / display
 #include <visp3/core/vpColor.h>
-#include <visp3/core/vpImage.h>
-#include <visp3/core/vpRGBa.h>
+// #include <visp3/core/vpImage.h>
+// #include <visp3/core/vpRGBa.h>
+
+class vpCameraParameters;
+class vpRGBa;
+template <class Type> class vpImage;
 
 // #define FEATURE_ALL 0xff
 

@@ -41,7 +41,7 @@
 
 #include <visp3/core/vpConfig.h>
 #include <visp3/core/vpDebug.h>
-#include <visp3/core/vpException.h>
+// #include <visp3/core/vpException.h>
 #include <visp3/core/vpNetwork.h>
 
 // inet_ntop() not supported on win XP

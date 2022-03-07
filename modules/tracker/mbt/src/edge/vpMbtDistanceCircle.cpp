@@ -51,7 +51,7 @@
 #include <visp3/core/vpPixelMeterConversion.h>
 #include <visp3/core/vpPlane.h>
 #include <visp3/mbt/vpMbtDistanceCircle.h>
-#include <visp3/vision/vpPose.h>
+// #include <visp3/vision/vpPose.h>
 #include <visp3/visual_features/vpFeatureBuilder.h>
 #include <visp3/visual_features/vpFeatureEllipse.h>
 

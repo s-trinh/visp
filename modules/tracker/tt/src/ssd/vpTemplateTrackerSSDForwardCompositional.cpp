@@ -40,6 +40,9 @@
 #include <visp3/core/vpImageFilter.h>
 #include <visp3/tt/vpTemplateTrackerSSDForwardCompositional.h>
 
+#include "visp3/tt/vpTemplateTrackerWarp.h"    // for vpTemplateTrackerWarp
+#include "visp3/core/vpTrackingException.h"                     // for vpTra...
+
 vpTemplateTrackerSSDForwardCompositional::vpTemplateTrackerSSDForwardCompositional(vpTemplateTrackerWarp *warp)
   : vpTemplateTrackerSSD(warp), compoInitialised(false)
 {

@@ -47,20 +47,20 @@
 #include <visp3/core/vpException.h>
 #include <visp3/core/vpExponentialMap.h>
 #include <visp3/core/vpMath.h>
-#include <visp3/core/vpMatrixException.h>
-#include <visp3/core/vpPixelMeterConversion.h>
+// #include <visp3/core/vpMatrixException.h>
+// #include <visp3/core/vpPixelMeterConversion.h>
 #include <visp3/core/vpPolygon3D.h>
 #include <visp3/core/vpTrackingException.h>
 #include <visp3/core/vpVelocityTwistMatrix.h>
 #include <visp3/mbt/vpMbEdgeTracker.h>
 #include <visp3/mbt/vpMbtDistanceLine.h>
 #include <visp3/mbt/vpMbtXmlGenericParser.h>
-#include <visp3/vision/vpPose.h>
+// #include <visp3/vision/vpPose.h>
 
-#include <float.h>
+// #include <float.h>
 #include <limits>
-#include <map>
-#include <sstream>
+// #include <map>
+// #include <sstream>
 #include <string>
 
 /*!

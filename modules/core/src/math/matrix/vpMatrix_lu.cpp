@@ -38,8 +38,8 @@
 
 #include <visp3/core/vpConfig.h>
 
-#include <visp3/core/vpColVector.h>
-#include <visp3/core/vpMath.h>
+// #include <visp3/core/vpColVector.h>
+// #include <visp3/core/vpMath.h>
 #include <visp3/core/vpMatrix.h>
 
 #ifdef VISP_HAVE_EIGEN3
@@ -72,7 +72,7 @@ extern "C" void dgetri_(integer *n, double *a, integer *lda, integer *ipiv, doub
 
 // Exception
 #include <visp3/core/vpException.h>
-#include <visp3/core/vpMatrixException.h>
+// #include <visp3/core/vpMatrixException.h>
 
 #include <cmath>  // std::fabs
 #include <limits> // numeric_limits

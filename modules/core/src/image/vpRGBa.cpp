@@ -43,7 +43,7 @@
   images (it define a RGB 32 bits structure, fourth byte is not used - yet -)
 */
 
-#include <visp3/core/vpColor.h>
+// #include <visp3/core/vpColor.h>
 #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpException.h>
 #include <visp3/core/vpRGBa.h>

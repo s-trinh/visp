@@ -44,8 +44,8 @@
 #define _vpMomentGravityCenter_h_
 
 #include <visp3/core/vpMoment.h>
-#include <visp3/core/vpMomentDatabase.h>
-class vpMomentObject;
+// #include <visp3/core/vpMomentDatabase.h>
+// class vpMomentObject;
 
 /*!
   \class vpMomentGravityCenter

@@ -45,7 +45,7 @@
 
 #include <visp3/visual_features/vpFeatureMomentDatabase.h>
 
-#include <limits>
+// #include <limits>
 #include <vector>
 
 /*!
@@ -421,7 +421,7 @@ void vpFeatureMomentCInvariant::compute_interaction()
 
 #include <cmath>
 #include <iostream>
-#include <limits>
+// #include <limits>
 #include <vector>
 
 /*!

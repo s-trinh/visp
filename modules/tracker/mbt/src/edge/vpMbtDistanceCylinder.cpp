@@ -50,13 +50,13 @@
 #include <algorithm>
 #include <stdlib.h>
 #include <visp3/core/vpMeterPixelConversion.h>
-#include <visp3/core/vpPixelMeterConversion.h>
-#include <visp3/core/vpPlane.h>
+// #include <visp3/core/vpPixelMeterConversion.h>
+// #include <visp3/core/vpPlane.h>
 #include <visp3/mbt/vpMbtDistanceCylinder.h>
 #include <visp3/visual_features/vpFeatureBuilder.h>
-#include <visp3/visual_features/vpFeatureEllipse.h>
+// #include <visp3/visual_features/vpFeatureEllipse.h>
 
-#include <visp3/vision/vpPose.h>
+// #include <visp3/vision/vpPose.h>
 
 /*!
   Basic constructor
@@ -684,7 +684,7 @@ std::vector<std::vector<double> > vpMbtDistanceCylinder::getModelForDisplay(unsi
     params1.push_back(ip12.get_i());
     params1.push_back(ip12.get_j());
 
-    params2.push_back(0); 
+    params2.push_back(0);
     params2.push_back(ip11.get_i());
     params2.push_back(ip11.get_j());
     params2.push_back(ip12.get_i());

@@ -37,8 +37,11 @@
  * Fabien Spindler
  *
  *****************************************************************************/
-#include <visp3/core/vpImageTools.h>
+// #include <visp3/core/vpImageTools.h>
 #include <visp3/tt/vpTemplateTrackerSSDInverseCompositional.h>
+
+#include "visp3/tt/vpTemplateTrackerWarp.h"    // for vpTemplateTrackerWarp
+#include "visp3/core/vpTrackingException.h"                     // for vpTra...
 
 vpTemplateTrackerSSDInverseCompositional::vpTemplateTrackerSSDInverseCompositional(vpTemplateTrackerWarp *warp)
   : vpTemplateTrackerSSD(warp), compoInitialised(false), HInv(), HCompInverse(), useTemplateSelect(false)

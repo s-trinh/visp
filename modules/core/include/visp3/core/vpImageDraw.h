@@ -42,11 +42,16 @@
   \brief Drawing functions for image.
 */
 
-#include <visp3/core/vpImage.h>
+// #include <visp3/core/vpImage.h>
 #include <visp3/core/vpColor.h>
-#include <visp3/core/vpMath.h>
-#include <visp3/core/vpRect.h>
-#include <visp3/core/vpCameraParameters.h>
+// #include <visp3/core/vpMath.h>
+// #include <visp3/core/vpRect.h>
+// #include <visp3/core/vpCameraParameters.h>
+
+class vpCameraParameters;
+class vpRGBa;
+class vpRect;
+template <class Type> class vpImage;
 
 /*!
   \class vpImageDraw

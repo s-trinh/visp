@@ -54,20 +54,27 @@
 #include <visp3/core/vpCircle.h>
 #include <visp3/core/vpCylinder.h>
 #include <visp3/core/vpDebug.h>
-#include <visp3/core/vpException.h>
-#include <visp3/core/vpExponentialMap.h>
-#include <visp3/core/vpForwardProjection.h>
+// #include <visp3/core/vpException.h>
+// #include <visp3/core/vpExponentialMap.h>
+// #include <visp3/core/vpForwardProjection.h>
 #include <visp3/core/vpLine.h>
 #include <visp3/core/vpPoint.h>
-#include <visp3/core/vpRobust.h>
+// #include <visp3/core/vpRobust.h>
 #include <visp3/core/vpSphere.h>
-#include <visp3/visual_features/vpBasicFeature.h>
-#include <visp3/visual_features/vpFeatureBuilder.h>
-#include <visp3/visual_features/vpFeatureEllipse.h>
-#include <visp3/visual_features/vpFeaturePoint.h>
+// #include <visp3/visual_features/vpBasicFeature.h>
+// #include <visp3/visual_features/vpFeatureBuilder.h>
+// #include <visp3/visual_features/vpFeatureEllipse.h>
+// #include <visp3/visual_features/vpFeaturePoint.h>
 
-#include <iostream>
+// #include <iostream>
 #include <vector>
+
+class vpFeatureEllipse;
+class vpFeatureLine;
+class vpFeaturePoint3D;
+class vpFeaturePoint;
+class vpFeatureSegment;
+class vpFeatureVanishingPoint;
 
 #if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
 #include <tuple>

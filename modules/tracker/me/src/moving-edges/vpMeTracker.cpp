@@ -41,8 +41,6 @@
 \brief Contains abstract elements for a Distance to Feature type feature.
 */
 
-#include <visp3/core/vpColor.h>
-#include <visp3/core/vpDisplay.h>
 #include <visp3/me/vpMeTracker.h>
 
 #include <algorithm>
@@ -51,6 +49,11 @@
 
 #define DEBUG_LEVEL1 0
 #define DEBUG_LEVEL2 0
+
+#ifdef DEBUG_LEVEL2
+#include <visp3/core/vpColor.h>
+#include <visp3/core/vpDisplay.h>
+#endif
 
 void vpMeTracker::init()
 {
@@ -274,7 +277,7 @@ void vpMeTracker::track(const vpImage<unsigned char> &I)
       } catch (...) {
         s.setState(vpMeSite::THRESHOLD);
       }
-      
+
       if (vpMeTracker::inMask(m_mask, s.i, s.j)) {
         if (s.getState() != vpMeSite::THRESHOLD) {
           nGoodElement++;

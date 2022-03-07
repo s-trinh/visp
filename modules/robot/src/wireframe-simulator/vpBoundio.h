@@ -47,7 +47,7 @@
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-#include "vpBound.h"
+// #include "vpBound.h"
 
 void fscanf_Bound(Bound *bp);
 void fscanf_Face_list(Face_list *lp);

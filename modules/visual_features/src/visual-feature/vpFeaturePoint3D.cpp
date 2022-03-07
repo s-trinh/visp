@@ -41,7 +41,7 @@
 #include <visp3/visual_features/vpFeaturePoint3D.h>
 
 // Exception
-#include <visp3/core/vpException.h>
+// #include <visp3/core/vpException.h>
 #include <visp3/visual_features/vpFeatureException.h>
 
 // Debug trace

@@ -41,7 +41,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include <visp3/core/vpMath.h>
+// #include <visp3/core/vpMath.h>
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 /*

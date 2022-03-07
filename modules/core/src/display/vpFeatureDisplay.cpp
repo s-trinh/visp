@@ -46,10 +46,10 @@
 #include <visp3/core/vpDisplay.h>
 
 // Debug trace
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 
 // math
-#include <visp3/core/vpMath.h>
+// #include <visp3/core/vpMath.h>
 
 #include <visp3/core/vpImagePoint.h>
 

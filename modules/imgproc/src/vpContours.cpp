@@ -73,7 +73,9 @@
 */
 
 #include <map>
-#include <visp3/imgproc/vpImgproc.h>
+// #include <visp3/imgproc/vpImgproc.h>
+
+#include "visp3/imgproc/vpContours.h"  // for vpContour, vpDirection, CONTOU...
 
 namespace
 {

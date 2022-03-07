@@ -42,7 +42,7 @@
   \brief  Segment creation out of dots.
 */
 
-#include <visp3/core/vpMath.h>
+// #include <visp3/core/vpMath.h>
 #include <visp3/visual_features/vpFeatureBuilder.h>
 
 #ifdef VISP_HAVE_MODULE_BLOB

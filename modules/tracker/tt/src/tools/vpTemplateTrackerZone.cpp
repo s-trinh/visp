@@ -38,7 +38,7 @@
  *
  *****************************************************************************/
 
-#include <limits> // numeric_limits
+// #include <limits> // numeric_limits
 
 #include <visp3/core/vpConfig.h>
 

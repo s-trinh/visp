@@ -38,7 +38,7 @@
 
 //#include <computeHomography.h>
 //#include <utilsHomography.h>
-#include <iostream>
+// #include <iostream>
 #include <visp3/core/vpExponentialMap.h>
 #include <visp3/core/vpHomogeneousMatrix.h>
 #include <visp3/core/vpMath.h>

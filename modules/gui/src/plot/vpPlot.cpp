@@ -42,9 +42,9 @@
 #include <fstream>
 #include <list>
 #include <vector>
-#include <visp3/core/vpMath.h>
-#include <visp3/core/vpMeterPixelConversion.h>
-#include <visp3/core/vpPixelMeterConversion.h>
+// #include <visp3/core/vpMath.h>
+// #include <visp3/core/vpMeterPixelConversion.h>
+// #include <visp3/core/vpPixelMeterConversion.h>
 #include <visp3/gui/vpDisplayD3D.h>
 #include <visp3/gui/vpDisplayGDI.h>
 #include <visp3/gui/vpDisplayGTK.h>

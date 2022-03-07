@@ -45,10 +45,10 @@
 #define _vpMomentCInvariant_h_
 
 #include <visp3/core/vpMoment.h>
-#include <visp3/core/vpMomentDatabase.h>
+// #include <visp3/core/vpMomentDatabase.h>
 
 class vpMomentCentered;
-class vpMomentBasic;
+// class vpMomentBasic;
 
 /*!
   \class vpMomentCInvariant

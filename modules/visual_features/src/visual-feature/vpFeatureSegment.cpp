@@ -46,7 +46,7 @@
 #include <visp3/visual_features/vpFeatureSegment.h>
 
 // Exception
-#include <visp3/core/vpException.h>
+// #include <visp3/core/vpException.h>
 
 // Debug trace
 #include <visp3/core/vpDebug.h>

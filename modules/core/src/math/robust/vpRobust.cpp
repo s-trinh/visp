@@ -41,11 +41,11 @@
   \file vpRobust.cpp
 */
 
-#include <algorithm> // std::swap
+// #include <algorithm> // std::swap
 #include <cmath>     // std::fabs
 #include <limits>    // numeric_limits
-#include <stdio.h>
-#include <stdlib.h>
+// #include <stdio.h>
+// #include <stdlib.h>
 #include <string.h>
 
 #include <visp3/core/vpColVector.h>

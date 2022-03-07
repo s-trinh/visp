@@ -42,7 +42,7 @@
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 #include "vpLex.h"
-#include "vpMy.h"
+// #include "vpMy.h"
 #include "vpSkipio.h"
 #include "vpToken.h"
 #include <stdio.h>

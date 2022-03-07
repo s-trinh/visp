@@ -41,7 +41,7 @@
 
 #include <visp3/core/vpColVector.h>
 #include <visp3/core/vpHomogeneousMatrix.h>
-#include <visp3/core/vpPoint.h>
+// #include <visp3/core/vpPoint.h>
 
 /*!
   \class vpPlane

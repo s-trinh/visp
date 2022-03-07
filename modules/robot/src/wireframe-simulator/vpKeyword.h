@@ -40,7 +40,7 @@
 #ifndef vpKeyword_H
 #define vpKeyword_H
 
-#include "vpMy.h"
+// #include "vpMy.h"
 #include "vpToken.h"
 #include <visp3/core/vpConfig.h>
 

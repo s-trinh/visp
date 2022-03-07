@@ -38,6 +38,7 @@
  *
  *****************************************************************************/
 #include <visp3/tt_mi/vpTemplateTrackerMIBSpline.h>
+#include "visp3/tt/vpTemplateTrackerBSpline.h"  // for vpTemplateTrackerBSpline
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 

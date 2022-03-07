@@ -45,13 +45,13 @@
 #include <visp3/vs/vpServo.h>
 
 // Meter/pixel conversion
-#include <visp3/core/vpCameraParameters.h>
+// #include <visp3/core/vpCameraParameters.h>
 
 // Color / image / display
 #include <visp3/core/vpColor.h>
-#include <visp3/core/vpImage.h>
+// #include <visp3/core/vpImage.h>
 
-#include <visp3/core/vpDisplay.h>
+// #include <visp3/core/vpDisplay.h>
 
 #include <visp3/vs/vpServoDisplay.h>
 

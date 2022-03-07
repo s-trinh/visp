@@ -38,7 +38,8 @@
 
 #include <visp3/core/vpImageMorphology.h>
 
-#include <Simd/SimdLib.hpp>
+// #include <Simd/SimdLib.hpp>
+#include <Simd/SimdLib.h>
 
 /*!
   Erode a grayscale image using the given structuring element.

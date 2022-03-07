@@ -54,7 +54,7 @@
 
 #include <cmath>  // std::fabs
 #include <limits> // numeric_limits
-#include <visp3/core/vpMath.h>
+// #include <visp3/core/vpMath.h>
 
 #if defined(VISP_HAVE_DISPLAY)
 
@@ -184,7 +184,7 @@ void vpPlotGraph::findPose()
     point_[i].set_y(y);
     pose.addPoint(point_[i]);
   }
-  
+
   pose.computePose(vpPose::LAGRANGE, cMo) ;
   pose.computePose(vpPose::VIRTUAL_VS, cMo);
 

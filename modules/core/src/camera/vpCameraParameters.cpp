@@ -45,12 +45,12 @@
 */
 
 #include <cmath>
-#include <iomanip>
+// #include <iomanip>
 #include <iostream>
 #include <limits>
-#include <sstream>
+// #include <sstream>
 #include <visp3/core/vpCameraParameters.h>
-#include <visp3/core/vpDebug.h>
+// #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpException.h>
 #include <visp3/core/vpRotationMatrix.h>
 

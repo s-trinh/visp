@@ -52,7 +52,7 @@
 
 #include <visp3/core/vpColVector.h>
 #include <visp3/core/vpMath.h>
-#include <visp3/core/vpRansac.h>
+// #include <visp3/core/vpRansac.h>
 #include <visp3/vision/vpPose.h>
 #include <visp3/vision/vpPoseException.h>
 

@@ -61,6 +61,11 @@
 #include <visp3/core/vpPoint.h>
 #include <visp3/core/vpMeterPixelConversion.h>
 
+#include "visp3/core/vpRect.h"                  // for vpRect
+
+class vpCameraParameters;
+template <class Type> class vpImage;
+
 namespace
 {
 template<class Type> void DrawLine(vpImage<Type> & canvas, int x1, int y1, int x2, int y2, const Type & color, unsigned int width = 1)

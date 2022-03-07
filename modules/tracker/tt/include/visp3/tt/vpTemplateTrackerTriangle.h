@@ -49,9 +49,9 @@
 #include <vector>
 
 #include <visp3/core/vpColVector.h>
-#include <visp3/core/vpImagePoint.h>
-#include <visp3/core/vpMath.h>
-#include <visp3/core/vpMatrix.h>
+// #include <visp3/core/vpImagePoint.h>
+// #include <visp3/core/vpMath.h>
+// #include <visp3/core/vpMatrix.h>
 #include <visp3/tt/vpTemplateTrackerHeader.h>
 
 /*!

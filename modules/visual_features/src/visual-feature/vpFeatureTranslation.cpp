@@ -40,10 +40,10 @@
 #include <visp3/visual_features/vpBasicFeature.h>
 #include <visp3/visual_features/vpFeatureTranslation.h>
 
-#include <visp3/core/vpMath.h>
+// #include <visp3/core/vpMath.h>
 
 // Exception
-#include <visp3/core/vpException.h>
+// #include <visp3/core/vpException.h>
 #include <visp3/visual_features/vpFeatureException.h>
 
 // Debug trace

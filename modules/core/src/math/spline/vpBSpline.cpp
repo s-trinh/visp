@@ -39,6 +39,9 @@
 #include <visp3/core/vpBSpline.h>
 #include <visp3/core/vpDebug.h>
 
+#include "visp3/core/vpMath.h"        // for vpMath
+#include "visp3/core/vpMatrix.h"      // for vpMatrix
+
 /*!
   Basic constructor.
 

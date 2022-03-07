@@ -40,13 +40,13 @@
 #include <visp3/core/vpConfig.h>
 #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpException.h>
-#include <visp3/core/vpMath.h>
+// #include <visp3/core/vpMath.h>
 #include <visp3/core/vpMatrix.h>
 #include <visp3/core/vpMatrixException.h>
 
-#include <cmath> // std::fabs
-#include <iostream>
-#include <limits> // numeric_limits
+// #include <cmath> // std::fabs
+// #include <iostream>
+// #include <limits> // numeric_limits
 
 #ifdef VISP_HAVE_EIGEN3
 #include <Eigen/SVD>
@@ -72,7 +72,7 @@ typedef int integer;
 extern "C" int dgesdd_(char *jobz, integer *m, integer *n, double *a, integer *lda, double *s, double *u, integer *ldu,
                        double *vt, integer *ldvt, double *work, integer *lwork, integer *iwork, integer *info);
 
-#include <stdio.h>
+// #include <stdio.h>
 #include <string.h>
 #  endif
 #endif

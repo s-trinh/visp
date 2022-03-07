@@ -45,23 +45,23 @@
 #include <visp3/visual_features/vpFeatureLine.h>
 
 // Exception
-#include <visp3/core/vpException.h>
+// #include <visp3/core/vpException.h>
 #include <visp3/visual_features/vpFeatureException.h>
 
 // Debug trace
 #include <visp3/core/vpDebug.h>
 
 // simple math function (round)
-#include <visp3/core/vpMath.h>
+// #include <visp3/core/vpMath.h>
 
 // Display Issue
 
 // Meter/pixel conversion
-#include <visp3/core/vpCameraParameters.h>
+// #include <visp3/core/vpCameraParameters.h>
 
 // Color / image / display
-#include <visp3/core/vpColor.h>
-#include <visp3/core/vpImage.h>
+// #include <visp3/core/vpColor.h>
+// #include <visp3/core/vpImage.h>
 
 #include <visp3/core/vpFeatureDisplay.h>
 

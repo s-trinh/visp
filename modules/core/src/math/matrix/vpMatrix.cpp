@@ -43,9 +43,9 @@
 #include <algorithm>
 #include <assert.h>
 #include <cmath> // std::fabs
-#include <fstream>
+// #include <fstream>
 #include <limits> // numeric_limits
-#include <sstream>
+// #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -53,7 +53,7 @@
 #include <vector>
 
 #include <visp3/core/vpConfig.h>
-#include <visp3/core/vpCPUFeatures.h>
+// #include <visp3/core/vpCPUFeatures.h>
 #include <visp3/core/vpColVector.h>
 #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpException.h>
@@ -61,7 +61,8 @@
 #include <visp3/core/vpMatrix.h>
 #include <visp3/core/vpTranslationVector.h>
 
-#include <Simd/SimdLib.hpp>
+// #include <Simd/SimdLib.hpp>
+#include "Simd/SimdLib.h"                      // for SimdMatMulTwist, SimdM...
 
 #ifdef VISP_HAVE_LAPACK
 #  ifdef VISP_HAVE_GSL

@@ -45,7 +45,7 @@
   Defines a robot just to show which function you must implement.
 */
 
-#include <visp3/core/vpHomogeneousMatrix.h>
+// #include <visp3/core/vpHomogeneousMatrix.h>
 #include <visp3/robot/vpRobotTemplate.h>
 
 /*!

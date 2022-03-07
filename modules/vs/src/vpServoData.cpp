@@ -44,9 +44,11 @@
 // Servo
 #include <visp3/vs/vpServo.h>
 
-#include <visp3/core/vpIoException.h>
+// #include <visp3/core/vpIoException.h>
 #include <visp3/core/vpIoTools.h>
 #include <visp3/vs/vpServoData.h>
+
+#include "visp3/core/vpDebug.h"
 
 void vpServoData::open(const char *directory)
 {

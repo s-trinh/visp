@@ -45,17 +45,17 @@
 #define vpMeEllipse_HH
 
 #include <visp3/core/vpColVector.h>
-#include <visp3/core/vpMatrix.h>
+// #include <visp3/core/vpMatrix.h>
 
 #include <visp3/core/vpImagePoint.h>
-#include <visp3/me/vpMeSite.h>
+// #include <visp3/me/vpMeSite.h>
 #include <visp3/me/vpMeTracker.h>
 
 #include <visp3/core/vpColor.h>
-#include <visp3/core/vpImage.h>
+// #include <visp3/core/vpImage.h>
 
 #include <list>
-#include <math.h>
+// #include <math.h>
 
 /*!
   \class vpMeEllipse

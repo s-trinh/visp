@@ -45,7 +45,7 @@
 #include <cmath>
 #include <functional>
 #include <numeric>
-#include <stdint.h>
+// #include <stdint.h>
 
 #include <visp3/core/vpException.h>
 #include <visp3/core/vpMath.h>

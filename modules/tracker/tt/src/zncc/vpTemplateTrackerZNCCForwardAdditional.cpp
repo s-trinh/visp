@@ -40,6 +40,8 @@
 #include <visp3/core/vpImageFilter.h>
 #include <visp3/tt/vpTemplateTrackerZNCCForwardAdditional.h>
 
+#include "visp3/tt/vpTemplateTrackerWarp.h"    // for vpTemplateTrackerWarp
+
 vpTemplateTrackerZNCCForwardAdditional::vpTemplateTrackerZNCCForwardAdditional(vpTemplateTrackerWarp *warp)
   : vpTemplateTrackerZNCC(warp)
 {

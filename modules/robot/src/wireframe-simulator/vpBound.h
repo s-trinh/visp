@@ -44,8 +44,8 @@
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-#include "vpArit.h"
-#include "vpMy.h"
+// #include "vpArit.h"
+// #include "vpMy.h"
 #include <visp3/robot/vpWireFrameSimulatorTypes.h>
 
 #define START_ARG 0

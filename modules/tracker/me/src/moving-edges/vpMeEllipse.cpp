@@ -44,7 +44,7 @@
 #include <visp3/core/vpRobust.h>
 #include <visp3/me/vpMe.h>
 
-#include <cmath>  // std::fabs
+// #include <cmath>  // std::fabs
 #include <limits> // numeric_limits
 #include <vector>
 

@@ -40,7 +40,7 @@
 
 #ifdef VISP_MOMENTS_COMBINE_MATRICES
 
-#include <limits>
+// #include <limits>
 #include <vector>
 
 #include <visp3/core/vpMomentObject.h>
@@ -80,7 +80,7 @@ void vpFeatureMomentGravityCenter::compute_interaction()
 
 #else
 
-#include <limits>
+// #include <limits>
 #include <vector>
 
 #include <visp3/core/vpMomentCentered.h>

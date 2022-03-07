@@ -38,6 +38,10 @@
 
 #include <visp3/core/vpClient.h>
 
+#include "visp3/core/vpTime.h"     // for wait
+
+#include <netdb.h>                 // for gethostbyname, hostent, h_addr
+
 // inet_ntop() not supported on win XP
 #ifdef VISP_HAVE_FUNC_INET_NTOP
 

@@ -52,7 +52,7 @@
 #include <visp3/vision/vpHomography.h>
 
 #include <cmath>  // std::fabs
-#include <limits> // numeric_limits
+// #include <limits> // numeric_limits
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 const double eps = 1e-6;

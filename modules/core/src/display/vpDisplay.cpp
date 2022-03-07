@@ -37,15 +37,15 @@
  *
  *****************************************************************************/
 
-#include <limits>
+// #include <limits>
 
 #include <visp3/core/vpDisplay.h>
-#include <visp3/core/vpDisplayException.h>
+// #include <visp3/core/vpDisplayException.h>
 #include <visp3/core/vpImageConvert.h>
 
-#include <visp3/core/vpMath.h>
-#include <visp3/core/vpMeterPixelConversion.h>
-#include <visp3/core/vpPoint.h>
+// #include <visp3/core/vpMath.h>
+// #include <visp3/core/vpMeterPixelConversion.h>
+// #include <visp3/core/vpPoint.h>
 
 /*!
   \file vpDisplay.cpp

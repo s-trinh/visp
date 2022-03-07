@@ -36,8 +36,8 @@
  *
  *****************************************************************************/
 
-#include <iostream>
-#include <typeinfo>
+// #include <iostream>
+// #include <typeinfo>
 #include <visp3/core/vpConfig.h>
 #include <visp3/visual_features/vpFeatureMoment.h>
 #include <visp3/visual_features/vpFeatureMomentDatabase.h>

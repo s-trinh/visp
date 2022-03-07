@@ -44,8 +44,8 @@
 
 #include <visp3/core/vpKalmanFilter.h>
 
-#include <math.h>
-#include <stdlib.h>
+// #include <math.h>
+// #include <stdlib.h>
 
 /*!
   Initialize the Kalman filter.

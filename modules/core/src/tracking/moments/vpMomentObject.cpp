@@ -36,10 +36,10 @@
  *
  *****************************************************************************/
 
-#include <stdexcept>
+// #include <stdexcept>
 #include <visp3/core/vpCameraParameters.h>
 #include <visp3/core/vpConfig.h>
-#include <visp3/core/vpMomentBasic.h>
+// #include <visp3/core/vpMomentBasic.h>
 #include <visp3/core/vpMomentObject.h>
 #include <visp3/core/vpPixelMeterConversion.h>
 

@@ -38,6 +38,8 @@
 
 #include <visp3/core/vpNetwork.h>
 
+#include <netdb.h>                 // for gethostbyname, h_addr, hostent
+
 // inet_ntop() not supported on win XP
 #ifdef VISP_HAVE_FUNC_INET_NTOP
 

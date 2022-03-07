@@ -44,7 +44,7 @@
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-#include <stdio.h>
+// #include <stdio.h>
 
 #include "vpArit.h"
 #include "vpLex.h"

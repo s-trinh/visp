@@ -42,12 +42,12 @@
 
 #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpImagePoint.h>
-#include <visp3/core/vpRobust.h>
+// #include <visp3/core/vpRobust.h>
 #include <visp3/core/vpTrackingException.h>
 #include <visp3/me/vpMe.h>
 
 #include <algorithm> // (std::min)
-#include <cmath>     // std::fabs
+// #include <cmath>     // std::fabs
 #include <limits>    // numeric_limits
 
 /*!

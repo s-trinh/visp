@@ -45,11 +45,15 @@
 */
 
 #include <visp3/core/vpColor.h>
-#include <visp3/core/vpImage.h>
+// #include <visp3/core/vpImage.h>
 #include <visp3/core/vpImagePoint.h>
-#include <visp3/core/vpRect.h>
+// #include <visp3/core/vpRect.h>
 
 #include <vector>
+
+#include "visp3/core/vpDebug.h"       // for vpTRACE
+
+template <class Type> class vpImage;
 
 /*!
   \class vpBasicKeyPoint

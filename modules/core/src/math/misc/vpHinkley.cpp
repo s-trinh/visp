@@ -53,8 +53,8 @@
 #include <cmath> // std::fabs
 #include <iostream>
 #include <limits> // numeric_limits
-#include <stdio.h>
-#include <stdlib.h>
+// #include <stdio.h>
+// #include <stdlib.h>
 
 /* VP_DEBUG_MODE fixed by configure:
    1:

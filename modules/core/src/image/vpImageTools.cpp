@@ -36,7 +36,7 @@
  *
  *****************************************************************************/
 
-#include <visp3/core/vpCPUFeatures.h>
+// #include <visp3/core/vpCPUFeatures.h>
 #include <visp3/core/vpImageConvert.h>
 #include <visp3/core/vpImageTools.h>
 

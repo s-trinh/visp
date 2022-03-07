@@ -44,7 +44,7 @@
 
 #include <iostream>
 #include <stdio.h>
-#include <string.h>
+// #include <string.h>
 #include <vector>
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
 #include <sys/select.h>
@@ -55,10 +55,10 @@
 
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
 #  include <arpa/inet.h>
-#  include <netdb.h>
+// #  include <netdb.h>
 #  include <netinet/in.h>
 #  include <sys/socket.h>
-#  include <unistd.h>
+// #  include <unistd.h>
 #else
 #  include <io.h>
 //#  include<winsock.h>

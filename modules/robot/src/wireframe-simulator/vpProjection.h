@@ -44,7 +44,7 @@
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-#include "vpArit.h"
+// #include "vpArit.h"
 #include "vpView.h"
 
 void View_to_Matrix(View_parameters *vp, Matrix m);

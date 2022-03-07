@@ -36,8 +36,8 @@
  *
  *****************************************************************************/
 
-#include <algorithm>
-#include <math.h>
+// #include <algorithm>
+// #include <math.h>
 
 #include <visp3/core/vpColVector.h>
 #include <visp3/core/vpRotationVector.h>

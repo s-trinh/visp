@@ -37,7 +37,7 @@
  *
  *****************************************************************************/
 
-#include <visp3/core/vpMomentDatabase.h>
+// #include <visp3/core/vpMomentDatabase.h>
 #include <visp3/visual_features/vpFeatureMomentCommon.h>
 
 /*!

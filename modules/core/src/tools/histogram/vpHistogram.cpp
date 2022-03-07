@@ -48,7 +48,7 @@
 #include <stdlib.h>
 #include <visp3/core/vpDisplay.h>
 #include <visp3/core/vpHistogram.h>
-#include <visp3/core/vpImageConvert.h>
+// #include <visp3/core/vpImageConvert.h>
 
 #if defined(VISP_HAVE_PTHREAD) || (defined(_WIN32) && !defined(WINRT_8_0))
 #include <visp3/core/vpThread.h>

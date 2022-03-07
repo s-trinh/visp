@@ -41,7 +41,7 @@
   \brief Implementation of a wire frame simulator.
 */
 
-#include <fcntl.h>
+// #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <vector>
@@ -51,19 +51,19 @@
 #include "vpBound.h"
 #include "vpClipping.h"
 #include "vpCoreDisplay.h"
-#include "vpKeyword.h"
-#include "vpLex.h"
+// #include "vpKeyword.h"
+// #include "vpLex.h"
 #include "vpMy.h"
-#include "vpParser.h"
+// #include "vpParser.h"
 #include "vpProjection.h"
 #include "vpRfstack.h"
 #include "vpScene.h"
 #include "vpTmstack.h"
-#include "vpToken.h"
+// #include "vpToken.h"
 #include "vpView.h"
 #include "vpVwstack.h"
 
-#include <visp3/core/vpCameraParameters.h>
+// #include <visp3/core/vpCameraParameters.h>
 #include <visp3/core/vpException.h>
 #include <visp3/core/vpIoTools.h>
 #include <visp3/core/vpMeterPixelConversion.h>

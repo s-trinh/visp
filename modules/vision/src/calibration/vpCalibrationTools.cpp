@@ -38,12 +38,12 @@
  *****************************************************************************/
 
 #include <visp3/core/vpMath.h>
-#include <visp3/core/vpPixelMeterConversion.h>
+// #include <visp3/core/vpPixelMeterConversion.h>
 #include <visp3/vision/vpCalibration.h>
-#include <visp3/vision/vpPose.h>
+// #include <visp3/vision/vpPose.h>
 
 #include <cmath>  // std::fabs
-#include <limits> // numeric_limits
+// #include <limits> // numeric_limits
 
 #define DEBUG_LEVEL1 0
 #define DEBUG_LEVEL2 0

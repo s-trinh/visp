@@ -45,8 +45,8 @@
 #if defined(VISP_HAVE_DISPLAY)
 
 // Meter/pixel conversion
-#include <visp3/core/vpCameraParameters.h>
-#include <visp3/core/vpMath.h>
+// #include <visp3/core/vpCameraParameters.h>
+// #include <visp3/core/vpMath.h>
 #include <visp3/core/vpMeterPixelConversion.h>
 #include <visp3/core/vpPoint.h>
 

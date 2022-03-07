@@ -40,6 +40,9 @@
 #include <visp3/core/vpImageFilter.h>
 #include <visp3/tt/vpTemplateTrackerSSDESM.h>
 
+#include "visp3/tt/vpTemplateTrackerWarp.h"    // for vpTemplateTrackerWarp
+#include "visp3/core/vpTrackingException.h"                     // for vpTra...
+
 vpTemplateTrackerSSDESM::vpTemplateTrackerSSDESM(vpTemplateTrackerWarp *warp)
   : vpTemplateTrackerSSD(warp), compoInitialised(false), HDir(), HInv(), HLMDir(), HLMInv(), GDir(), GInv()
 {

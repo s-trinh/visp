@@ -42,6 +42,8 @@
 #include <visp3/core/vpImageFilter.h>
 #include <visp3/tt/vpTemplateTrackerZNCCInverseCompositional.h>
 
+#include "visp3/tt/vpTemplateTrackerWarp.h"    // for vpTemplateTrackerWarp
+
 vpTemplateTrackerZNCCInverseCompositional::vpTemplateTrackerZNCCInverseCompositional(vpTemplateTrackerWarp *warp)
   : vpTemplateTrackerZNCC(warp), compoInitialised(false), moydIrefdp()
 {

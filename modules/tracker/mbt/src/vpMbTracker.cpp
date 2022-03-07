@@ -47,7 +47,8 @@
 #include <iostream>
 #include <limits>
 
-#include <Simd/SimdLib.hpp>
+// #include <Simd/SimdLib.hpp>
+#include "Simd/SimdLib.h"                       // for SimdComputeJtR
 
 #include <visp3/core/vpColVector.h>
 #include <visp3/core/vpDisplay.h>
@@ -68,8 +69,8 @@
 #ifdef VISP_HAVE_MODULE_IO
 #include <visp3/io/vpImageIo.h>
 #endif
-#include <visp3/core/vpCPUFeatures.h>
-#include <visp3/core/vpIoTools.h>
+// #include <visp3/core/vpCPUFeatures.h>
+// #include <visp3/core/vpIoTools.h>
 #include <visp3/core/vpMatrixException.h>
 #include <visp3/core/vpTrackingException.h>
 #include <visp3/mbt/vpMbTracker.h>

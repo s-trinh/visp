@@ -37,10 +37,10 @@
  *****************************************************************************/
 
 #include <iostream>
-#include <typeinfo>
+// #include <typeinfo>
 #include <visp3/core/vpMoment.h>
 #include <visp3/core/vpMomentDatabase.h>
-#include <visp3/core/vpMomentObject.h>
+// #include <visp3/core/vpMomentObject.h>
 
 /*!
         Adds a moment to the database.

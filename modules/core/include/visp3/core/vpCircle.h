@@ -44,11 +44,11 @@
 #ifndef vpCircle_hh
 #define vpCircle_hh
 
-#include <math.h>
+// #include <math.h>
 #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpForwardProjection.h>
 #include <visp3/core/vpHomogeneousMatrix.h>
-#include <visp3/core/vpMath.h>
+// #include <visp3/core/vpMath.h>
 
 /*!
   \class vpCircle

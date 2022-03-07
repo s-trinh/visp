@@ -37,10 +37,10 @@
  *
  *****************************************************************************/
 
-#include <float.h>
+// #include <float.h>
 #include <limits> // numeric_limits
 #include <math.h>
-#include <string.h>
+// #include <string.h>
 
 // besoin de la librairie mathematique, en particulier des
 // fonctions de minimisation de Levenberg Marquartd

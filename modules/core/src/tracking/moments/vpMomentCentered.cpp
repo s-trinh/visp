@@ -37,10 +37,12 @@
  *****************************************************************************/
 
 #include <cassert>
-#include <exception>
+// #include <exception>
 #include <visp3/core/vpMomentCentered.h>
 #include <visp3/core/vpMomentGravityCenter.h>
 #include <visp3/core/vpMomentObject.h>
+
+#include "visp3/core/vpMomentDatabase.h"       // for vpMomentDatabase
 
 /*!
   To set the values of centred moments. Required when normalizing the moment

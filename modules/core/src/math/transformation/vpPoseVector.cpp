@@ -45,12 +45,12 @@
 */
 
 #include <assert.h>
-#include <sstream>
+// #include <sstream>
 
 #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpException.h>
 #include <visp3/core/vpMath.h>
-#include <visp3/core/vpMatrixException.h>
+// #include <visp3/core/vpMatrixException.h>
 #include <visp3/core/vpPoseVector.h>
 
 /*!

@@ -38,12 +38,12 @@
  *****************************************************************************/
 
 #include <cmath>     // For std::abs() on iOS
-#include <cstdlib>   // For std::abs() on iOS
+// #include <cstdlib>   // For std::abs() on iOS
 #include <algorithm> // for (std::min) and (std::max)
 #include <visp3/core/vpConfig.h>
 
 #include <visp3/core/vpColVector.h>
-#include <visp3/core/vpMath.h>
+// #include <visp3/core/vpMath.h>
 #include <visp3/core/vpMatrix.h>
 
 // Exception

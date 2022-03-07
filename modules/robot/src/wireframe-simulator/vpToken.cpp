@@ -38,7 +38,7 @@
  *****************************************************************************/
 
 #include "vpToken.h"
-#include "vpMy.h"
+// #include "vpMy.h"
 
 #include <visp3/core/vpConfig.h>
 

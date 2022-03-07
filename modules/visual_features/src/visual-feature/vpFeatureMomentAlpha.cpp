@@ -40,11 +40,13 @@
 #include <visp3/core/vpMomentGravityCenter.h>
 #include <visp3/core/vpMomentObject.h>
 #include <visp3/visual_features/vpFeatureMomentAlpha.h>
-#include <visp3/visual_features/vpFeatureMomentCentered.h>
-#include <visp3/visual_features/vpFeatureMomentDatabase.h>
+// #include <visp3/visual_features/vpFeatureMomentCentered.h>
+// #include <visp3/visual_features/vpFeatureMomentDatabase.h>
 
-#include <limits>
+// #include <limits>
 #include <vector>
+
+#include "visp3/core/vpMomentDatabase.h"                 // for vpMomentData...
 
 #ifdef VISP_MOMENTS_COMBINE_MATRICES
 

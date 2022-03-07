@@ -44,8 +44,8 @@
 #ifndef vpMbtMeEllipse_HH
 #define vpMbtMeEllipse_HH
 
-#include <list>
-#include <math.h>
+// #include <list>
+// #include <math.h>
 
 #include <visp3/me/vpMeEllipse.h>
 

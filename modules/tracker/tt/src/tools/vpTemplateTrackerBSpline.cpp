@@ -39,6 +39,9 @@
  *****************************************************************************/
 #include <visp3/tt/vpTemplateTrackerBSpline.h>
 
+#include "visp3/core/vpImage.h"  // for vpImage
+#include "visp3/core/vpMath.h"   // for vpMath
+
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 double vpTemplateTrackerBSpline::getSubPixBspline4(const vpImage<double> &I, double r, double t)

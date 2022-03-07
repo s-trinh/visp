@@ -45,16 +45,16 @@
 #ifndef vpTemplateTrackerSSD_hh
 #define vpTemplateTrackerSSD_hh
 
-#include <math.h>
+// #include <math.h>
 
-#include <visp3/core/vpDisplay.h>
-#include <visp3/core/vpImage.h>
-#include <visp3/core/vpImageFilter.h>
-#include <visp3/core/vpImageTools.h>
-#include <visp3/core/vpIoTools.h>
-#include <visp3/core/vpMath.h>
+// #include <visp3/core/vpDisplay.h>
+// #include <visp3/core/vpImage.h>
+// #include <visp3/core/vpImageFilter.h>
+// #include <visp3/core/vpImageTools.h>
+// #include <visp3/core/vpIoTools.h>
+// #include <visp3/core/vpMath.h>
 #include <visp3/tt/vpTemplateTracker.h>
-#include <visp3/vision/vpHomography.h>
+// #include <visp3/vision/vpHomography.h>
 
 /*!
   \class vpTemplateTrackerSSD

@@ -51,7 +51,7 @@
 #include <visp3/core/vpMath.h>
 #include <visp3/core/vpTrackingException.h>
 
-#include <cmath> // std::fabs
+// #include <cmath> // std::fabs
 #include <iostream>
 #include <limits> // numeric_limits
 #include <math.h>

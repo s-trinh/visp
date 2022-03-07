@@ -45,10 +45,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <iostream>
+// #include <iostream>
 #include <utility>
 
-#include <visp3/core/vpMeterPixelConversion.h>
+// #include <visp3/core/vpMeterPixelConversion.h>
 #include <visp3/mbt/vpMbScanLine.h>
 
 #if defined(DEBUG_DISP)

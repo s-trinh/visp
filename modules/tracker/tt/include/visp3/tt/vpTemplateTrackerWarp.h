@@ -45,11 +45,18 @@
 #ifndef vpTemplateTrackerWarp_hh
 #define vpTemplateTrackerWarp_hh
 
-#include <visp3/core/vpDisplay.h>
-#include <visp3/core/vpTrackingException.h>
-#include <visp3/tt/vpTemplateTrackerHeader.h>
-#include <visp3/tt/vpTemplateTrackerTriangle.h>
-#include <visp3/tt/vpTemplateTrackerZone.h>
+// #include <visp3/core/vpDisplay.h>
+// #include <visp3/core/vpTrackingException.h>
+// #include <visp3/tt/vpTemplateTrackerHeader.h>
+// #include <visp3/tt/vpTemplateTrackerTriangle.h>
+// #include <visp3/tt/vpTemplateTrackerZone.h>
+
+#include "visp3/core/vpConfig.h"     // for VISP_EXPORT
+#include "visp3/core/vpColVector.h"  // for vpColVector
+
+class vpMatrix;
+class vpTemplateTrackerTriangle;
+class vpTemplateTrackerZone;
 
 /*!
   \class vpTemplateTrackerWarp

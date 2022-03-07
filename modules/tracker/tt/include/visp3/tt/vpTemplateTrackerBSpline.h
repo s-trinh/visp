@@ -46,8 +46,10 @@
 #define vpTemplateTrackerBSpline_hh
 
 #include <visp3/core/vpConfig.h>
-#include <visp3/core/vpImage.h>
-#include <visp3/core/vpMath.h>
+// #include <visp3/core/vpImage.h>
+// #include <visp3/core/vpMath.h>
+
+template <class Type> class vpImage;
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 

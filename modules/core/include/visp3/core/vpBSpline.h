@@ -48,7 +48,7 @@
 
 #include <list>
 #include <vector>
-#include <visp3/core/vpMatrix.h>
+// #include <visp3/core/vpMatrix.h>
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 

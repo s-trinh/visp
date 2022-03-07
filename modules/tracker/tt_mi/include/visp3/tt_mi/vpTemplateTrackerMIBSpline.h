@@ -47,10 +47,10 @@
 
 #include <visp3/core/vpConfig.h>
 
-#include <visp3/core/vpImage.h>
-#include <visp3/core/vpMath.h>
-#include <visp3/tt/vpTemplateTrackerBSpline.h>
-#include <visp3/tt/vpTemplateTrackerHeader.h>
+// #include <visp3/core/vpImage.h>
+// #include <visp3/core/vpMath.h>
+// #include <visp3/tt/vpTemplateTrackerBSpline.h>
+// #include <visp3/tt/vpTemplateTrackerHeader.h>
 
 #include <visp3/tt_mi/vpTemplateTrackerMI.h>
 

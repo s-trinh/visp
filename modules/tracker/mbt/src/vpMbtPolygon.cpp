@@ -39,7 +39,7 @@
  *
  *****************************************************************************/
 
-#include <limits.h>
+// #include <limits.h>
 
 #include <visp3/core/vpConfig.h>
 /*!

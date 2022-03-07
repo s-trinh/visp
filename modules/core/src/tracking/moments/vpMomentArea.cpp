@@ -35,7 +35,7 @@
  * Manikandan Bakthavatchalam
  *
  *****************************************************************************/
-#include <cmath>
+// #include <cmath>
 #include <visp3/core/vpMomentArea.h>
 #include <visp3/core/vpMomentCentered.h>
 #include <visp3/core/vpMomentDatabase.h>

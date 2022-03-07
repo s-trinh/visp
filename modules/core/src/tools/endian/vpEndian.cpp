@@ -37,7 +37,7 @@
   \file vpEndian.cpp
   \brief Functions for correct endianness handling.
 */
-#include <stdexcept>
+// #include <stdexcept>
 #include <visp3/core/vpEndian.h>
 
 namespace vpEndian

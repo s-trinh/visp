@@ -39,6 +39,8 @@
  *****************************************************************************/
 #include <visp3/tt/vpTemplateTrackerZNCC.h>
 
+#include "visp3/tt/vpTemplateTrackerWarp.h"    // for vpTemplateTrackerWarp
+
 vpTemplateTrackerZNCC::vpTemplateTrackerZNCC(vpTemplateTrackerWarp *warp) : vpTemplateTracker(warp), DI(), temp()
 {
   dW.resize(2, nbParam);

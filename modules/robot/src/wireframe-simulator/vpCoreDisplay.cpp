@@ -45,11 +45,13 @@
 #include <stdlib.h>
 
 #include "vpCoreDisplay.h"
-#include "vpImstack.h"
+// #include "vpImstack.h"
 #include "vpMy.h"
-#include "vpRfstack.h"
+// #include "vpRfstack.h"
 #include "vpView.h"
-#include "vpVwstack.h"
+// #include "vpVwstack.h"
+
+#include "wireframe-simulator/vpBound.h"  // for POINT_NBR
 
 /*
  * POINT2I	:

@@ -40,12 +40,12 @@
 #include <visp3/core/vpConfig.h>
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-#include "vpArit.h"
-#include "vpMy.h"
+// #include "vpArit.h"
+// #include "vpMy.h"
 #include "vpRfstack.h"
 #include "vpView.h"
 #include <stdio.h>
-#include <string.h>
+// #include <string.h>
 #define STACKSIZE 32
 
 static int stack[STACKSIZE] = {vpDEFAULT_REMOVE}; /* pile		*/

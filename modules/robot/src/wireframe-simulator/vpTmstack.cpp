@@ -40,8 +40,8 @@
 
 #include "vpTmstack.h"
 #include "vpArit.h"
-#include "vpMy.h"
-#include <math.h>
+// #include "vpMy.h"
+// #include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <visp3/core/vpConfig.h>

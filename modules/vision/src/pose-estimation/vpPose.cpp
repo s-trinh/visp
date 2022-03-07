@@ -46,7 +46,7 @@ pour faire du calcul de pose par difference methode
 #include <visp3/core/vpCameraParameters.h>
 #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpDisplay.h>
-#include <visp3/core/vpException.h>
+// #include <visp3/core/vpException.h>
 #include <visp3/core/vpMath.h>
 #include <visp3/core/vpMeterPixelConversion.h>
 #include <visp3/vision/vpPose.h>

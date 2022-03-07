@@ -48,7 +48,7 @@
 #include <cmath>     // std::fabs
 #include <limits>    // numeric_limits
 
-#include <visp3/core/vpRobust.h>
+// #include <visp3/core/vpRobust.h>
 #include <visp3/core/vpTrackingException.h>
 #include <visp3/mbt/vpMbtMeLine.h>
 

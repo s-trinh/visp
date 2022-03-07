@@ -41,6 +41,9 @@
 #include <visp3/tt_mi/vpTemplateTrackerMI.h>
 #include <visp3/tt_mi/vpTemplateTrackerMIBSpline.h>
 
+#include "visp3/tt/vpTemplateTrackerWarp.h"    // for vpTemplateTrackerWarp
+#include "visp3/core/vpTrackingException.h"                     // for vpTra...
+
 void vpTemplateTrackerMI::setBspline(const vpBsplineType &newbs)
 {
   bspline = (int)newbs;

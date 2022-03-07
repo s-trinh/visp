@@ -43,7 +43,7 @@
 
 #include <cmath>  // std::fabs
 #include <limits> // numeric_limits
-#include <stdlib.h>
+// #include <stdlib.h>
 #include <visp3/core/vpColVector.h>
 #include <visp3/core/vpMath.h>
 #include <visp3/core/vpScale.h>

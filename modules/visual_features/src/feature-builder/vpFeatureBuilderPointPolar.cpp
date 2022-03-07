@@ -43,7 +43,7 @@
   \brief Conversion between tracker and visual feature point with
   polar coordinates.
 */
-#include <visp3/core/vpException.h>
+// #include <visp3/core/vpException.h>
 #include <visp3/visual_features/vpFeatureBuilder.h>
 #include <visp3/visual_features/vpFeatureException.h>
 

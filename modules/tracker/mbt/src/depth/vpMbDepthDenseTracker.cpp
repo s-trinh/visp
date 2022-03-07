@@ -43,7 +43,7 @@
 
 #include <visp3/core/vpDisplay.h>
 #include <visp3/core/vpExponentialMap.h>
-#include <visp3/core/vpTrackingException.h>
+// #include <visp3/core/vpTrackingException.h>
 #include <visp3/mbt/vpMbDepthDenseTracker.h>
 #include <visp3/mbt/vpMbtXmlGenericParser.h>
 

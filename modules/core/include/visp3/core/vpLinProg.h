@@ -40,7 +40,7 @@
 #define vpLinProgh
 
 #include <cmath>     // For std::abs() on iOS
-#include <cstdlib>   // For std::abs() on iOS
+// #include <cstdlib>   // For std::abs() on iOS
 
 #include <visp3/core/vpConfig.h>
 #include <visp3/core/vpColVector.h>

@@ -52,7 +52,7 @@
 #include <visp3/core/vpVelocityTwistMatrix.h>
 #include <visp3/visual_features/vpBasicFeature.h>
 #include <visp3/vs/vpAdaptiveGain.h>
-#include <visp3/vs/vpServoException.h>
+// #include <visp3/vs/vpServoException.h>
 
 /*!
   \class vpServo

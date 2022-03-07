@@ -37,12 +37,14 @@
  *****************************************************************************/
 
 #include <visp3/core/vpColVector.h>
-#include <visp3/core/vpRansac.h>
+// #include <visp3/core/vpRansac.h>
 #include <visp3/vision/vpHomography.h>
 
-#include <visp3/core/vpDisplay.h>
-#include <visp3/core/vpImage.h>
-#include <visp3/core/vpMeterPixelConversion.h>
+// #include <visp3/core/vpDisplay.h>
+// #include <visp3/core/vpImage.h>
+// #include <visp3/core/vpMeterPixelConversion.h>
+
+#include "visp3/core/vpUniRand.h"       // for vpUniRand
 
 #define vpEps 1e-6
 

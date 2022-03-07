@@ -47,6 +47,8 @@
 #include <cmath>  // std::fabs
 #include <limits> // numeric_limits
 
+#include "visp3/core/vpPoint.h"              // for vpPoint
+
 /*!
   Copy operator.
 */

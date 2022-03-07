@@ -36,11 +36,11 @@
  *
  *****************************************************************************/
 
-#include <limits>
+// #include <limits>
 #include <vector>
 #include <visp3/core/vpMomentObject.h>
 #include <visp3/visual_features/vpFeatureMomentBasic.h>
-#include <visp3/visual_features/vpFeatureMomentDatabase.h>
+// #include <visp3/visual_features/vpFeatureMomentDatabase.h>
 /*!
   Default constructor.
   \param data_base : Database of moment primitives.

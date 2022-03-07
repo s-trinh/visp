@@ -41,6 +41,9 @@
 #include <visp3/tt/vpTemplateTracker.h>
 #include <visp3/tt/vpTemplateTrackerBSpline.h>
 
+#include "visp3/core/vpTrackingException.h"      // for vpTrackingException
+#include "visp3/tt/vpTemplateTrackerWarp.h"      // for vpTemplateTrackerWarp
+
 vpTemplateTracker::vpTemplateTracker(vpTemplateTrackerWarp *_warp)
   : nbLvlPyr(1), l0Pyr(0), pyrInitialised(false), evolRMS(0), x_pos(), y_pos(),
     evolRMS_eps(1e-4), ptTemplate(NULL), ptTemplatePyr(NULL), ptTemplateInit(false),

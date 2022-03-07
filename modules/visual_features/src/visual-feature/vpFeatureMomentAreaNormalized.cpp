@@ -38,7 +38,7 @@
 #include <visp3/core/vpConfig.h>
 
 #ifdef VISP_MOMENTS_COMBINE_MATRICES
-#include <limits>
+// #include <limits>
 #include <vector>
 
 #include <visp3/core/vpMomentAreaNormalized.h>
@@ -47,7 +47,9 @@
 #include <visp3/visual_features/vpFeatureMomentAreaNormalized.h>
 #include <visp3/visual_features/vpFeatureMomentBasic.h>
 #include <visp3/visual_features/vpFeatureMomentCentered.h>
-#include <visp3/visual_features/vpFeatureMomentDatabase.h>
+// #include <visp3/visual_features/vpFeatureMomentDatabase.h>
+
+#include "visp3/core/vpMomentDatabase.h"                          // for vpM...
 
 /*!
   Computes interaction matrix for the normalized surface moment. Called
@@ -104,7 +106,7 @@ void vpFeatureMomentAreaNormalized::compute_interaction()
 
 #else
 
-#include <limits>
+// #include <limits>
 #include <vector>
 
 #include <visp3/core/vpMomentAreaNormalized.h>
@@ -112,7 +114,8 @@ void vpFeatureMomentAreaNormalized::compute_interaction()
 #include <visp3/core/vpMomentGravityCenter.h>
 #include <visp3/core/vpMomentObject.h>
 #include <visp3/visual_features/vpFeatureMomentAreaNormalized.h>
-#include <visp3/visual_features/vpFeatureMomentDatabase.h>
+// #include <visp3/visual_features/vpFeatureMomentDatabase.h>
+#include "visp3/core/vpMomentDatabase.h"                          // for vpM...
 
 /*!
   Computes interaction matrix for the normalized surface moment. Called

@@ -52,6 +52,8 @@
 #include <visp3/visual_features/vpFeatureMomentGravityCenter.h>
 #include <visp3/visual_features/vpFeatureMomentGravityCenterNormalized.h>
 
+#include "visp3/core/vpMomentDatabase.h"                          // for vpM...
+
 /*!
   Computes interaction matrix for centered and normalized moment. Called
   internally. The moment primitives must be computed before calling this. This
@@ -108,6 +110,8 @@ void vpFeatureMomentGravityCenterNormalized::compute_interaction()
 #include <visp3/core/vpMomentObject.h>
 #include <visp3/visual_features/vpFeatureMomentDatabase.h>
 #include <visp3/visual_features/vpFeatureMomentGravityCenterNormalized.h>
+
+#include "visp3/core/vpMomentDatabase.h"                          // for vpM...
 
 /*!
   Computes interaction matrix for centered and normalized moment. Called

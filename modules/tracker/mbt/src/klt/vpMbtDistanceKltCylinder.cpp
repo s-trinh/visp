@@ -38,7 +38,7 @@
 
 #include <visp3/core/vpPolygon.h>
 #include <visp3/mbt/vpMbtDistanceKltCylinder.h>
-#include <visp3/mbt/vpMbtDistanceKltPoints.h>
+// #include <visp3/mbt/vpMbtDistanceKltPoints.h>
 
 #if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
 

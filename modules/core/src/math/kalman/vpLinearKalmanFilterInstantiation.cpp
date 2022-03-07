@@ -46,8 +46,8 @@
 #include <visp3/core/vpException.h>
 #include <visp3/core/vpLinearKalmanFilterInstantiation.h>
 
-#include <math.h>
-#include <stdlib.h>
+// #include <math.h>
+// #include <stdlib.h>
 
 /*!
 

@@ -47,9 +47,11 @@
 #include <visp3/io/vpVideoReader.h>
 
 #include <cctype>
-#include <fstream>
+// #include <fstream>
 #include <iostream>
-#include <limits> // numeric_limits
+// #include <limits> // numeric_limits
+
+#include "visp3/core/vpImageConvert.h"    // for vpImageConvert
 
 /*!
   Basic constructor.

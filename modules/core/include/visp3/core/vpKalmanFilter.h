@@ -43,7 +43,7 @@
 #include <visp3/core/vpColVector.h>
 #include <visp3/core/vpMatrix.h>
 
-#include <math.h>
+// #include <math.h>
 
 /*!
   \file vpKalmanFilter.h

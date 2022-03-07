@@ -40,6 +40,10 @@
 
 #include <visp3/tt_mi/vpTemplateTrackerMIForwardAdditional.h>
 
+#include "visp3/tt/vpTemplateTrackerWarp.h"    // for vpTemplateTrackerWarp
+#include "visp3/core/vpTrackingException.h"                     // for vpTra...
+#include "visp3/tt_mi/vpTemplateTrackerMIBSpline.h"  // for vpTemplateTracke...
+
 #ifdef VISP_HAVE_OPENMP
 #include <omp.h>
 #endif

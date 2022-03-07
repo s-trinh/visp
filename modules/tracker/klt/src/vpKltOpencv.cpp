@@ -49,7 +49,7 @@
 
 #if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020408)
 
-#include <string>
+// #include <string>
 
 #include <visp3/core/vpDisplay.h>
 #include <visp3/core/vpTrackingException.h>

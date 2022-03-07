@@ -36,10 +36,10 @@
  *
  *****************************************************************************/
 
-#include <visp3/core/vpDisplay.h>
+// #include <visp3/core/vpDisplay.h>
 #include <visp3/core/vpException.h>
-#include <visp3/core/vpHomogeneousMatrix.h>
-#include <visp3/core/vpImageConvert.h>
+// #include <visp3/core/vpHomogeneousMatrix.h>
+// #include <visp3/core/vpImageConvert.h>
 #include <visp3/core/vpImageFilter.h>
 #include <visp3/core/vpMatrix.h>
 #include <visp3/core/vpPixelMeterConversion.h>

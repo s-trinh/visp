@@ -46,7 +46,7 @@
 
 #include <visp3/core/vpException.h>
 
-#include <iostream> /* Classe std::ostream.    */
+// #include <iostream> /* Classe std::ostream.    */
 #include <string>   /* Classe string.     */
 
 /*!

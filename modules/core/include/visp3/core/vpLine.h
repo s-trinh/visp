@@ -45,7 +45,7 @@
 */
 
 #include <visp3/core/vpHomogeneousMatrix.h>
-#include <visp3/core/vpMatrix.h>
+// #include <visp3/core/vpMatrix.h>
 
 #include <visp3/core/vpForwardProjection.h>
 

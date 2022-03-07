@@ -36,8 +36,8 @@
  *
  *****************************************************************************/
 #include <cassert>
-#include <limits>
-#include <limits> // numeric_limits
+// #include <limits>
+// #include <limits> // numeric_limits
 #include <vector>
 #include <visp3/core/vpConfig.h>
 

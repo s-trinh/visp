@@ -45,12 +45,14 @@
 #ifndef vpTemplateTracker_hh
 #define vpTemplateTracker_hh
 
-#include <math.h>
+// #include <math.h>
 
 #include <visp3/core/vpImageFilter.h>
-#include <visp3/tt/vpTemplateTrackerHeader.h>
-#include <visp3/tt/vpTemplateTrackerWarp.h>
+// #include <visp3/tt/vpTemplateTrackerHeader.h>
+// #include <visp3/tt/vpTemplateTrackerWarp.h>
 #include <visp3/tt/vpTemplateTrackerZone.h>
+
+class vpTemplateTrackerWarp;
 
 /*!
   \class vpTemplateTracker
