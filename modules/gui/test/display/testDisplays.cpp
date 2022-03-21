@@ -46,6 +46,7 @@
 #if (defined(VISP_HAVE_GTK) || defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_D3D9) ||          \
      defined(VISP_HAVE_OPENCV))
 
+#include <visp3/core/vpCameraParameters.h>
 #include <visp3/core/vpImage.h>
 #include <visp3/core/vpIoTools.h>
 #include <visp3/core/vpRect.h>

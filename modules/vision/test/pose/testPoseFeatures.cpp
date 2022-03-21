@@ -47,6 +47,7 @@
 #include <visp3/core/vpPoint.h>
 #include <visp3/vision/vpPose.h>
 #include <visp3/vision/vpPoseFeatures.h>
+#include <visp3/visual_features/vpFeatureBuilder.h>
 
 /*!
   \example testPoseFeatures.cpp

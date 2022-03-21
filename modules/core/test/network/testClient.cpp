@@ -44,6 +44,7 @@
 
 #include <iostream>
 #include <visp3/core/vpClient.h>
+#include <visp3/core/vpException.h>
 
 int main()
 {

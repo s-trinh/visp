@@ -41,6 +41,8 @@
 #include <iostream>
 #include <visp3/core/vpImageDraw.h>
 #include <visp3/core/vpFont.h>
+#include <visp3/core/vpCameraParameters.h>
+#include <visp3/core/vpRect.h>
 #include <visp3/io/vpImageIo.h>
 
 int main(int argc ,char *argv[])
