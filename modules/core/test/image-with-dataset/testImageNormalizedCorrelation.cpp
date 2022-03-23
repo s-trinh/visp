@@ -41,6 +41,7 @@
 #include <visp3/core/vpImage.h>
 #include <visp3/core/vpIoTools.h>
 #include <visp3/core/vpImageTools.h>
+#include <visp3/core/vpImageConvert.h>
 #include <visp3/io/vpVideoReader.h>
 #include <visp3/io/vpParseArgv.h>
 #include <visp3/gui/vpDisplayX.h>

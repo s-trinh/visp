@@ -38,7 +38,9 @@
 
 #include <visp3/core/vpServer.h>
 
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
 #include <unistd.h>                // for close, ssize_t
+#endif
 #include "visp3/core/vpDebug.h"    // for vpERROR_TRACE
 
 // inet_ntop() not supported on win XP

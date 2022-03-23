@@ -38,6 +38,7 @@
 
 #include "vpArit.h"
 #include "vpMy.h"
+#define _USE_MATH_DEFINES // for C see: https://docs.microsoft.com/en-us/cpp/c-runtime-library/math-constants
 #include <math.h>
 #include <stdio.h>
 #include <string.h>

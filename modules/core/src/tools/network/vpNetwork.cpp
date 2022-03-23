@@ -38,7 +38,9 @@
 
 #include <visp3/core/vpNetwork.h>
 
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
 #include <netdb.h>                 // for gethostbyname, h_addr, hostent
+#endif
 
 // inet_ntop() not supported on win XP
 #ifdef VISP_HAVE_FUNC_INET_NTOP
