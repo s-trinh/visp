@@ -59,7 +59,7 @@
 #include <visp3/core/vpIoTools.h>
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
 #include <dirent.h>
-// #include <unistd.h>
+#include <unistd.h>
 #elif defined(_WIN32)
 #include <direct.h>
 #include <windows.h>

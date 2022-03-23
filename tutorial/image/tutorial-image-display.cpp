@@ -1,4 +1,5 @@
 //! \example tutorial-image-display.cpp
+#include <visp3/core/vpImage.h>
 #include <visp3/gui/vpDisplayGDI.h>
 #include <visp3/gui/vpDisplayX.h>
 

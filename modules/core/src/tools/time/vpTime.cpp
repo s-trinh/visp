@@ -57,7 +57,7 @@
 // Unix depend version
 
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
-// #include <sys/time.h>
+#include <sys/time.h>
 #include <unistd.h>
 #elif defined(_WIN32)
 //#include <winbase.h>
