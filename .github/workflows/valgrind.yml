@@ -40,7 +40,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_DEMOS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_TUTORIALS=OFF
         cat ViSP-third-party.txt
 
     - name: Compile
