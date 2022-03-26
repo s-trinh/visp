@@ -80,7 +80,7 @@ jobs:
       run: |
         pwd
         mkdir build && cd build
-        cmake ..
+        cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
         cat ViSP-third-party.txt
 
     - name: Compile
@@ -89,4 +89,7 @@ jobs:
 
     - name: Run unit tests
       working-directory: build
-      run: ctest -j$(nproc) --output-on-failure
+      run: |
+        cd modules/core/
+        gdb -x ../../../gdbinit ./testColorConversion
+        ctest -j$(nproc) --output-on-failure

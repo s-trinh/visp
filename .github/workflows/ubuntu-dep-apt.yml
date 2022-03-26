@@ -60,7 +60,7 @@ jobs:
         echo "CC: $CC"
         echo "CXX: $CXX"
         echo "Standard: $CXX_STANDARD"
-        cmake .. -DCMAKE_C_COMPILER="${CC}" -DCMAKE_CXX_COMPILER="${CXX}" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/tmp/usr/local -DCMAKE_VERBOSE_MAKEFILE=ON -DUSE_CXX_STANDARD=$CXX_STANDARD
+        cmake .. -DCMAKE_C_COMPILER="${CC}" -DCMAKE_CXX_COMPILER="${CXX}" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=/tmp/usr/local -DCMAKE_VERBOSE_MAKEFILE=ON -DUSE_CXX_STANDARD=$CXX_STANDARD
         cat ViSP-third-party.txt
 
     - name: Compile
@@ -70,36 +70,8 @@ jobs:
 
     - name: Run unit tests
       working-directory: build
-      run: ctest -j$(nproc) --output-on-failure
-
-    - name: ViSP as 3rdparty with cmake
       run: |
-        cd ${HOME}/visp_sample
-        mkdir visp_sample-build
-        cd visp_sample-build
-        CC=${{ matrix.compiler.CC }}
-        CXX=${{ matrix.compiler.CXX }}
-        cmake .. -DCMAKE_C_COMPILER="${CC}" -DCMAKE_CXX_COMPILER="${CXX}" -DVISP_DIR=/tmp/usr/local/lib/cmake/visp -DCMAKE_VERBOSE_MAKEFILE=ON
-        make -j$(nproc)
+        cd modules/core/
+        gdb -x ../../../gdbinit ./testColorConversion
+        ctest -j$(nproc) --output-on-failure
 
-    - name: ViSP as 3rdparty with visp.pc and pkg-config
-      run: |
-        cd ${HOME}/visp_sample
-        export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/tmp/usr/local/lib/pkgconfig
-        CC=${{ matrix.compiler.CC }}
-        CXX=${{ matrix.compiler.CXX }}
-        pkg-config --cflags visp
-        pkg-config --libs visp
-        make CXX=${{ matrix.compiler.CXX }} -j$(nproc) -f Makefile.visp.pc
-        make CXX=${{ matrix.compiler.CXX }} -j$(nproc) -f Makefile.visp.pc clean
-
-    - name: ViSP as 3rdparty with visp-config
-      run: |
-        cd ${HOME}/visp_sample
-        export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/tmp/usr/local/lib/pkgconfig
-        CC=${{ matrix.compiler.CC }}
-        CXX=${{ matrix.compiler.CXX }}
-        /tmp/usr/local/bin/visp-config --cflags
-        /tmp/usr/local/bin/visp-config --libs
-        make CXX=${{ matrix.compiler.CXX }} -j$(nproc) -f Makefile.visp-config
-        make CXX=${{ matrix.compiler.CXX }} -j$(nproc) -f Makefile.visp-config clean
