@@ -74,5 +74,4 @@ jobs:
         cd modules/core/
         gdb -x ../../../gdbinit ./testColorConversion
         ctest -j$(nproc) --output-on-failure
-        cd modules/core
         valgrind --leak-check=full --track-origins=yes --verbose ./testColorConversion
