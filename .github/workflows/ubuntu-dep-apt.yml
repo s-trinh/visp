@@ -38,7 +38,7 @@ jobs:
       run: dpkg --list | grep compiler
 
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y libx11-dev libdc1394-22-dev libv4l-dev liblapack-dev libopenblas-dev libeigen3-dev libopencv-dev gdb
+      run: sudo apt-get update && sudo apt-get install -y libx11-dev libdc1394-22-dev libv4l-dev liblapack-dev libopenblas-dev libeigen3-dev libopencv-dev valgrind gdb
 
     - name: Clone visp-images
       run: |
@@ -74,4 +74,5 @@ jobs:
         cd modules/core/
         gdb -x ../../../gdbinit ./testColorConversion
         ctest -j$(nproc) --output-on-failure
-
+        cd modules/core
+        valgrind --leak-check=full --track-origins=yes --verbose ./testColorConversion
