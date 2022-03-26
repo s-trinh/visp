@@ -45,7 +45,7 @@ jobs:
 
     - name: Compile
       working-directory: build
-      run: make -j$(nproc) visp_core
+      run: make -j$(nproc)
 
     - name: Run unit tests with Valgrind
       working-directory: build
