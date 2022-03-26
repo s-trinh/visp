@@ -50,5 +50,4 @@ jobs:
     - name: Run unit tests with Valgrind
       working-directory: build
       run: |
-        cd modules/core/
         ctest -j$(nproc) -T memcheck
