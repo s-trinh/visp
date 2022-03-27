@@ -514,6 +514,18 @@ TEST_CASE("BGR to Gray conversion", "[image_conversion]") {
       CHECK(common_tools::almostEqual(gray_ref, gray, maxMeanPixelError, error));
       std::cout << "BGR to Gray conversion, mean error: " << error << std::endl;
     }
+    SECTION("Image 4x64 DEBUG")
+    {
+      unsigned int h = 4, w = 64;
+      vpImage<vpRGBa> bgra(h, w);
+      vpImage<unsigned char> R(bgra.getHeight(), bgra.getWidth());
+      vpImage<unsigned char> G(bgra.getHeight(), bgra.getWidth());
+      vpImage<unsigned char> B(bgra.getHeight(), bgra.getWidth());
+      vpImage<unsigned char> A(bgra.getHeight(), bgra.getWidth());
+
+      vpImageConvert::merge(&B, &G, &R, &A, bgra);
+      CHECK(bgra.getSize() == h*w);
+    }
     SECTION("Image 4x64 (general aligned = true")
     {
       unsigned int h = 4, w = 64;
