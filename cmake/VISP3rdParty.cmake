@@ -64,6 +64,12 @@ set(PUGIXML_INCLUDE_DIRS "${${PUGIXML_LIBRARY}_SOURCE_DIR}" "${${PUGIXML_LIBRARY
 set(PUGIXML_LIBRARIES ${PUGIXML_LIBRARY})
 set(PUGIXML_VERSION ${PUGIXML_MAJOR_VERSION}.${PUGIXML_MINOR_VERSION}.${PUGIXML_PATCH_VERSION})
 
+# qoi is always enabled
+set(QOI_LIBRARY visp_qoi)
+add_subdirectory("${VISP_SOURCE_DIR}/3rdparty/qoi")
+set(QOI_INCLUDE_DIRS "${VISP_SOURCE_DIR}/3rdparty/qoi")
+set(QOI_VERSION ${QOI_MAJOR_VERSION}.${QOI_MINOR_VERSION}.${QOI_PATCH_VERSION})
+
 # simdlib is always enabled since it contains fallback code to plain C++ code
 set(SIMD_LIBRARY visp_simdlib)
 add_subdirectory("${VISP_SOURCE_DIR}/3rdparty/simdlib")

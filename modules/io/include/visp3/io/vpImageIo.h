@@ -109,7 +109,9 @@ private:
     FORMAT_PPM,
     FORMAT_JPEG,
     FORMAT_PNG,
-    // Formats supported by opencv
+    // QOI image format
+    FORMAT_QOI,
+    // Formats supported by OpenCV
     FORMAT_TIFF,
     FORMAT_BMP,
     FORMAT_DIB,
@@ -168,5 +170,11 @@ public:
 
   static void writePNG(const vpImage<unsigned char> &I, const std::string &filename, int backend = IO_DEFAULT_BACKEND);
   static void writePNG(const vpImage<vpRGBa> &I, const std::string &filename, int backend = IO_DEFAULT_BACKEND);
+
+  static void readQOI(vpImage<unsigned char> &I, const std::string &filename);
+  static void readQOI(vpImage<vpRGBa> &I, const std::string &filename);
+
+  static void writeQOI(const vpImage<unsigned char> &I, const std::string &filename);
+  static void writeQOI(const vpImage<vpRGBa> &I, const std::string &filename);
 };
 #endif

@@ -70,6 +70,11 @@ vpImageIo::vpImageFormatType vpImageIo::getFormat(const std::string &filename)
     return FORMAT_PNG;
   else if (ext.compare(".png") == 0)
     return FORMAT_PNG;
+  // QOI image format
+  else if (ext.compare(".qoi") == 0)
+    return FORMAT_QOI;
+  else if (ext.compare(".QOI") == 0)
+    return FORMAT_QOI;
   // Formats supported by opencv
   else if (ext.compare(".TIFF") == 0)
     return FORMAT_TIFF;
@@ -171,6 +176,9 @@ void vpImageIo::read(vpImage<unsigned char> &I, const std::string &filename, int
   case FORMAT_PNG:
     readPNG(I, final_filename, backend);
     break;
+  case FORMAT_QOI:
+    readQOI(I, final_filename);
+    break;
   case FORMAT_TIFF:
   case FORMAT_BMP:
   case FORMAT_DIB:
@@ -246,6 +254,9 @@ void vpImageIo::read(vpImage<vpRGBa> &I, const std::string &filename, int backen
   case FORMAT_PNG:
     readPNG(I, final_filename, backend);
     break;
+  case FORMAT_QOI:
+    readQOI(I, final_filename);
+    break;
   case FORMAT_TIFF:
   case FORMAT_BMP:
   case FORMAT_DIB:
@@ -306,6 +317,9 @@ void vpImageIo::write(const vpImage<unsigned char> &I, const std::string &filena
   case FORMAT_PNG:
     writePNG(I, filename, backend);
     break;
+  case FORMAT_QOI:
+    writeQOI(I, filename);
+    break;
   case FORMAT_TIFF:
   case FORMAT_BMP:
   case FORMAT_DIB:
@@ -365,6 +379,9 @@ void vpImageIo::write(const vpImage<vpRGBa> &I, const std::string &filename, int
     break;
   case FORMAT_PNG:
     writePNG(I, filename, backend);
+    break;
+  case FORMAT_QOI:
+    writeQOI(I, filename);
     break;
   case FORMAT_TIFF:
   case FORMAT_BMP:
@@ -843,3 +860,11 @@ void vpImageIo::writePPM(const vpImage<unsigned char> &I, const std::string &fil
   \param[in] filename : Image location.
  */
 void vpImageIo::writePPM(const vpImage<vpRGBa> &I, const std::string &filename) { vp_writePPM(I, filename); }
+
+void vpImageIo::readQOI(vpImage<unsigned char> &I, const std::string &filename) { vp_readQOI(I, filename); }
+
+void vpImageIo::readQOI(vpImage<vpRGBa> &I, const std::string &filename) { vp_readQOI(I, filename); }
+
+void vpImageIo::writeQOI(const vpImage<unsigned char> &I, const std::string &filename) { vp_writeQOI(I, filename); }
+
+void vpImageIo::writeQOI(const vpImage<vpRGBa> &I, const std::string &filename) { vp_writeQOI(I, filename); }

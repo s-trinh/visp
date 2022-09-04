@@ -99,4 +99,11 @@ void writeJPEGStb(const vpImage<vpRGBa> &I, const std::string &filename, int qua
 void writePNGStb(const vpImage<unsigned char> &I, const std::string &filename);
 void writePNGStb(const vpImage<vpRGBa> &I, const std::string &filename);
 
+// QOI image format
+void vp_readQOI(vpImage<unsigned char> &I, const std::string &filename);
+void vp_readQOI(vpImage<vpRGBa> &I, const std::string &filename);
+
+void vp_writeQOI(const vpImage<unsigned char> &I, const std::string &filename);
+void vp_writeQOI(const vpImage<vpRGBa> &I, const std::string &filename);
+
 #endif

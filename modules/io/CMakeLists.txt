@@ -57,6 +57,9 @@ if(USE_PNG)
   add_definitions(${PNG_DEFINITIONS})
 endif()
 
+# QOI is private
+include_directories(${QOI_INCLUDE_DIRS})
+
 # stb_image is private
 include_directories(${STBIMAGE_INCLUDE_DIRS})
 

@@ -34,7 +34,7 @@
  *****************************************************************************/
 
 /*!
-  \file vpImageIo.cpp
+  \file vpImageIoStb.cpp
   \brief stb backend for JPEG and PNG image I/O operations.
 */
 

@@ -34,7 +34,7 @@
  *****************************************************************************/
 
 /*!
-  \file vpImageIo.cpp
+  \file vpImageIoSimd.cpp
   \brief Simd backend for JPEG and PNG image I/O operations.
 */
 
