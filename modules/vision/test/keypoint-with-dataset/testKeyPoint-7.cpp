@@ -638,6 +638,7 @@ template <typename Type> void run_test(const std::string &env_ipath, const std::
 */
 int main(int argc, const char **argv)
 {
+  std::cout << cv::getBuildInformation() << std::endl;
   try {
     std::string env_ipath;
     std::string opt_opath;

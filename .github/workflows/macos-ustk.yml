@@ -63,4 +63,6 @@ jobs:
     - name: Run unit tests
       working-directory: build
       run: |
-        gdb -ex run --batch ./modules/vision/keypoint-with-dataset/testKeyPoint-5 -ex bt
+        ls modules/vision
+        gdb -batch -ex "run" -ex "bt" ./modules/vision/testKeyPoint-5
+        gdb -batch -ex "run" -ex "bt" ./modules/vision/testKeyPoint-7

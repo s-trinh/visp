@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-10.15, macos-11, macos-12]
+        os: [macos-12]
 
     steps:
     # https://github.com/marketplace/actions/cancel-workflow-action
@@ -70,4 +70,6 @@ jobs:
     - name: Run unit tests
       working-directory: build
       run: |
-        gdb -ex run --batch ./modules/vision/keypoint-with-dataset/testKeyPoint-5 -ex bt
+        ls modules/vision
+        gdb -ex run --batch ./modules/vision/testKeyPoint-5 -ex bt
+        gdb -ex run --batch ./modules/vision/testKeyPoint-7 -ex bt
