@@ -306,6 +306,7 @@ void run_test(const std::string &env_ipath, bool opt_click_allowed, bool opt_dis
 */
 int main(int argc, const char **argv)
 {
+  std::cout << cv::getBuildInformation() << std::endl;
   try {
     std::string env_ipath;
     bool opt_click_allowed = true;

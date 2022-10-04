@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-11, macos-12]
+        os: [macos-12]
 
     steps:
     # https://github.com/marketplace/actions/cancel-workflow-action
@@ -34,27 +34,13 @@ jobs:
       run: system_profiler SPSoftwareDataType
 
     - name: Install dependencies
-      run: brew install libpng libjpeg libdc1394 opencv pcl librealsense zbar vtk fftw armadillo
+      run: brew install libpng libjpeg libdc1394 opencv pcl librealsense zbar vtk fftw armadillo gdb
 
     - name: Clone visp-images
       run: |
         git clone --depth 1 https://github.com/lagadic/visp-images ${HOME}/visp-images
         echo "VISP_INPUT_IMAGE_PATH=$HOME" >> $GITHUB_ENV
         echo ${VISP_INPUT_IMAGE_PATH}
-
-    - name: Clone ustk-dataset
-      run: |
-        git clone --depth 1 https://github.com/lagadic/ustk-dataset ${HOME}/ustk-dataset
-        echo "USTK_DATASET_PATH=$HOME/ustk-dataset" >> $GITHUB_ENV
-        echo ${USTK_DATASET_PATH}
-
-    - name: Clone ustk
-      run: |
-        git clone --depth 1 https://github.com/lagadic/ustk ${HOME}/ustk
-
-    - name: Clone ustk-sample
-      run: |
-        git clone --depth 1 https://github.com/lagadic/ustk-sample ${HOME}/ustk-sample
 
     # Openblas location is exported explicitly because openblas is keg-only,
     # which means it was not symlinked into /usr/local/.
@@ -67,7 +53,7 @@ jobs:
         export Qt5_DIR="$(brew --prefix qt5)/lib/cmake/Qt5"
         mkdir build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/tmp/usr/local -DVISP_CONTRIB_MODULES_PATH=${HOME}/ustk/modules
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/tmp/usr/local -DBUILD_EXAMPLES=OFF -DBUILD_DEMOS=OFF -DBUILD_TUTORIALS=OFF
         cat ViSP-third-party.txt
 
     - name: Compile
@@ -76,12 +62,5 @@ jobs:
 
     - name: Run unit tests
       working-directory: build
-      run: ctest -j$(sysctl -n hw.logicalcpu) --output-on-failure
-
-    - name: ViSP + UsTK as 3rdparty with cmake
       run: |
-        cd ${HOME}/ustk-sample
-        mkdir ustk-sample-build
-        cd ustk-sample-build
-        cmake .. -DVISP_DIR=/tmp/usr/local/lib/cmake/visp
-        make -j$(sysctl -n hw.logicalcpu)
+        gdb -ex run --batch ./modules/vision/keypoint-with-dataset/testKeyPoint-5 -ex bt
