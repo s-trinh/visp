@@ -72,5 +72,6 @@ jobs:
       run: |
         ls modules/vision
         ./modules/vision/testKeyPoint-5
-        sudo gdb -ex run --batch ./modules/vision/testKeyPoint-5 -ex bt
-        sudo gdb -ex run --batch ./modules/vision/testKeyPoint-7 -ex bt
+        ./modules/vision/testKeyPoint-7
+      # sudo gdb -ex run --batch ./modules/vision/testKeyPoint-5 -ex bt
+      # sudo gdb -ex run --batch ./modules/vision/testKeyPoint-7 -ex bt

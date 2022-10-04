@@ -64,5 +64,7 @@ jobs:
       working-directory: build
       run: |
         ls modules/vision
-        sudo gdb -batch -ex "run" -ex "bt" ./modules/vision/testKeyPoint-5
-        sudo gdb -batch -ex "run" -ex "bt" ./modules/vision/testKeyPoint-7
+        ./modules/vision/testKeyPoint-5
+        ./modules/vision/testKeyPoint-7
+      # sudo gdb -batch -ex "run" -ex "bt" ./modules/vision/testKeyPoint-5
+      # sudo gdb -batch -ex "run" -ex "bt" ./modules/vision/testKeyPoint-7
