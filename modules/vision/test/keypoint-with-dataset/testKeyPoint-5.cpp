@@ -60,7 +60,6 @@ void usage(const char *name, const char *badparam);
 bool getOptions(int argc, const char **argv, bool &click_allowed, bool &display);
 
 #ifdef __GNUC__
-
 void __cpuid(int* cpuinfo, int info)
 {
 	__asm__ __volatile__(
@@ -82,6 +81,7 @@ unsigned long long _xgetbv(unsigned int index)
 	);
 	return ((unsigned long long)edx << 32) | eax;
 }
+#endif
 
 /*!
   Print the program options.
@@ -330,7 +330,7 @@ void run_test(const std::string &env_ipath, bool opt_click_allowed, bool opt_dis
 int main(int argc, const char **argv)
 {
   std::cout << cv::getBuildInformation() << std::endl;
-  
+
   {
 	bool sseSupportted = false;
 	bool sse2Supportted = false;
@@ -352,14 +352,14 @@ int main(int argc, const char **argv)
 	ssse3Supportted		= cpuinfo[2] & (1 << 9) || false;
 	sse4_1Supportted	= cpuinfo[2] & (1 << 19) || false;
 	sse4_2Supportted	= cpuinfo[2] & (1 << 20) || false;
-	
+
 	// ----------------------------------------------------------------------
 
 	// Check AVX support
 	// References
 	// http://software.intel.com/en-us/blogs/2011/04/14/is-avx-enabled/
 	// http://insufficientlycomplicated.wordpress.com/2011/11/07/detecting-intel-advanced-vector-extensions-avx-in-visual-studio/
-	
+
 	avxSupportted = cpuinfo[2] & (1 << 28) || false;
 	bool osxsaveSupported = cpuinfo[2] & (1 << 27) || false;
 	if (osxsaveSupported && avxSupportted)
@@ -388,13 +388,14 @@ int main(int argc, const char **argv)
 	std::cout << "SSE:" << (sseSupportted ? 1 : 0) << std::endl;
 	std::cout << "SSE2:" << (sse2Supportted ? 1 : 0) << std::endl;
 	std::cout << "SSE3:" << (sse3Supportted ? 1 : 0) << std::endl;
+	std::cout << "SSSE3:" << (ssse3Supportted ? 1 : 0) << std::endl;
 	std::cout << "SSE4.1:" << (sse4_1Supportted ? 1 : 0) << std::endl;
 	std::cout << "SSE4.2:" << (sse4_2Supportted ? 1 : 0) << std::endl;
 	std::cout << "SSE4a:" << (sse4aSupportted ? 1 : 0) << std::endl;
 	std::cout << "SSE5:" << (sse5Supportted ? 1 : 0) << std::endl;
 	std::cout << "AVX:" << (avxSupportted ? 1 : 0) << std::endl;
   }
-  
+
   try {
     std::string env_ipath;
     bool opt_click_allowed = true;
