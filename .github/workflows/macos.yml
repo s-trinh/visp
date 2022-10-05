@@ -36,6 +36,16 @@ jobs:
     - name: Install dependencies
       run: brew install libpng libjpeg libdc1394 opencv pcl librealsense zbar gdb
 
+    - name: Clone OpenCV
+      run: |
+        git clone --depth 1 https://github.com/opencv/opencv.git ${HOME}/opencv
+        cd ${HOME}/opencv
+        git checkout 4.6.0
+        cd ${HOME}/opencv
+        mkdir build
+        cd build
+        cmake ..
+
     - name: Install java dependencies
       run: |
         brew install openjdk ant
