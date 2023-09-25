@@ -245,6 +245,9 @@ public:
   static bool parseBoolean(std::string input);
   static std::string trim(std::string s);
 
+  // TODO:
+  static void writeHomogeneousDataToCnpy(const std::string &filename, const std::vector<vpHomogeneousMatrix> &poses);
+
 protected:
   static std::string baseName;
   static std::string baseDir;

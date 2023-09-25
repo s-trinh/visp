@@ -255,6 +255,12 @@ if(USE_NLOHMANN_JSON)
   get_target_property(_inc_dirs "nlohmann_json::nlohmann_json" INTERFACE_INCLUDE_DIRECTORIES)
   list(APPEND opt_incs ${_inc_dirs})
 endif()
+# TODO:
+if(WITH_CNPY)
+  # list(APPEND opt_incs ${CNPY_INCLUDE_DIRS})
+  # list(APPEND opt_libs ${CNPY_LIBRARIES})
+  include_directories(${CNPY_INCLUDE_DIRS})
+endif()
 
 # pugixml is always enabled to provide default XML I/O capabilities
 # pugixml is private
@@ -369,7 +375,8 @@ if(USE_XML2)
   endif()
 endif()
 
-vp_add_module(core PRIVATE_OPTIONAL ${LAPACK_LIBRARIES} ${PUGIXML_LIBRARIES} ${SIMDLIB_LIBRARIES} WRAP java)
+# TODO:
+vp_add_module(core PRIVATE_OPTIONAL ${LAPACK_LIBRARIES} ${PUGIXML_LIBRARIES} ${SIMDLIB_LIBRARIES} ${CNPY_LIBRARIES} WRAP java)
 
 #-----------------------------------------------------------------------------
 # Enable large file support

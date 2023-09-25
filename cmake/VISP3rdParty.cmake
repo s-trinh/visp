@@ -57,6 +57,15 @@ if(WITH_TAKKTILE2)
   set(TAKKTILE2_VERSION ${TAKKTILE2_MAJOR_VERSION}.${TAKKTILE2_MINOR_VERSION}.${TAKKTILE2_PATCH_VERSION})
 endif()
 
+# TODO:
+if(WITH_CNPY)
+  set(CNPY_LIBRARY visp_cnpy)
+  add_subdirectory("${VISP_SOURCE_DIR}/3rdparty/cnpy")
+  set(CNPY_INCLUDE_DIRS "${${CNPY_LIBRARY}_SOURCE_DIR}" "${${CNPY_LIBRARY}_BINARY_DIR}")
+  set(CNPY_LIBRARIES ${CNPY_LIBRARY})
+  set(CNPY_VERSION ${CNPY_MAJOR_VERSION}.${CNPY_MINOR_VERSION}.${CNPY_PATCH_VERSION})
+endif()
+
 # pugixml is always enabled to provide default XML I/O capabilities
 set(PUGIXML_LIBRARY visp_pugixml)
 add_subdirectory("${VISP_SOURCE_DIR}/3rdparty/pugixml-1.9")

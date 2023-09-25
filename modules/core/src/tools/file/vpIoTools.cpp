@@ -67,6 +67,8 @@
 #include <visp3/core/vpEndian.h>
 #include <visp3/core/vpIoException.h>
 #include <visp3/core/vpIoTools.h>
+// TODO:
+#include <cnpy.h>
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
 #include <dirent.h>
 #include <unistd.h>
@@ -150,6 +152,30 @@ std::string &rtrim(std::string &s)
   s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
 #endif
   return s;
+}
+
+// TODO:
+std::string toString(const std::string& name, int val)
+{
+  auto fmt = name.c_str();
+  int sz = std::snprintf(nullptr, 0, fmt, val);
+  std::vector<char> buf(sz + 1); // note +1 for null terminator
+  std::sprintf(buf.data(), fmt, val); // certain to fit
+  std::string str(buf.begin(), buf.end());
+
+  return str;
+}
+
+std::vector<double> poseToVecDouble(const vpHomogeneousMatrix &pose)
+{
+  vpQuaternionVector quat(pose.getRotationMatrix());
+  vpTranslationVector tvec(pose);
+  std::vector<double> pose_vec {
+    tvec[0], tvec[1], tvec[2],
+    quat.x(), quat.y(), quat.z(), quat.w()
+  };
+
+  return pose_vec;
 }
 } // namespace
 
@@ -2276,3 +2302,18 @@ bool vpIoTools::parseBoolean(std::string input)
    Remove leading and trailing whitespaces from a string.
  */
 std::string vpIoTools::trim(std::string s) { return ltrim(rtrim(s)); }
+
+// TODO:
+void writeHomogeneousDataToCnpy(const std::string &filename, const std::vector<vpHomogeneousMatrix>& poses)
+{
+  if (!poses.empty())
+  {
+    int nb_data = static_cast<int>(poses.size());
+    cnpy::npz_save(filename, "nb_data", &nb_data, {1}, "w"); //"w" overwrites any existing file
+    for (size_t i = 0; i < poses.size(); i++)
+    {
+      std::vector<double> pose_vec = poseToVecDouble(poses[i]);
+      cnpy::npz_save(filename, toString("pose_%06d", i), &pose_vec[0], {pose_vec.size()}, "a"); //"a" appends to the file we created above
+    }
+  }
+}
