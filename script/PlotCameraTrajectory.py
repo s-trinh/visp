@@ -881,7 +881,9 @@ def main():
         if args.plot_cam_poses:
             plot_poses(camera_poses)
 
-        ax.set_title('Camera poses')
+        # ax.set_title('Camera poses')
+        # TODO:
+        ax.set_title('Poses caméra')
         plt.show()
 
 if __name__ == "__main__":

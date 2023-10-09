@@ -469,7 +469,7 @@ def main():
         ax1.set_zlabel('Z', fontsize=24)
         ax1.set_title('Camera poses from longitude-latitude sampling', fontsize=26)
 
-        draw_square(ax1, radius)
+        # draw_square(ax1, radius)
 
         if verbose:
             print("\n=========Spherical sampling using Lon/Lat coordinates=========")
@@ -497,7 +497,7 @@ def main():
         fig2 = plt.figure()
         ax2 = fig2.add_subplot(projection='3d')
 
-        draw_square(ax2, radius)
+        # draw_square(ax2, radius)
 
         npoints = longitudes.shape[0]*latitudes.shape[0]
         full_sphere = args.full_sphere
@@ -531,7 +531,7 @@ def main():
         ax2.set_xlabel('X', fontsize=24)
         ax2.set_ylabel('Y', fontsize=24)
         ax2.set_zlabel('Z', fontsize=24)
-        ax2.set_title('Camera poses from equidistributed sphere sampling', fontsize=26)
+        # ax2.set_title('Camera poses from equidistributed sphere sampling', fontsize=26)
 
         # Copy axis limits from the first figure
         ax2.set_xlim(ax1.get_xlim())

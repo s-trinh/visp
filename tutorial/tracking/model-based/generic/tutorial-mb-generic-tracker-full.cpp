@@ -19,6 +19,7 @@ int main(int argc, char **argv)
   int opt_video_first_frame = -1;
   int opt_downscale_img = 1;
   bool opt_verbose = false;
+  bool opt_color = false;
   bool opt_plot = true;
   bool opt_display_scale_auto = false;
   vpColVector opt_dof_to_estimate(6, 1.); // Here we consider 6 dof estimation
@@ -49,6 +50,9 @@ int main(int argc, char **argv)
       }
       else if (std::string(argv[i]) == "--save") {
         opt_save = std::string(argv[++i]);
+      }
+      else if (std::string(argv[i]) == "--color") {
+        opt_color = true;
       }
       else if (std::string(argv[i]) == "--plot") {
         opt_plot = true;
@@ -170,6 +174,7 @@ int main(int argc, char **argv)
     }
 
     //! [Image]
+    vpImage<vpRGBa> Icolor;
     vpImage<unsigned char> Ivideo;
     //! [Image]
     //! [cMo]
@@ -181,15 +186,17 @@ int main(int argc, char **argv)
     if (opt_video_first_frame > 0) {
       g.setFirstFrameIndex(static_cast<unsigned int>(opt_video_first_frame));
     }
+    g.open(Icolor);
     if (opt_downscale_img > 1) {
-      g.open(Ivideo);
+      vpImageConvert::convert(Icolor, Ivideo);
       Ivideo.subsample(opt_downscale_img, opt_downscale_img, I);
     }
     else {
-      g.open(I);
+      vpImageConvert::convert(Icolor, I);
     }
 
     vpImage<vpRGBa> O;
+    O = Icolor;
     if (!opt_save.empty()) {
       writer = new vpVideoWriter();
       writer->setFileName(opt_save);
@@ -206,7 +213,9 @@ int main(int argc, char **argv)
     if (opt_display_scale_auto) {
       display->setDownScalingFactor(vpDisplay::SCALE_AUTO);
     }
-    display->init(I, 100, 100, "Model-based tracker");
+    // TODO:
+    // display->init(I, 100, 100, "Model-based tracker");
+    display->init(O, 100, 100, "Model-based tracker");
 
     if (opt_plot) {
       plot = new vpPlot(2, 700, 700, display->getWindowXPosition() + I.getWidth() / display->getDownScalingFactor() + 30, display->getWindowYPosition(), "Estimated pose");
@@ -341,23 +350,30 @@ int main(int argc, char **argv)
     std::cout << "Initialize tracker on image size: " << I.getWidth() << " x " << I.getHeight() << std::endl;
 
     //! [Init]
-    tracker.initClick(I, objectname + ".init", true);
+    tracker.initClick(O, objectname + ".init", true);
     //! [Init]
 
-    while (!g.end()) {
+    // TODO:
+    std::ofstream file_poses("save_poses.txt");
+
+    bool click = false, exit = false;
+    while (!g.end() && !exit) {
+      g.acquire(Icolor);
       if (opt_downscale_img > 1) {
-        g.acquire(Ivideo);
+        vpImageConvert::convert(Icolor, Ivideo);
         Ivideo.subsample(opt_downscale_img, opt_downscale_img, I);
       }
       else {
-        g.acquire(I);
+        vpImageConvert::convert(Icolor, I);
       }
       std::stringstream ss;
       ss << "Process image " << g.getFrameIndex();
       if (opt_verbose) {
         std::cout << "-- " << ss.str() << std::endl;
       }
-      vpDisplay::display(I);
+      // TODO:
+      // vpDisplay::display(I);
+      vpDisplay::display(O);
       //! [Track]
       tracker.track(I);
       //! [Track]
@@ -365,11 +381,14 @@ int main(int argc, char **argv)
       tracker.getPose(cMo);
       //! [Get pose]
       //! [Display]
-      tracker.display(I, cMo, cam, vpColor::red, thickness);
+
+      // TODO:
+      O = Icolor;
+      tracker.display(O, cMo, cam, vpColor::red, thickness);
       //! [Display]
-      vpDisplay::displayFrame(I, cMo, cam, 0.025, vpColor::none, thickness);
-      vpDisplay::displayText(I, 20 * display->getDownScalingFactor(), 10 * display->getDownScalingFactor(), "A click to exit...", vpColor::red);
-      vpDisplay::displayText(I, 40 * display->getDownScalingFactor(), 10 * display->getDownScalingFactor(), ss.str(), vpColor::red);
+      vpDisplay::displayFrame(O, cMo, cam, 0.25, vpColor::none, thickness);
+      // vpDisplay::displayText(I, 20 * display->getDownScalingFactor(), 10 * display->getDownScalingFactor(), "A click to exit...", vpColor::red);
+      // vpDisplay::displayText(I, 40 * display->getDownScalingFactor(), 10 * display->getDownScalingFactor(), ss.str(), vpColor::red);
       {
         std::stringstream ss;
         ss << "Features";
@@ -381,7 +400,7 @@ int main(int argc, char **argv)
           ss << " klt: " << tracker.getNbFeaturesKlt();
         }
 #endif
-        vpDisplay::displayText(I, 60 * display->getDownScalingFactor(), 10 * display->getDownScalingFactor(), ss.str(), vpColor::red);
+        // vpDisplay::displayText(I, 60 * display->getDownScalingFactor(), 10 * display->getDownScalingFactor(), ss.str(), vpColor::red);
         if (opt_verbose) {
           std::cout << ss.str() << std::endl;
           std::cout << "cMo:\n" << cMo << std::endl;
@@ -391,12 +410,14 @@ int main(int argc, char **argv)
         double proj_error = tracker.computeCurrentProjectionError(I, cMo, cam);
         std::stringstream ss;
         ss << "Projection error: " << std::setprecision(2) << proj_error << " deg";
-        vpDisplay::displayText(I, 80 * display->getDownScalingFactor(), 10 * display->getDownScalingFactor(), ss.str(), vpColor::red);
+        // vpDisplay::displayText(I, 80 * display->getDownScalingFactor(), 10 * display->getDownScalingFactor(), ss.str(), vpColor::red);
         if (opt_verbose) {
           std::cout << ss.str() << std::endl;
         }
       }
-      vpDisplay::flush(I);
+      // TODO:
+      // vpDisplay::flush(I);
+      vpDisplay::flush(O);
 
       if (opt_plot) {
         vpTranslationVector c_t_o = cMo.getTranslationVector();
@@ -404,17 +425,28 @@ int main(int argc, char **argv)
         vpColVector c_tu_o_deg = vpMath::deg(c_tu_o);
         plot->plot(0, g.getFrameIndex(), c_t_o);
         plot->plot(1, g.getFrameIndex(), c_tu_o_deg);
+
+        // TODO:
+        file_poses << c_t_o[0] << " " << c_t_o[1] << " " << c_t_o[2] << " "
+          << c_tu_o[0] << " " << c_tu_o[1] << " " << c_tu_o[2] << std::endl;
       }
 
       if (!opt_save.empty()) {
-        vpDisplay::getImage(I, O);
-        writer->saveFrame(O);
+        vpDisplay::getImage(O, Icolor);
+        writer->saveFrame(Icolor);
       }
 
-      if (vpDisplay::getClick(I, false))
-        break;
+      vpMouseButton::vpMouseButtonType button;
+      if (vpDisplay::getClick(I, button, click)) {
+        if (button == vpMouseButton::button3)
+          click = !click;
+        else if (!click)
+          exit = true;
+      }
     }
-    vpDisplay::getClick(I);
+    // TODO:
+    // vpDisplay::getClick(I);
+    vpDisplay::getClick(O);
   }
   catch (const vpException &e) {
     std::cout << "Catch a ViSP exception: " << e << std::endl;
