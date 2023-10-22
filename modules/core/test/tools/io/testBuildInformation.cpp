@@ -49,6 +49,7 @@ int main()
 {
   std::string info = vpIoTools::getBuildInformation();
   std::cout << info << std::endl;
+  std::cout << vpIoTools::getDateTime() << std::endl;
 
   return EXIT_SUCCESS;
 }

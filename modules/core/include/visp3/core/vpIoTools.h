@@ -160,6 +160,7 @@ public:
   static std::string getUserName();
   static std::string getenv(const std::string &env);
   static std::string getViSPImagesDataPath();
+  static std::string getDateTime(const std::string &format="%Y-%m-%d_%H-%M-%S");
   static void getVersion(const std::string &version, unsigned int &major, unsigned int &minor, unsigned int &patch);
   static bool checkDirectory(const std::string &dirname);
   static bool checkFifo(const std::string &filename);

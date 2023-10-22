@@ -250,6 +250,29 @@ std::string vpIoTools::getTempPath()
 #endif
 }
 
+std::string vpIoTools::getDateTime(const std::string &format)
+{
+  std::time_t now;
+  std::time(&now);
+
+  // first try with an on-stack buffer (fast path)
+  char buf[64];
+  size_t written = std::strftime(buf, sizeof(buf), format.c_str(), std::localtime(&now));
+  if (written > 0) {
+    return buf;
+  }
+
+  // now, iterate with an allocated buffer
+  size_t len = sizeof(buf);
+  std::vector<char> v;
+  do {
+    v.resize(len *= 2);
+    written = std::strftime(v.data(), v.size(), format.c_str(), std::localtime(&now));
+  } while (written == 0);
+
+  return std::string(v.data(), written);
+}
+
 /*!
   Sets the base name (prefix) of the experiment files.
 
