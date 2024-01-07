@@ -20,6 +20,7 @@ std::string toString(const std::string &name, int val)
   return str;
 }
 
+// https://stackoverflow.com/a/17903225
 template<typename T, typename... Args>
 std::unique_ptr<T> make_unique_compat(Args&&... args)
 {
@@ -113,6 +114,8 @@ int main(int argc, char *argv[])
     double start = vpTime::measureTimeMs(), end = -1;
     if (opencv_backend) {
       vpImageIo::readPNGfromMem(vec_img, I, vpImageIo::IO_OPENCV_BACKEND);
+      end = vpTime::measureTimeMs();
+      vpImageConvert::convert(I, I_display);
     }
     else {
       if (channel > 1) {

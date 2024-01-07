@@ -60,7 +60,7 @@
 #include <visp3/io/vpVideoReader.h>
 #include <visp3/mbt/vpMbGenericTracker.h>
 
-#define GETOPTARGS "x:m:i:n:de:chtfColwvpT:"
+#define GETOPTARGS "x:m:i:n:de:chtfColwvpT:zyj:"
 
 #define USE_XML 0
 
@@ -158,7 +158,7 @@ OPTIONS:                                               \n\
 bool getOptions(int argc, const char **argv, std::string &ipath, std::string &configFile, std::string &modelFile,
   std::string &initFile, long &lastFrame, bool &displayFeatures, bool &click_allowed, bool &display,
   bool &cao3DModel, bool &trackCylinder, bool &useOgre, bool &showOgreConfigDialog, bool &useScanline,
-  bool &computeCovariance, bool &projectionError, int &trackerType)
+  bool &computeCovariance, bool &projectionError, int &trackerType, bool &experimentation, bool &forceInitME, int &jump)
 {
   const char *optarg_;
   int c;
@@ -213,6 +213,15 @@ bool getOptions(int argc, const char **argv, std::string &ipath, std::string &co
     case 'T':
       trackerType = atoi(optarg_);
       break;
+    case 'z':
+      experimentation = true;
+      break;
+    case 'y':
+      forceInitME = true;
+      break;
+    case 'j':
+      jump = atoi(optarg_);
+      break;
     case 'h':
       usage(argv[0], nullptr);
       return false;
@@ -259,6 +268,9 @@ int main(int argc, const char **argv)
     bool computeCovariance = false;
     bool projectionError = false;
     int trackerType = vpMbGenericTracker::EDGE_TRACKER;
+    bool experimentation = false;
+    bool forceInitME = false;
+    int jump = 1;
 
 #if VISP_HAVE_DATASET_VERSION >= 0x030600
     std::string ext("png");
@@ -276,8 +288,8 @@ int main(int argc, const char **argv)
 
     // Read the command line options
     if (!getOptions(argc, argv, opt_ipath, opt_configFile, opt_modelFile, opt_initFile, opt_lastFrame, displayFeatures,
-      opt_click_allowed, opt_display, cao3DModel, trackCylinder, useOgre, showOgreConfigDialog,
-      useScanline, computeCovariance, projectionError, trackerType)) {
+                    opt_click_allowed, opt_display, cao3DModel, trackCylinder, useOgre, showOgreConfigDialog,
+                    useScanline, computeCovariance, projectionError, trackerType, experimentation, forceInitME, jump)) {
       return EXIT_FAILURE;
     }
 
@@ -443,12 +455,12 @@ int main(int argc, const char **argv)
     vpMe me;
     me.setMaskSize(5);
     me.setMaskNumber(180);
-    me.setRange(7);
+    me.setRange(20); // TODO:
     me.setLikelihoodThresholdType(vpMe::NORMALIZED_THRESHOLD);
     me.setThreshold(10);
     me.setMu1(0.5);
     me.setMu2(0.5);
-    me.setSampleStep(4);
+    me.setSampleStep(1);
     std::map<std::string, vpMe> mapOfMe;
     mapOfMe["Camera1"] = me;
     mapOfMe["Camera2"] = me;
@@ -480,6 +492,10 @@ int main(int argc, const char **argv)
     // Specify the clipping to
     tracker->setNearClippingDistance(0.01);
     tracker->setFarClippingDistance(0.90);
+
+    // TODO:
+    dynamic_cast<vpMbGenericTracker *>(tracker)->setForceInitMovingEdge(forceInitME);
+    dynamic_cast<vpMbGenericTracker *>(tracker)->setGoodMovingEdgesRatioThreshold(0.2);
 
     std::map<std::string, unsigned int> mapOfClippingFlags;
     dynamic_cast<vpMbGenericTracker *>(tracker)->getClipping(mapOfClippingFlags);
@@ -561,10 +577,31 @@ int main(int argc, const char **argv)
       vpDisplay::flush(I3);
     }
 
-    bool quit = false, click = false;
+    bool quit = false, click = true;
     while (!reader.end() && !quit) {
       // acquire a new image
-      reader.acquire(I1);
+      for (int cpt = 0; cpt < jump; cpt++) {
+        reader.acquire(I1);
+      }
+
+      // TODO:
+      if (experimentation) {
+        using namespace cv;
+        Mat grad_x, grad_y;
+        Mat abs_grad_x, abs_grad_y;
+        Mat image, src_gray;
+        vpImageConvert::convert(I1, src_gray);
+        GaussianBlur(src_gray, image, Size(3, 3), 0, 0, BORDER_DEFAULT);
+        Sobel(image, grad_x, CV_16SC1, 1, 0, 3);
+        Sobel(image, grad_y, CV_16SC1, 0, 1, 3);
+        // converting back to CV_8U
+        convertScaleAbs(grad_x, abs_grad_x);
+        convertScaleAbs(grad_y, abs_grad_y);
+        Mat grad;
+        addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad);
+        vpImageConvert::convert(grad, I1);
+      }
+
       I2 = I1;
       I3 = I1;
       mapOfImages["Camera1"] = &I1;
@@ -582,98 +619,102 @@ int main(int argc, const char **argv)
         vpDisplay::displayText(I1, 40, 20, ss.str(), vpColor::red);
       }
 
-      // Test to reset the tracker
-      if (reader.getFrameIndex() == reader.getFirstFrameIndex() + 10) {
-        std::cout << "----------Test reset tracker----------" << std::endl;
-        if (opt_display) {
-          vpDisplay::display(I1);
-          vpDisplay::display(I2);
-          vpDisplay::display(I3);
-        }
+      // TODO:
+//       // Test to reset the tracker
+//       if (reader.getFrameIndex() == reader.getFirstFrameIndex() + 10) {
+//         std::cout << "----------Test reset tracker----------" << std::endl;
+//         if (opt_display) {
+//           vpDisplay::display(I1);
+//           vpDisplay::display(I2);
+//           vpDisplay::display(I3);
+//         }
 
-        tracker->resetTracker();
-#if USE_XML
-        dynamic_cast<vpMbGenericTracker *>(tracker)->loadConfigFile(mapOfConfigFiles);
-#else
-        // By setting the parameters:
-        cam.initPersProjWithoutDistortion(547, 542, 338, 234);
-        mapOfCameraParams["Camera1"] = cam;
-        mapOfCameraParams["Camera2"] = cam;
-        mapOfCameraParams["Camera3"] = cam;
+//         tracker->resetTracker();
+// #if USE_XML
+//         dynamic_cast<vpMbGenericTracker *>(tracker)->loadConfigFile(mapOfConfigFiles);
+// #else
+//         // By setting the parameters:
+//         cam.initPersProjWithoutDistortion(547, 542, 338, 234);
+//         mapOfCameraParams["Camera1"] = cam;
+//         mapOfCameraParams["Camera2"] = cam;
+//         mapOfCameraParams["Camera3"] = cam;
 
-        me.setMaskSize(5);
-        me.setMaskNumber(180);
-        me.setRange(7);
-        me.setLikelihoodThresholdType(vpMe::NORMALIZED_THRESHOLD);
-        me.setThreshold(10);
-        me.setMu1(0.5);
-        me.setMu2(0.5);
-        me.setSampleStep(4);
+//         me.setMaskSize(5);
+//         me.setMaskNumber(180);
+//         me.setRange(7);
+//         me.setLikelihoodThresholdType(vpMe::NORMALIZED_THRESHOLD);
+//         me.setThreshold(10);
+//         me.setMu1(0.5);
+//         me.setMu2(0.5);
+//         me.setSampleStep(4);
 
-        mapOfMe["Camera1"] = me;
-        mapOfMe["Camera2"] = me;
-        mapOfMe["Camera3"] = me;
+//         mapOfMe["Camera1"] = me;
+//         mapOfMe["Camera2"] = me;
+//         mapOfMe["Camera3"] = me;
 
-#if defined(VISP_HAVE_MODULE_KLT) && defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO)
-        klt.setMaxFeatures(10000);
-        klt.setWindowSize(5);
-        klt.setQuality(0.01);
-        klt.setMinDistance(5);
-        klt.setHarrisFreeParameter(0.01);
-        klt.setBlockSize(3);
-        klt.setPyramidLevels(3);
+// #if defined(VISP_HAVE_MODULE_KLT) && defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO)
+//         klt.setMaxFeatures(10000);
+//         klt.setWindowSize(5);
+//         klt.setQuality(0.01);
+//         klt.setMinDistance(5);
+//         klt.setHarrisFreeParameter(0.01);
+//         klt.setBlockSize(3);
+//         klt.setPyramidLevels(3);
 
-        mapOfKlt["Camera1"] = klt;
-        mapOfKlt["Camera2"] = klt;
-        mapOfKlt["Camera3"] = klt;
+//         mapOfKlt["Camera1"] = klt;
+//         mapOfKlt["Camera2"] = klt;
+//         mapOfKlt["Camera3"] = klt;
 
-        dynamic_cast<vpMbGenericTracker *>(tracker)->setKltOpencv(mapOfKlt);
-        dynamic_cast<vpMbGenericTracker *>(tracker)->setKltMaskBorder(5);
-#endif
+//         dynamic_cast<vpMbGenericTracker *>(tracker)->setKltOpencv(mapOfKlt);
+//         dynamic_cast<vpMbGenericTracker *>(tracker)->setKltMaskBorder(5);
+// #endif
 
-        dynamic_cast<vpMbGenericTracker *>(tracker)->setCameraParameters(mapOfCameraParams);
-        dynamic_cast<vpMbGenericTracker *>(tracker)->setMovingEdge(mapOfMe);
-        tracker->setAngleAppear(vpMath::rad(65));
-        tracker->setAngleDisappear(vpMath::rad(75));
+//         dynamic_cast<vpMbGenericTracker *>(tracker)->setCameraParameters(mapOfCameraParams);
+//         dynamic_cast<vpMbGenericTracker *>(tracker)->setMovingEdge(mapOfMe);
+//         tracker->setAngleAppear(vpMath::rad(65));
+//         tracker->setAngleDisappear(vpMath::rad(75));
 
-        // Specify the clipping to
-        tracker->setNearClippingDistance(0.01);
-        tracker->setFarClippingDistance(0.90);
+//         // Specify the clipping to
+//         tracker->setNearClippingDistance(0.01);
+//         tracker->setFarClippingDistance(0.90);
 
-        dynamic_cast<vpMbGenericTracker *>(tracker)->getClipping(mapOfClippingFlags);
-        for (std::map<std::string, unsigned int>::iterator it = mapOfClippingFlags.begin();
-          it != mapOfClippingFlags.end(); ++it) {
-          it->second = (it->second | vpMbtPolygon::FOV_CLIPPING);
-        }
+//         dynamic_cast<vpMbGenericTracker *>(tracker)->getClipping(mapOfClippingFlags);
+//         for (std::map<std::string, unsigned int>::iterator it = mapOfClippingFlags.begin();
+//           it != mapOfClippingFlags.end(); ++it) {
+//           it->second = (it->second | vpMbtPolygon::FOV_CLIPPING);
+//         }
 
-        dynamic_cast<vpMbGenericTracker *>(tracker)->setClipping(mapOfClippingFlags);
-        //   tracker->setClipping(tracker->getClipping() | vpMbtPolygon::LEFT_CLIPPING
-        //   | vpMbtPolygon::RIGHT_CLIPPING | vpMbtPolygon::UP_CLIPPING |
-        //   vpMbtPolygon::DOWN_CLIPPING); // Equivalent to FOV_CLIPPING
-#endif
-        tracker->loadModel(modelFile);
-        dynamic_cast<vpMbGenericTracker *>(tracker)->setCameraParameters(mapOfCameraParams);
-        tracker->setOgreVisibilityTest(useOgre);
-        tracker->setScanLineVisibilityTest(useScanline);
-        tracker->setCovarianceComputation(computeCovariance);
-        tracker->setProjectionErrorComputation(projectionError);
-        dynamic_cast<vpMbGenericTracker *>(tracker)->initFromPose(mapOfImages, mapOfCameraPoses);
-      }
+//         dynamic_cast<vpMbGenericTracker *>(tracker)->setClipping(mapOfClippingFlags);
+//         //   tracker->setClipping(tracker->getClipping() | vpMbtPolygon::LEFT_CLIPPING
+//         //   | vpMbtPolygon::RIGHT_CLIPPING | vpMbtPolygon::UP_CLIPPING |
+//         //   vpMbtPolygon::DOWN_CLIPPING); // Equivalent to FOV_CLIPPING
+// #endif
+//         tracker->loadModel(modelFile);
+//         dynamic_cast<vpMbGenericTracker *>(tracker)->setCameraParameters(mapOfCameraParams);
+//         tracker->setOgreVisibilityTest(useOgre);
+//         tracker->setScanLineVisibilityTest(useScanline);
+//         tracker->setCovarianceComputation(computeCovariance);
+//         tracker->setProjectionErrorComputation(projectionError);
+//         dynamic_cast<vpMbGenericTracker *>(tracker)->initFromPose(mapOfImages, mapOfCameraPoses);
+//       }
 
-      // Test to set an initial pose
-      if (reader.getFrameIndex() == reader.getFirstFrameIndex() + 50) {
-        vpHomogeneousMatrix c1Moi;
-        c1Moi.buildFrom(0.0439540832, 0.0845870108, 0.5477322481, 2.179498458, 0.8611798108, -0.3491961946);
-        std::map<std::string, vpHomogeneousMatrix> mapOfSetPoses;
-        mapOfSetPoses["Camera1"] = c1Moi;
+      // TODO:
+      // // Test to set an initial pose
+      // if (reader.getFrameIndex() == reader.getFirstFrameIndex() + 50) {
+      //   vpHomogeneousMatrix c1Moi;
+      //   c1Moi.buildFrom(0.0439540832, 0.0845870108, 0.5477322481, 2.179498458, 0.8611798108, -0.3491961946);
+      //   std::map<std::string, vpHomogeneousMatrix> mapOfSetPoses;
+      //   mapOfSetPoses["Camera1"] = c1Moi;
 
-        std::cout << "Test set pose" << std::endl;
-        dynamic_cast<vpMbGenericTracker *>(tracker)->setPose(mapOfImages, mapOfSetPoses);
-      }
+      //   std::cout << "Test set pose" << std::endl;
+      //   dynamic_cast<vpMbGenericTracker *>(tracker)->setPose(mapOfImages, mapOfSetPoses);
+      // }
 
+      // TODO:
       // track the object: stop tracking from frame 40 to 50
-      if (reader.getFrameIndex() - reader.getFirstFrameIndex() < 40 ||
-        reader.getFrameIndex() - reader.getFirstFrameIndex() >= 50) {
+      // if (reader.getFrameIndex() - reader.getFirstFrameIndex() < 40 ||
+      //   reader.getFrameIndex() - reader.getFirstFrameIndex() >= 50)
+      {
         dynamic_cast<vpMbGenericTracker *>(tracker)->track(mapOfImages);
         dynamic_cast<vpMbGenericTracker *>(tracker)->getPose(mapOfCameraPoses);
         if (opt_display) {
@@ -684,11 +725,11 @@ int main(int argc, const char **argv)
             mapOfSubImages["Camera2"] = &I2;
 
             dynamic_cast<vpMbGenericTracker *>(tracker)->display(mapOfSubImages, mapOfCameraPoses, mapOfCameraParams,
-              vpColor::red, 3);
+              vpColor::red, 5);
           }
           else {
             dynamic_cast<vpMbGenericTracker *>(tracker)->display(mapOfImages, mapOfCameraPoses, mapOfCameraParams,
-              vpColor::red, 3);
+              vpColor::red, 5);
           }
           // display the frame
           vpDisplay::displayFrame(I1, mapOfCameraPoses["Camera1"], mapOfCameraParams["Camera1"], 0.05);

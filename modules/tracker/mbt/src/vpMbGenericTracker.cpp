@@ -5242,6 +5242,16 @@ void vpMbGenericTracker::setUseEdgeTracking(const std::string &name, const bool 
   }
 }
 
+// TODO:
+void vpMbGenericTracker::setForceInitMovingEdge(bool force)
+{
+  for (std::map<std::string, TrackerWrapper *>::const_iterator it = m_mapOfTrackers.begin();
+    it != m_mapOfTrackers.end(); ++it) {
+    TrackerWrapper *tracker = it->second;
+    tracker->setForceInitMovingEdge(force);
+  }
+}
+
 #if defined(VISP_HAVE_MODULE_KLT) && defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO)
 /*!
   Set if the polygon that has the given name has to be considered during
@@ -6157,6 +6167,7 @@ void vpMbGenericTracker::TrackerWrapper::display(const vpImage<unsigned char> &I
   const vpCameraParameters &cam, const vpColor &col,
   unsigned int thickness, bool displayFullModel)
 {
+  displayFullModel = true;
   if (displayFeatures) {
     std::vector<std::vector<double> > features = getFeaturesForDisplay();
     for (size_t i = 0; i < features.size(); i++) {
@@ -6208,22 +6219,22 @@ void vpMbGenericTracker::TrackerWrapper::display(const vpImage<unsigned char> &I
     }
   }
 
-  std::vector<std::vector<double> > models =
-    getModelForDisplay(I.getWidth(), I.getHeight(), cMo, cam, displayFullModel);
-  for (size_t i = 0; i < models.size(); i++) {
-    if (vpMath::equal(models[i][0], 0)) {
-      vpImagePoint ip1(models[i][1], models[i][2]);
-      vpImagePoint ip2(models[i][3], models[i][4]);
-      vpDisplay::displayLine(I, ip1, ip2, col, thickness);
-    }
-    else if (vpMath::equal(models[i][0], 1)) {
-      vpImagePoint center(models[i][1], models[i][2]);
-      double n20 = models[i][3];
-      double n11 = models[i][4];
-      double n02 = models[i][5];
-      vpDisplay::displayEllipse(I, center, n20, n11, n02, true, col, thickness);
-    }
-  }
+  // std::vector<std::vector<double> > models =
+  //   getModelForDisplay(I.getWidth(), I.getHeight(), cMo, cam, displayFullModel);
+  // for (size_t i = 0; i < models.size(); i++) {
+  //   if (vpMath::equal(models[i][0], 0)) {
+  //     vpImagePoint ip1(models[i][1], models[i][2]);
+  //     vpImagePoint ip2(models[i][3], models[i][4]);
+  //     vpDisplay::displayLine(I, ip1, ip2, col, thickness);
+  //   }
+  //   else if (vpMath::equal(models[i][0], 1)) {
+  //     vpImagePoint center(models[i][1], models[i][2]);
+  //     double n20 = models[i][3];
+  //     double n11 = models[i][4];
+  //     double n02 = models[i][5];
+  //     vpDisplay::displayEllipse(I, center, n20, n11, n02, true, col, thickness);
+  //   }
+  // }
 
 #ifdef VISP_HAVE_OGRE
   if ((m_trackerType & EDGE_TRACKER)
@@ -6776,6 +6787,12 @@ void vpMbGenericTracker::TrackerWrapper::postTracking(const vpImage<unsigned cha
     vpMbEdgeTracker::initMovingEdge(*ptr_I, m_cMo);
     // Reinit the moving edge for the lines which need it.
     vpMbEdgeTracker::reinitMovingEdge(*ptr_I, m_cMo);
+
+    // TODO:
+    // bool backup = m_forceInitMovingEdge;
+    // setForceInitMovingEdge(true);
+    // vpMbEdgeTracker::trackMovingEdge(*ptr_I);
+    // setForceInitMovingEdge(backup);
 
     if (computeProjError) {
       vpMbEdgeTracker::computeProjectionError(*ptr_I);

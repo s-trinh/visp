@@ -276,8 +276,8 @@ int main(int argc, const char **argv)
 
     // Read the command line options
     if (!getOptions(argc, argv, opt_ipath, opt_configFile, opt_modelFile, opt_initFile, opt_lastFrame, displayFeatures,
-      opt_click_allowed, opt_display, cao3DModel, trackCylinder, useOgre, showOgreConfigDialog,
-      useScanline, computeCovariance, projectionError, trackerType)) {
+                    opt_click_allowed, opt_display, cao3DModel, trackCylinder, useOgre, showOgreConfigDialog,
+                    useScanline, computeCovariance, projectionError, trackerType)) {
       return EXIT_FAILURE;
     }
 
@@ -520,6 +520,15 @@ int main(int argc, const char **argv)
     bool quit = false, click = false;
     while (!reader.end() && !quit) {
       // acquire a new image
+      reader.acquire(I1);
+      reader.acquire(I1);
+      reader.acquire(I1);
+      reader.acquire(I1);
+      reader.acquire(I1);
+      reader.acquire(I1);
+      reader.acquire(I1);
+      reader.acquire(I1);
+      reader.acquire(I1);
       reader.acquire(I1);
       I2 = I1;
       // display the image

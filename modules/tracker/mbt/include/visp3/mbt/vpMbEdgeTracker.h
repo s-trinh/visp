@@ -308,6 +308,9 @@ protected:
   //! Display features
   std::vector<std::vector<double> > m_featuresToBeDisplayedEdge;
 
+  // TODO:
+  bool m_forceInitMovingEdge;
+
 public:
   vpMbEdgeTracker();
   virtual ~vpMbEdgeTracker() override;
@@ -462,6 +465,8 @@ public:
   void setScales(const std::vector<bool> &_scales);
 
   void setUseEdgeTracking(const std::string &name, const bool &useEdgeTracking);
+
+  void setForceInitMovingEdge(bool force);
 
   virtual void track(const vpImage<unsigned char> &I) override;
   virtual void track(const vpImage<vpRGBa> &I) override;

@@ -38,7 +38,7 @@ int main(int argc, char **argv)
     if (std::string(argv[i]) == "--cv-backend") {
       opencv_backend = true;
     }
-    else if ((std::string(argv[i]) == "--save" || std::string(argv[i]) == "-i") && i+1 < argc) {
+    else if ((std::string(argv[i]) == "--save" || std::string(argv[i]) == "-s") && i+1 < argc) {
       npz_filename = argv[i+1];
     }
     else if (std::string(argv[i]) == "--color" || std::string(argv[i]) == "-c") {
@@ -124,7 +124,27 @@ int main(int argc, char **argv)
   int iter = 0;
   while (!g.end()) {
     g.acquire(I);
+
+    // TODO:
+    using namespace cv;
+    Mat grad_x, grad_y;
+    Mat abs_grad_x, abs_grad_y;
+    Mat image, src_gray;
+    vpImageConvert::convert(I, src_gray);
+    GaussianBlur(src_gray, image, Size(3, 3), 0, 0, BORDER_DEFAULT);
+    Sobel(image, grad_x, CV_16SC1, 1, 0, 3);
+    Sobel(image, grad_y, CV_16SC1, 0, 1, 3);
+    // converting back to CV_8U
+    convertScaleAbs(grad_x, abs_grad_x);
+    convertScaleAbs(grad_y, abs_grad_y);
+    Mat grad;
+    addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad);
+    vpImageConvert::convert(grad, I);
+    // imshow("grad", grad);
+    // char key = (char)waitKey(30);
+
     tracker.track(I);
+    // tracker.track(I);
     tracker.getPose(cMo);
     // std::cout << "\ncMo:\n" << cMo << std::endl;
 

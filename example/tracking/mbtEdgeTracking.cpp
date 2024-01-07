@@ -60,7 +60,7 @@
 #include <visp3/io/vpVideoReader.h>
 #include <visp3/mbt/vpMbEdgeTracker.h>
 
-#define GETOPTARGS "x:m:i:n:de:chtfColwvp"
+#define GETOPTARGS "x:m:i:n:de:chtfColwvpj:"
 
 void usage(const char *name, const char *badparam)
 {
@@ -153,7 +153,7 @@ OPTIONS:                                               \n\
 bool getOptions(int argc, const char **argv, std::string &ipath, std::string &configFile, std::string &modelFile,
   std::string &initFile, long &lastFrame, bool &displayFeatures, bool &click_allowed, bool &display,
   bool &cao3DModel, bool &trackCylinder, bool &useOgre, bool &showOgreConfigDialog, bool &useScanline,
-  bool &computeCovariance, bool &projectionError)
+  bool &computeCovariance, bool &projectionError, int &jump)
 {
   const char *optarg_;
   int c;
@@ -205,6 +205,9 @@ bool getOptions(int argc, const char **argv, std::string &ipath, std::string &co
     case 'p':
       projectionError = true;
       break;
+    case 'j':
+      jump = atoi(optarg_);
+      break;
     case 'h':
       usage(argv[0], nullptr);
       return false;
@@ -252,6 +255,7 @@ int main(int argc, const char **argv)
     bool computeCovariance = false;
     bool projectionError = false;
     bool quit = false;
+    int jump = 1;
 
 #if VISP_HAVE_DATASET_VERSION >= 0x030600
     std::string ext("png");
@@ -269,8 +273,8 @@ int main(int argc, const char **argv)
 
     // Read the command line options
     if (!getOptions(argc, argv, opt_ipath, opt_configFile, opt_modelFile, opt_initFile, opt_lastFrame, displayFeatures,
-      opt_click_allowed, opt_display, cao3DModel, trackCylinder, useOgre, showOgreConfigDialog,
-      useScanline, computeCovariance, projectionError)) {
+                    opt_click_allowed, opt_display, cao3DModel, trackCylinder, useOgre, showOgreConfigDialog,
+                    useScanline, computeCovariance, projectionError, jump)) {
       return EXIT_FAILURE;
     }
 
@@ -391,6 +395,10 @@ int main(int argc, const char **argv)
     vpMbEdgeTracker tracker;
     vpHomogeneousMatrix cMo;
 
+    std::vector<bool> pyramids = { true, true };
+    // TODO:
+    tracker.setScales(pyramids);
+
     // Initialise the tracker: camera parameters, moving edge and KLT settings
     vpCameraParameters cam;
     // From the xml file
@@ -481,73 +489,76 @@ int main(int argc, const char **argv)
 
     while (!reader.end()) {
       // acquire a new image
-      reader.acquire(I);
+      for (int cpt = 0; cpt < jump; cpt++) {
+        reader.acquire(I);
+      }
       // display the image
       if (opt_display)
         vpDisplay::display(I);
 
-      // Test to reset the tracker
-      if (reader.getFrameIndex() == reader.getFirstFrameIndex() + 10) {
-        vpTRACE("Test reset tracker");
-        if (opt_display)
-          vpDisplay::display(I);
-        tracker.resetTracker();
-        tracker.loadConfigFile(configFile);
-#if 0
-        // Corresponding parameters manually set to have an example code
-        // By setting the parameters:
-        cam.initPersProjWithoutDistortion(547, 542, 338, 234);
+//       // Test to reset the tracker
+//       if (reader.getFrameIndex() == reader.getFirstFrameIndex() + 10) {
+//         vpTRACE("Test reset tracker");
+//         if (opt_display)
+//           vpDisplay::display(I);
+//         tracker.resetTracker();
+//         tracker.loadConfigFile(configFile);
+// #if 0
+//         // Corresponding parameters manually set to have an example code
+//         // By setting the parameters:
+//         cam.initPersProjWithoutDistortion(547, 542, 338, 234);
 
-        vpMe me;
-        me.setMaskSize(5);
-        me.setMaskNumber(180);
-        me.setRange(7);
-        me.setLikelihoodThresholdType(vpMe::NORMALIZED_THRESHOLD);
-        me.setThreshold(10);
-        me.setMu1(0.5);
-        me.setMu2(0.5);
-        me.setSampleStep(4);
+//         vpMe me;
+//         me.setMaskSize(5);
+//         me.setMaskNumber(180);
+//         me.setRange(7);
+//         me.setLikelihoodThresholdType(vpMe::NORMALIZED_THRESHOLD);
+//         me.setThreshold(10);
+//         me.setMu1(0.5);
+//         me.setMu2(0.5);
+//         me.setSampleStep(4);
 
-        tracker.setCameraParameters(cam);
-        tracker.setMovingEdge(me);
+//         tracker.setCameraParameters(cam);
+//         tracker.setMovingEdge(me);
 
-        // Specify the clipping to use
-        tracker.setNearClippingDistance(0.01);
-        tracker.setFarClippingDistance(0.90);
-        tracker.setClipping(tracker.getClipping() | vpMbtPolygon::FOV_CLIPPING);
-        //   tracker.setClipping(tracker.getClipping() | vpMbtPolygon::LEFT_CLIPPING |
-        //   vpMbtPolygon::RIGHT_CLIPPING | vpMbtPolygon::UP_CLIPPING |
-        //   vpMbtPolygon::DOWN_CLIPPING); // Equivalent to FOV_CLIPPING
-#endif
-        tracker.loadModel(modelFile);
-        tracker.setCameraParameters(cam);
-        tracker.setOgreVisibilityTest(useOgre);
-        tracker.setScanLineVisibilityTest(useScanline);
-        tracker.setCovarianceComputation(computeCovariance);
-        tracker.setProjectionErrorComputation(projectionError);
-        tracker.initFromPose(I, cMo);
-      }
+//         // Specify the clipping to use
+//         tracker.setNearClippingDistance(0.01);
+//         tracker.setFarClippingDistance(0.90);
+//         tracker.setClipping(tracker.getClipping() | vpMbtPolygon::FOV_CLIPPING);
+//         //   tracker.setClipping(tracker.getClipping() | vpMbtPolygon::LEFT_CLIPPING |
+//         //   vpMbtPolygon::RIGHT_CLIPPING | vpMbtPolygon::UP_CLIPPING |
+//         //   vpMbtPolygon::DOWN_CLIPPING); // Equivalent to FOV_CLIPPING
+// #endif
+//         tracker.loadModel(modelFile);
+//         tracker.setCameraParameters(cam);
+//         tracker.setOgreVisibilityTest(useOgre);
+//         tracker.setScanLineVisibilityTest(useScanline);
+//         tracker.setCovarianceComputation(computeCovariance);
+//         tracker.setProjectionErrorComputation(projectionError);
+//         tracker.initFromPose(I, cMo);
+//       }
 
-      // Test to set an initial pose
-      if (reader.getFrameIndex() == reader.getFirstFrameIndex() + 50) {
-        cMo.buildFrom(0.0439540832, 0.0845870108, 0.5477322481, 2.179498458, 0.8611798108, -0.3491961946);
-        vpTRACE("Test set pose");
-        tracker.setPose(I, cMo);
-        //        if (opt_display) {
-        //          // display the 3D model
-        //          tracker.display(I, cMo, cam, vpColor::darkRed);
-        //          // display the frame
-        //          vpDisplay::displayFrame (I, cMo, cam, 0.05);
-        ////          if (opt_click_allowed) {
-        ////            vpDisplay::flush(I);
-        ////            vpDisplay::getClick(I);
-        ////          }
-        //        }
-      }
+      // // Test to set an initial pose
+      // if (reader.getFrameIndex() == reader.getFirstFrameIndex() + 50) {
+      //   cMo.buildFrom(0.0439540832, 0.0845870108, 0.5477322481, 2.179498458, 0.8611798108, -0.3491961946);
+      //   vpTRACE("Test set pose");
+      //   tracker.setPose(I, cMo);
+      //   //        if (opt_display) {
+      //   //          // display the 3D model
+      //   //          tracker.display(I, cMo, cam, vpColor::darkRed);
+      //   //          // display the frame
+      //   //          vpDisplay::displayFrame (I, cMo, cam, 0.05);
+      //   ////          if (opt_click_allowed) {
+      //   ////            vpDisplay::flush(I);
+      //   ////            vpDisplay::getClick(I);
+      //   ////          }
+      //   //        }
+      // }
 
-      // track the object: stop tracking from frame 40 to 50
-      if (reader.getFrameIndex() - reader.getFirstFrameIndex() < 40 ||
-        reader.getFrameIndex() - reader.getFirstFrameIndex() >= 50) {
+      // // track the object: stop tracking from frame 40 to 50
+      // if (reader.getFrameIndex() - reader.getFirstFrameIndex() < 40 ||
+      //   reader.getFrameIndex() - reader.getFirstFrameIndex() >= 50)
+      {
         tracker.track(I);
         tracker.getPose(cMo);
         if (opt_display) {
@@ -560,9 +571,9 @@ int main(int argc, const char **argv)
 
       if (opt_click_allowed) {
         vpDisplay::displayText(I, 10, 10, "Click to quit", vpColor::red);
-        if (vpDisplay::getClick(I, false)) {
-          quit = true;
-          break;
+        if (vpDisplay::getClick(I, true)) {
+          // quit = true;
+          // break;
         }
       }
 

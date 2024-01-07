@@ -574,6 +574,8 @@ public:
   virtual void setUseDepthDenseTracking(const std::string &name, const bool &useDepthDenseTracking);
   virtual void setUseDepthNormalTracking(const std::string &name, const bool &useDepthNormalTracking);
   virtual void setUseEdgeTracking(const std::string &name, const bool &useEdgeTracking);
+  // TODO:
+  virtual void setForceInitMovingEdge(bool force);
 #if defined(VISP_HAVE_MODULE_KLT) && defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO)
   virtual void setUseKltTracking(const std::string &name, const bool &useKltTracking);
 #endif

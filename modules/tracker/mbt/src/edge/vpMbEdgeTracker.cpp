@@ -52,6 +52,9 @@
 #include <visp3/mbt/vpMbtXmlGenericParser.h>
 #include <visp3/vision/vpPose.h>
 
+// TODO:
+#include <visp3/io/vpImageIo.h>
+
 #include <float.h>
 #include <limits>
 #include <map>
@@ -63,10 +66,10 @@
 */
 vpMbEdgeTracker::vpMbEdgeTracker()
   : me(), lines(1), circles(1), cylinders(1), nline(0), ncircle(0), ncylinder(0), nbvisiblepolygone(0),
-    percentageGdPt(0.4), scales(1), Ipyramid(0), scaleLevel(0), nbFeaturesForProjErrorComputation(0), m_factor(),
-    m_robustLines(), m_robustCylinders(), m_robustCircles(), m_wLines(), m_wCylinders(), m_wCircles(), m_errorLines(),
-    m_errorCylinders(), m_errorCircles(), m_L_edge(), m_error_edge(), m_w_edge(), m_weightedError_edge(),
-    m_robust_edge(), m_featuresToBeDisplayedEdge()
+  percentageGdPt(0.4), scales(1), Ipyramid(0), scaleLevel(0), nbFeaturesForProjErrorComputation(0), m_factor(),
+  m_robustLines(), m_robustCylinders(), m_robustCircles(), m_wLines(), m_wCylinders(), m_wCircles(), m_errorLines(),
+  m_errorCylinders(), m_errorCircles(), m_L_edge(), m_error_edge(), m_w_edge(), m_weightedError_edge(),
+  m_robust_edge(), m_featuresToBeDisplayedEdge(), m_forceInitMovingEdge(false)
 {
   scales[0] = true;
 
@@ -271,6 +274,9 @@ void vpMbEdgeTracker::computeVVS(const vpImage<unsigned char> &_I, unsigned int 
 
       cMoPrev = m_cMo;
       m_cMo = vpExponentialMap::direct(v).inverse() * m_cMo;
+
+      // TODO:
+      std::cerr << "computeVVSPoseEstimation ; m_cMo:\n" << m_cMo << std::endl;
 
     } // endif(!restartFromLast)
 
@@ -1021,19 +1027,36 @@ void vpMbEdgeTracker::track(const vpImage<unsigned char> &I)
   initPyramid(I, Ipyramid);
 
   unsigned int lvl = (unsigned int)scales.size();
+
+  // TODO:
+  std::cerr << "\n\ntrack()" << std::endl;
+
   do {
     lvl--;
+    // TODO:
+    std::cerr << "\nlvl=" << lvl << " ; m_forceInitMovingEdge=" << m_forceInitMovingEdge << std::endl;
 
     projectionError = 90.0;
 
     if (scales[lvl]) {
       vpHomogeneousMatrix cMo_1 = m_cMo;
+      // TODO:
+      std::cerr << "cMo_1:\n" << cMo_1 << std::endl;
       try {
+        // TODO:
+        std::cerr << "downScale" << std::endl;
         downScale(lvl);
 
+        std::ostringstream output_filename;
+        output_filename << "debug_pyramid_lvl_" << lvl << ".png";
+        vpImageIo::write(*Ipyramid[lvl], output_filename.str());
+
         try {
+          // TODO:
+          std::cerr << "trackMovingEdge" << std::endl;
           trackMovingEdge(*Ipyramid[lvl]);
-        } catch (...) {
+        }
+        catch (...) {
           vpTRACE("Error in moving edge tracking");
           throw;
         }
@@ -1063,12 +1086,16 @@ void vpMbEdgeTracker::track(const vpImage<unsigned char> &I)
         */
 
         try {
+          // TODO:
+          std::cerr << "computeVVS" << std::endl;
           computeVVS(*Ipyramid[lvl], lvl);
         } catch (...) {
           covarianceMatrix = -1;
           throw; // throw the original exception
         }
 
+        // TODO:
+        std::cerr << "testTracking" << std::endl;
         testTracking();
 
         if (displayFeatures) {
@@ -1077,7 +1104,7 @@ void vpMbEdgeTracker::track(const vpImage<unsigned char> &I)
 
         // Looking for new visible face
         bool newvisibleface = false;
-        visibleFace(I, m_cMo, newvisibleface);
+        visibleFace(*Ipyramid[lvl], m_cMo, newvisibleface);
 
         // cam.computeFov(I.getWidth(), I.getHeight());
         if (useScanLine) {
@@ -1085,15 +1112,17 @@ void vpMbEdgeTracker::track(const vpImage<unsigned char> &I)
           faces.computeScanLineRender(m_cam, I.getWidth(), I.getHeight());
         }
 
-        updateMovingEdge(I);
+        updateMovingEdge(*Ipyramid[lvl]);
 
-        initMovingEdge(I, m_cMo);
+        initMovingEdge(*Ipyramid[lvl], m_cMo);
         // Reinit the moving edge for the lines which need it.
-        reinitMovingEdge(I, m_cMo);
+        reinitMovingEdge(*Ipyramid[lvl], m_cMo);
 
         if (computeProjError)
           computeProjectionError(I);
 
+        // TODO:
+        std::cerr << "upScale" << std::endl;
         upScale(lvl);
       } catch (const vpException &e) {
         if (lvl != 0) {
@@ -1540,7 +1569,7 @@ void vpMbEdgeTracker::initMovingEdge(const vpImage<unsigned char> &I, const vpHo
     if (isvisible) {
       l->setVisible(true);
       l->updateTracked();
-      if (l->meline.empty() && l->isTracked())
+      if ((l->meline.empty() && l->isTracked()) || m_forceInitMovingEdge) // TODO:
         l->initMovingEdge(I, _cMo, doNotTrack, m_mask);
     } else {
       l->setVisible(false);
@@ -1574,7 +1603,8 @@ void vpMbEdgeTracker::initMovingEdge(const vpImage<unsigned char> &I, const vpHo
 
     if (isvisible) {
       cy->setVisible(true);
-      if (cy->meline1 == nullptr || cy->meline2 == nullptr) {
+      if (cy->meline1 == nullptr || cy->meline2 == nullptr || m_forceInitMovingEdge) // TODO:
+      {
         if (cy->isTracked())
           cy->initMovingEdge(I, _cMo, doNotTrack, m_mask);
       }
@@ -1607,7 +1637,8 @@ void vpMbEdgeTracker::initMovingEdge(const vpImage<unsigned char> &I, const vpHo
 
     if (isvisible) {
       ci->setVisible(true);
-      if (ci->meEllipse == nullptr) {
+      if (ci->meEllipse == nullptr || m_forceInitMovingEdge) // TODO:
+      {
         if (ci->isTracked())
           ci->initMovingEdge(I, _cMo, doNotTrack, m_mask);
       }
@@ -1634,7 +1665,8 @@ void vpMbEdgeTracker::trackMovingEdge(const vpImage<unsigned char> &I)
        ++it) {
     vpMbtDistanceLine *l = *it;
     if (l->isVisible() && l->isTracked()) {
-      if (l->meline.empty()) {
+      if (l->meline.empty() || m_forceInitMovingEdge) // TODO:
+      {
         l->initMovingEdge(I, m_cMo, doNotTrack, m_mask);
       }
       l->trackMovingEdge(I);
@@ -1645,7 +1677,8 @@ void vpMbEdgeTracker::trackMovingEdge(const vpImage<unsigned char> &I)
        it != cylinders[scaleLevel].end(); ++it) {
     vpMbtDistanceCylinder *cy = *it;
     if (cy->isVisible() && cy->isTracked()) {
-      if (cy->meline1 == nullptr || cy->meline2 == nullptr) {
+      if (cy->meline1 == nullptr || cy->meline2 == nullptr || m_forceInitMovingEdge) // TODO:
+      {
         cy->initMovingEdge(I, m_cMo, doNotTrack, m_mask);
       }
       cy->trackMovingEdge(I, m_cMo);
@@ -1655,8 +1688,9 @@ void vpMbEdgeTracker::trackMovingEdge(const vpImage<unsigned char> &I)
   for (std::list<vpMbtDistanceCircle *>::const_iterator it = circles[scaleLevel].begin();
        it != circles[scaleLevel].end(); ++it) {
     vpMbtDistanceCircle *ci = *it;
-    if (ci->isVisible() && ci->isTracked()) {
-      if (ci->meEllipse == nullptr) {
+    if ((ci->isVisible() && ci->isTracked()) || m_forceInitMovingEdge) {
+      if (ci->meEllipse == nullptr) // TODO:
+      {
         ci->initMovingEdge(I, m_cMo, doNotTrack, m_mask);
       }
       ci->trackMovingEdge(I, m_cMo);
@@ -1876,7 +1910,7 @@ void vpMbEdgeTracker::reinitMovingEdge(const vpImage<unsigned char> &I, const vp
        ++it) {
     if ((*it)->isTracked()) {
       l = *it;
-      if (l->Reinit && l->isVisible())
+      if ((l->Reinit || m_forceInitMovingEdge) && l->isVisible()) // TODO:
         l->reinitMovingEdge(I, _cMo, m_mask);
     }
   }
@@ -1886,7 +1920,7 @@ void vpMbEdgeTracker::reinitMovingEdge(const vpImage<unsigned char> &I, const vp
        it != cylinders[scaleLevel].end(); ++it) {
     if ((*it)->isTracked()) {
       cy = *it;
-      if (cy->Reinit && cy->isVisible())
+      if ((cy->Reinit || m_forceInitMovingEdge) && cy->isVisible()) // TODO:
         cy->reinitMovingEdge(I, _cMo, m_mask);
     }
   }
@@ -1896,7 +1930,7 @@ void vpMbEdgeTracker::reinitMovingEdge(const vpImage<unsigned char> &I, const vp
        it != circles[scaleLevel].end(); ++it) {
     if ((*it)->isTracked()) {
       ci = *it;
-      if (ci->Reinit && ci->isVisible())
+      if ((ci->Reinit || m_forceInitMovingEdge) && ci->isVisible()) // TODO:
         ci->reinitMovingEdge(I, _cMo, m_mask);
     }
   }
@@ -2953,4 +2987,10 @@ void vpMbEdgeTracker::setUseEdgeTracking(const std::string &name, const bool &us
       }
     }
   }
+}
+
+// TODO!
+void vpMbEdgeTracker::setForceInitMovingEdge(bool force)
+{
+  m_forceInitMovingEdge = force;
 }
