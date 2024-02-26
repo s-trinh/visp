@@ -9,9 +9,56 @@
 //! [Include]
 #include <visp3/io/vpVideoReader.h>
 #include <visp3/io/vpVideoWriter.h>
+// TODO:
+#include <visp3/core/vpImageFilter.h>
 
 int main(int argc, char **argv)
 {
+  {
+    vpRxyzVector workbench_rpy_vispa1(-1.028722, -0.249099, -2.752058);
+    vpHomogeneousMatrix workbench_T_vispa1(vpTranslationVector(-1.322705, 0.270946, 0.595833), vpRotationMatrix(workbench_rpy_vispa1));
+    vpHomogeneousMatrix vispa1_T_workbench = workbench_T_vispa1.inverse();
+    vpRxyzVector vispa1_rpy_workbench(vispa1_T_workbench.getRotationMatrix());
+
+    std::cout << "vispa1_t_workbench=\n" << vispa1_T_workbench.getTranslationVector() << std::endl;
+    std::cout << "vispa1_rpy_workbench=\n" << vispa1_rpy_workbench << std::endl;
+  }
+  {
+    vpRzyxVector workbench_rpy_vispa1(-1.028722, -0.249099, -2.752058);
+    vpHomogeneousMatrix workbench_T_vispa1(vpTranslationVector(-1.322705, 0.270946, 0.595833), vpRotationMatrix(workbench_rpy_vispa1));
+    vpHomogeneousMatrix vispa1_T_workbench = workbench_T_vispa1.inverse();
+    vpRzyxVector vispa1_rpy_workbench(vispa1_T_workbench.getRotationMatrix());
+
+    std::cout << "\n\nvispa1_t_workbench=\n" << vispa1_T_workbench.getTranslationVector() << std::endl;
+    std::cout << "vispa1_rpy_workbench=\n" << vispa1_rpy_workbench << std::endl;
+  }
+  // {
+  //   vpRzyxVector base_link_rpy_vispa1(-1.028722, -0.249099, -2.752058);
+  //   vpHomogeneousMatrix base_link_T_vispa1(vpTranslationVector(-1.322705, 0.270946, 0.595833), vpRotationMatrix(base_link_rpy_vispa1));
+  //   vpHomogeneousMatrix vispa1_T_base_link = base_link_T_vispa1.inverse();
+  //   vpRxyzVector vispa1_rpy_base_link(vispa1_T_base_link.getRotationMatrix());
+
+  //   std::cout << "\n\nvispa1_t_base_link=\n" << vispa1_T_base_link.getTranslationVector() << std::endl;
+  //   std::cout << "vispa1_rpy_base_link=\n" << vispa1_rpy_base_link << std::endl;
+  // }
+  {
+    // vpRxyzVector workbench_rpy_vispa1(-1.028722, -0.249099, -2.752058);
+    vpQuaternionVector workbench_rpy_vispa1(0.0116296, -0.4998696, -0.8357015, 0.2271524);
+    vpHomogeneousMatrix workbench_T_vispa1(vpTranslationVector(-1.322705, 0.270946, 0.595833), vpRotationMatrix(workbench_rpy_vispa1));
+    vpHomogeneousMatrix base_T_workbench = workbench_T_vispa1.inverse();
+
+    std::cout << "\n\nbase_T_workbench=\n" << base_T_workbench.getTranslationVector() << std::endl;
+    vpQuaternionVector base_q_workbench(base_T_workbench.getRotationMatrix());
+    std::cout << "base_q(x, y, z, w)_workbench=\n"
+      << base_q_workbench.x() << "\n"
+      << base_q_workbench.y() << "\n"
+      << base_q_workbench.z() << "\n"
+      << base_q_workbench.w() << std::endl;
+  }
+
+
+// TODO: 2024-02-20
+#if 0
 #if defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_VIDEOIO) && defined(HAVE_OPENCV_HIGHGUI)
   std::string opt_videoname = "model/teabox/teabox.mp4";
   std::string opt_modelname = "model/teabox/teabox.cao";
@@ -304,6 +351,12 @@ int main(int argc, char **argv)
       //! [Set parameters]
     }
 
+    // TODO:
+    tracker.setProjectionErrorDisplay(true);
+    tracker.setProjectionErrorKernelSize(1);
+    vpImage<unsigned char> I_gauss;
+    cv::Mat1b img, img_gauss;
+
     //! [Set visibility parameters]
     //! [Set ogre visibility]
     tracker.setOgreVisibilityTest(false);
@@ -388,7 +441,13 @@ int main(int argc, char **argv)
         }
       }
       {
-        double proj_error = tracker.computeCurrentProjectionError(I, cMo, cam);
+        // TODO:
+        // double proj_error = tracker.computeCurrentProjectionError(I, cMo, cam);
+        // vpImageFilter::gaussianBlur(I, I_gauss);
+        vpImageConvert::convert(I, img);
+        cv::GaussianBlur(img, img_gauss, cv::Size(5, 5), 0);
+        vpImageConvert::convert(img_gauss, I_gauss);
+        double proj_error = tracker.computeCurrentProjectionError(I_gauss, cMo, cam);
         std::stringstream ss;
         ss << "Projection error: " << std::setprecision(2) << proj_error << " deg";
         vpDisplay::displayText(I, 80 * display->getDownScalingFactor(), 10 * display->getDownScalingFactor(), ss.str(), vpColor::red);
@@ -439,6 +498,7 @@ int main(int argc, char **argv)
   (void)argc;
   (void)argv;
   std::cout << "Install OpenCV and rebuild ViSP to use this example." << std::endl;
+#endif
 #endif
   return EXIT_SUCCESS;
 }
