@@ -4,30 +4,30 @@
 
 namespace
 {
-void merge(const vpImage<vpRGBa> &I_demo, const vpImage<vpRGBa> &I_blinding_resize, vpImage<vpRGBa> &I_out,
-  int bb_top, int bb_left, int bb_w, int bb_h, float coeff_a_, float coeff_b_)
-{
-  int smooth_h = 20, smooth_w = 20;
-  for (int i = bb_top; i < bb_h; i++) {
-    for (int j = bb_left; j < bb_w; j++) {
-      vpRGBa a = I_demo[i][j];
-      vpRGBa b = I_blinding_resize[i][j];
-      float coeff_a = 0;
-      float coeff_b = coeff_b_;
-      if (i >= bb_h-smooth_h) {
-        float offset = ((i+1) - (bb_h-smooth_h)) / float(smooth_h);
-        float smooth_coeff = std::tanh(3*offset); // std::tanh(offset);
-        coeff_a = smooth_coeff*coeff_a_; // (1.0f - smooth_coeff)*coeff_a_;
-        // std::cout << "smooth_coeff=" << smooth_coeff << " ; coeff_a=" << coeff_a << " ; coeff_b=" << coeff_b << std::endl;
-      }
-      else {
-        coeff_a = coeff_a_; // (1.0f - std::tanh(1))*coeff_a_;
-      }
-      vpRGBa c = coeff_a*a + coeff_b*b;
-      I_out[i][j] = c;
-    }
-  }
-}
+// void merge(const vpImage<vpRGBa> &I_demo, const vpImage<vpRGBa> &I_blinding_resize, vpImage<vpRGBa> &I_out,
+//   int bb_top, int bb_left, int bb_w, int bb_h, float coeff_a_, float coeff_b_)
+// {
+//   int smooth_h = 20, smooth_w = 20;
+//   for (int i = bb_top; i < bb_h; i++) {
+//     for (int j = bb_left; j < bb_w; j++) {
+//       vpRGBa a = I_demo[i][j];
+//       vpRGBa b = I_blinding_resize[i][j];
+//       float coeff_a = 0;
+//       float coeff_b = coeff_b_;
+//       if (i >= bb_h-smooth_h) {
+//         float offset = ((i+1) - (bb_h-smooth_h)) / float(smooth_h);
+//         float smooth_coeff = std::tanh(3*offset); // std::tanh(offset);
+//         coeff_a = smooth_coeff*coeff_a_; // (1.0f - smooth_coeff)*coeff_a_;
+//         // std::cout << "smooth_coeff=" << smooth_coeff << " ; coeff_a=" << coeff_a << " ; coeff_b=" << coeff_b << std::endl;
+//       }
+//       else {
+//         coeff_a = coeff_a_; // (1.0f - std::tanh(1))*coeff_a_;
+//       }
+//       vpRGBa c = coeff_a*a + coeff_b*b;
+//       I_out[i][j] = c;
+//     }
+//   }
+// }
 
 void computeSmoothingTable(vpImage<unsigned char> &I_smooth, int smooth_h, int smooth_w, int bb_top, int bb_left, int bb_w, int bb_h)
 {
@@ -58,16 +58,39 @@ void computeSmoothingTable(vpImage<unsigned char> &I_smooth, int smooth_h, int s
   }
 }
 
+void smooth(const vpImage<vpRGBa> &I, vpImage<vpRGBa> &I_out, const vpImage<unsigned char> &I_smooth,
+  int bb_top, int bb_left, int bb_w, int bb_h)
+{
+  for (int i = bb_top; i < bb_h; i++) {
+    for (int j = bb_left; j < bb_w; j++) {
+      vpRGBa a = I[i][j];
+      float coeff_smooth = I_smooth[i][j] / 255.0f;
+      I_out[i][j] = coeff_smooth * a;
+    }
+  }
+}
+
 void merge(const vpImage<vpRGBa> &I_demo, const vpImage<vpRGBa> &I_blinding_resize, vpImage<vpRGBa> &I_out,
   int bb_top, int bb_left, int bb_w, int bb_h, float coeff_a_, float coeff_b_, const vpImage<unsigned char> &I_smooth)
 {
-  // int smooth_h = 20, smooth_w = 20;
   for (int i = bb_top; i < bb_h; i++) {
     for (int j = bb_left; j < bb_w; j++) {
       vpRGBa a = I_demo[i][j];
       vpRGBa b = I_blinding_resize[i][j];
-      float coeff_a = coeff_a_ * (I_smooth[i][j] / 255.0f);
-      float coeff_b = coeff_b_;
+      float coeff_smooth = I_smooth[i][j] / 255.0f;
+      // TODO:
+      // float coeff_a = coeff_smooth * coeff_a_;
+      // float coeff_b = (1.0f - coeff_smooth) * coeff_b_;
+      // vpRGBa c = coeff_a*a + coeff_b*b;
+      // I_out[i][j] = coeff_smooth * coeff_b_ * a + coeff_a_ * b;
+
+      // float coeff_a = coeff_smooth * coeff_a_;
+      // float coeff_b = (1.0f - coeff_smooth) * coeff_b_;
+      // vpRGBa c = coeff_a*a + coeff_b*b;
+      // I_out[i][j] = c;
+
+      float coeff_a = coeff_smooth * (1 - coeff_a_) + coeff_a_;
+      float coeff_b = (1.0f - coeff_smooth) * coeff_b_;
       vpRGBa c = coeff_a*a + coeff_b*b;
       I_out[i][j] = c;
     }
@@ -105,6 +128,32 @@ int main()
   //   if (index > end_index) {
   //     break;
   //   }
+  // }
+
+
+
+
+
+
+
+  // // Extract all
+  // vpImage<vpRGBa> I;
+  // vpVideoReader g;
+  // g.setFileName("rush_3/demarlus_rush_2.mp4");
+  // g.open(I);
+
+  // int index = 0;
+  // while (!g.end()) {
+  //   g.acquire(I);
+
+  //   char buffer[FILENAME_MAX];
+  //   const std::string output_dir = "rush_3/in/"; // TODO:
+  //   snprintf(buffer, FILENAME_MAX, std::string(output_dir + "image_%04d.png").c_str(), index);
+  //   const std::string output_filename = buffer;
+
+  //   vpImageIo::write(I, output_filename);
+
+  //   index++;
   // }
 
 
@@ -184,6 +233,8 @@ int main()
 
 
 
+#define MERGE 1
+#if MERGE
   const int final_w = 1920, final_h = 1080;
   vpImage<unsigned char> I_smooth(final_h, final_w, 255);
 
@@ -201,9 +252,14 @@ int main()
   vpImage<vpRGBa> I_out;
   char buffer[FILENAME_MAX];
 
-  int index_out = 0;
+  // TODO:
+  // int index_out = 0;
+  int index_out = (start_index_demo - end_index_demo) - (end_index_blinding - start_index_blinding);
+  int index_out_start = index_out;
   int index_blinding = start_index_blinding;
-  for (int index_demo = start_index_demo /* - (end_index_blinding - start_index_blinding)*/;
+  // for (int index_demo = start_index_demo /* - (end_index_blinding - start_index_blinding)*/;
+  //     index_demo >= end_index_demo; index_demo--, index_blinding++, index_out++) {
+  for (int index_demo = start_index_demo - index_out_start;
       index_demo >= end_index_demo; index_demo--, index_blinding++, index_out++) {
 
     const std::string demo_dir = "rush_3/demo/"; // TODO:
@@ -218,8 +274,8 @@ int main()
     const std::string blinding_filename = buffer;
     // std::cout << "blinding_filename=" << blinding_filename << std::endl;
     vpImageIo::read(I_blinding, blinding_filename);
-    // vpImageTools::resize(I_blinding, I_blinding_resize, vpImageTools::INTERPOLATION_LINEAR);
-    I_blinding_resize = I_blinding;
+    vpImageTools::resize(I_blinding, I_blinding_resize, vpImageTools::INTERPOLATION_LINEAR);
+    // I_blinding_resize = I_blinding;
 
     // BB1
     const int bb1_top = 0;
@@ -233,21 +289,35 @@ int main()
     const int bb2_width = 990;
     const int bb2_height = 470;
 
-    // if (index_out <= end_index_blinding-start_index_blinding) {
-    if (index_demo <= start_index_demo - (end_index_blinding - start_index_blinding)) {
-      const float idx_ratio = (index_out - (start_index_demo - index_demo)) / (float)(end_index_blinding - start_index_blinding);
+    // if (index_demo <= end_index_demo + (end_index_blinding - start_index_blinding))
+    {
+      // const float idx_ratio = (index_out - (start_index_demo - index_demo)) / (float)(end_index_blinding - start_index_blinding);
+      const float idx_ratio = (index_out - index_out_start) / (float)(end_index_blinding - start_index_blinding);
       const int bb_width = (bb2_width - bb1_width) * idx_ratio + bb1_width;
       const int bb_height = (bb2_height - bb1_height) * idx_ratio + bb1_height;
       // std::cout << "idx_ratio=" << idx_ratio << " ; bb_size=" << bb_width << "x" << bb_height << std::endl;
 
       // TODO:
-      resize_factor = 1.0f;
+      // resize_factor = 1.0f;
 
-      const float coeff_a = 0.6, coeff_b = 0.4;
-      const int smooth_h = bb_height, smooth_w = bb_width;
+      const float coeff_a = 0.4, coeff_b = 0.6;
+      // const int smooth_h = bb_height, smooth_w = bb_width;
+      const int smooth_h = 100, smooth_w = 100;
+      I_smooth = 255;
       computeSmoothingTable(I_smooth, smooth_h, smooth_w, bb1_top, bb1_left, bb_width*resize_factor, bb_height*resize_factor);
+      if (0) {
+        const std::string smooth_dir = "rush_3/smooth/";
+        snprintf(buffer, FILENAME_MAX, std::string(smooth_dir + "image_%04d.png").c_str(), index_out);
+        const std::string smooth_filename = buffer;
+        vpImageIo::write(I_smooth, smooth_filename);
+      }
       // merge(I_demo, I_blinding_resize, I_out, bb1_top, bb1_left, bb_width*resize_factor, bb_height*resize_factor, 0.6, 0.4);
-      merge(I_demo, I_blinding_resize, I_out, bb1_top, bb1_left, bb_width*resize_factor, bb_height*resize_factor, coeff_a, coeff_b, I_smooth);
+      merge(I_demo, I_blinding_resize, I_out, bb1_top, bb1_left,
+        bb_width*resize_factor, bb_height*resize_factor, coeff_a, coeff_b, I_smooth);
+
+      // // TODO:
+      // I_out = I_demo;
+      // smooth(I_demo, I_out, I_smooth, bb1_top, bb1_left, bb_width*resize_factor, bb_height*resize_factor);
     }
 
     const std::string output_dir = "rush_3/out/";
@@ -256,6 +326,7 @@ int main()
     // std::cout << "output_filename=" << output_filename << std::endl;
     vpImageIo::write(I_out, output_filename);
   }
+#endif
 
   return 0;
 }
