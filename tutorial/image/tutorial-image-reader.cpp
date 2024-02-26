@@ -58,6 +58,39 @@ void computeSmoothingTable(vpImage<unsigned char> &I_smooth, int smooth_h, int s
   }
 }
 
+void computeSmoothingTable2(vpImage<unsigned char> &I_smooth, int smooth_h, int smooth_w, int bb_top, int bb_left, int bb_w, int bb_h,
+  float coeff_a_)
+{
+  for (int i = bb_top; i < bb_h; i++) {
+    float coeff = 0;
+    if (i >= bb_h-smooth_h) {
+      float offset = ((i+1) - (bb_h-smooth_h)) / float(smooth_h);
+      float smooth_coeff = std::tanh(3*offset);
+      coeff = smooth_coeff;
+    }
+
+    for (int j = bb_left; j < bb_w; j++) {
+      float coeff_b = 0;
+      if (i < bb_h-smooth_h && j >= bb_w-smooth_w) {
+        float offset = ((j+1) - (bb_w-smooth_w)) / float(smooth_w);
+        float smooth_coeff = std::tanh(3*offset);
+        coeff = smooth_coeff;
+      }
+      else if (i >= bb_h-smooth_h && j >= bb_w-smooth_w) {
+        float dist_h = ((i+1) - (bb_h-smooth_h)) / float(smooth_h);
+        float dist_w = ((j+1) - (bb_w-smooth_w)) / float(smooth_w);
+        float offset = std::sqrt(dist_h*dist_h + dist_w*dist_w) / std::sqrt(2);
+        float smooth_coeff = std::tanh(3*offset);
+        coeff = smooth_coeff;
+      }
+
+      float coeff_a = coeff * (1 - coeff_a_) + coeff_a_;
+
+      I_smooth[i][j] = coeff_a*255;
+    }
+  }
+}
+
 void smooth(const vpImage<vpRGBa> &I, vpImage<vpRGBa> &I_out, const vpImage<unsigned char> &I_smooth,
   int bb_top, int bb_left, int bb_w, int bb_h)
 {
@@ -78,21 +111,26 @@ void merge(const vpImage<vpRGBa> &I_demo, const vpImage<vpRGBa> &I_blinding_resi
       vpRGBa a = I_demo[i][j];
       vpRGBa b = I_blinding_resize[i][j];
       float coeff_smooth = I_smooth[i][j] / 255.0f;
-      // TODO:
-      // float coeff_a = coeff_smooth * coeff_a_;
-      // float coeff_b = (1.0f - coeff_smooth) * coeff_b_;
-      // vpRGBa c = coeff_a*a + coeff_b*b;
-      // I_out[i][j] = coeff_smooth * coeff_b_ * a + coeff_a_ * b;
-
-      // float coeff_a = coeff_smooth * coeff_a_;
-      // float coeff_b = (1.0f - coeff_smooth) * coeff_b_;
-      // vpRGBa c = coeff_a*a + coeff_b*b;
-      // I_out[i][j] = c;
 
       float coeff_a = coeff_smooth * (1 - coeff_a_) + coeff_a_;
-      float coeff_b = (1.0f - coeff_smooth) * coeff_b_;
+      // float coeff_b = (1.0f - coeff_smooth) * coeff_b_;
+      float coeff_b = 1.0f - coeff_a;
       vpRGBa c = coeff_a*a + coeff_b*b;
       I_out[i][j] = c;
+    }
+  }
+}
+
+void mergeSimple(const vpImage<vpRGBa> &I_demo, const vpImage<vpRGBa> &I_blinding_resize, vpImage<vpRGBa> &I_out,
+  const vpImage<unsigned char> &I_coeff)
+{
+  for (unsigned int i = 0; i < I_demo.getRows(); i++) {
+    for (unsigned int j = 0; j < I_demo.getCols(); j++) {
+      float coeff_smooth = I_coeff[i][j] / 255.0f;
+      vpRGBa a = I_demo[i][j];
+      vpRGBa b = I_blinding_resize[i][j];
+
+      I_out[i][j] = coeff_smooth*a + (1 - coeff_smooth)*b;
     }
   }
 }
@@ -237,6 +275,7 @@ int main()
 #if MERGE
   const int final_w = 1920, final_h = 1080;
   vpImage<unsigned char> I_smooth(final_h, final_w, 255);
+  vpImage<unsigned char> I_smooth2(final_h, final_w, 255);
 
   int start_index_demo = 1134;
   int end_index_demo = 205;
@@ -303,17 +342,31 @@ int main()
       const float coeff_a = 0.4, coeff_b = 0.6;
       // const int smooth_h = bb_height, smooth_w = bb_width;
       const int smooth_h = 100, smooth_w = 100;
-      I_smooth = 255;
-      computeSmoothingTable(I_smooth, smooth_h, smooth_w, bb1_top, bb1_left, bb_width*resize_factor, bb_height*resize_factor);
+      // I_smooth = 255;
+      // computeSmoothingTable(I_smooth, smooth_h, smooth_w, bb1_top, bb1_left, bb_width*resize_factor, bb_height*resize_factor);
+
+      I_smooth2 = 255;
+      computeSmoothingTable2(I_smooth2, smooth_h, smooth_w, bb1_top, bb1_left, bb_width*resize_factor, bb_height*resize_factor, coeff_a);
+
       if (0) {
-        const std::string smooth_dir = "rush_3/smooth/";
-        snprintf(buffer, FILENAME_MAX, std::string(smooth_dir + "image_%04d.png").c_str(), index_out);
-        const std::string smooth_filename = buffer;
-        vpImageIo::write(I_smooth, smooth_filename);
+        {
+          const std::string smooth_dir = "rush_3/smooth/";
+          snprintf(buffer, FILENAME_MAX, std::string(smooth_dir + "image_%04d.png").c_str(), index_out);
+          const std::string smooth_filename = buffer;
+          vpImageIo::write(I_smooth, smooth_filename);
+        }
+        {
+          const std::string smooth_dir = "rush_3/smooth2/";
+          snprintf(buffer, FILENAME_MAX, std::string(smooth_dir + "image_%04d.png").c_str(), index_out);
+          const std::string smooth_filename = buffer;
+          vpImageIo::write(I_smooth2, smooth_filename);
+        }
       }
       // merge(I_demo, I_blinding_resize, I_out, bb1_top, bb1_left, bb_width*resize_factor, bb_height*resize_factor, 0.6, 0.4);
-      merge(I_demo, I_blinding_resize, I_out, bb1_top, bb1_left,
-        bb_width*resize_factor, bb_height*resize_factor, coeff_a, coeff_b, I_smooth);
+      // merge(I_demo, I_blinding_resize, I_out, bb1_top, bb1_left,
+      //   bb_width*resize_factor, bb_height*resize_factor, coeff_a, coeff_b, I_smooth);
+
+      mergeSimple(I_demo, I_blinding_resize, I_out, I_smooth2);
 
       // // TODO:
       // I_out = I_demo;
