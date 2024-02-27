@@ -271,6 +271,7 @@ int main()
 
 
 
+#define DEBUG 0
 #define MERGE 1
 #if MERGE
   const int final_w = 1920, final_h = 1080;
@@ -288,60 +289,85 @@ int main()
   vpImage<vpRGBa> I_demo;
   vpImage<vpRGBa> I_blinding;
   vpImage<vpRGBa> I_blinding_resize(final_h, final_w);
+  vpImage<vpRGBa> I_blinding_resize_start(final_h, final_w);
   vpImage<vpRGBa> I_out;
   char buffer[FILENAME_MAX];
 
+  // BB1
+  const int bb1_top = 0;
+  const int bb1_left = 0;
+  const int bb1_width = 1280;
+  const int bb1_height = 170;
+
+  // BB2
+  const int bb2_top = 0;
+  const int bb2_left = 0;
+  const int bb2_width = 990;
+  const int bb2_height = 470;
+
+  // Merge coeffs
+  const float coeff_a = 0.4, coeff_b = 0.6;
+  // Smoothing window size
+  const int smooth_h = 100, smooth_w = 100;
+
+  // Try to have smoothing transition temporally
+  const int nb_frames_temporal_merge = 60;
+  vpImage<unsigned char> I_smooth_transition(final_h, final_w, 255);
+  computeSmoothingTable2(I_smooth_transition, smooth_h, smooth_w, bb1_top, bb1_left, bb1_width*resize_factor, bb1_height*resize_factor, coeff_a);
+
+  // Read the first image of the second video
+  {
+    const std::string blinding_dir = "rush_3/lights/"; // TODO:
+    snprintf(buffer, FILENAME_MAX, std::string(blinding_dir + "image_%04d.png").c_str(), start_index_blinding);
+    const std::string blinding_filename = buffer;
+    vpImageIo::read(I_blinding, blinding_filename);
+    vpImageTools::resize(I_blinding, I_blinding_resize_start, vpImageTools::INTERPOLATION_LINEAR);
+  }
+
+  // // TODO:
+  // {
+  //   const std::string output_dir = "rush_3/debug/";
+  //   vpImageIo::write(I_smooth_transition, output_dir + "I_smooth_transition.png");
+  // }
+  // {
+  //   const std::string output_dir = "rush_3/debug/";
+  //   vpImageIo::write(I_blinding_resize_start, output_dir + "I_blinding_resize_start.png");
+  // }
+
   // TODO:
-  // int index_out = 0;
-  int index_out = (start_index_demo - end_index_demo) - (end_index_blinding - start_index_blinding);
-  int index_out_start = index_out;
+  int index_out = end_index_demo;
+  int index_out_start = end_index_demo + (end_index_blinding - start_index_blinding);
   int index_blinding = start_index_blinding;
-  // for (int index_demo = start_index_demo /* - (end_index_blinding - start_index_blinding)*/;
-  //     index_demo >= end_index_demo; index_demo--, index_blinding++, index_out++) {
-  for (int index_demo = start_index_demo - index_out_start;
-      index_demo >= end_index_demo; index_demo--, index_blinding++, index_out++) {
+  std::cout << "index_out=" << index_out << " ; index_out_start=" << index_out_start << " ; index_blinding="
+    << index_blinding << " ; index_temporal=" << (index_out_start + nb_frames_temporal_merge) << std::endl;
+
+  int index_merge = 0;
+
+  for (int index_demo = start_index_demo;
+      index_demo >= end_index_demo; index_demo--, index_out++) {
 
     const std::string demo_dir = "rush_3/demo/"; // TODO:
     snprintf(buffer, FILENAME_MAX, std::string(demo_dir + "image_%04d.png").c_str(), index_demo);
     const std::string demo_filename = buffer;
     // std::cout << "demo_filename=" << demo_filename << std::endl;
+#if !DEBUG
     vpImageIo::read(I_demo, demo_filename);
     I_out = I_demo;
+#endif
 
-    const std::string blinding_dir = "rush_3/lights/"; // TODO:
-    snprintf(buffer, FILENAME_MAX, std::string(blinding_dir + "image_%04d.png").c_str(), index_blinding);
-    const std::string blinding_filename = buffer;
-    // std::cout << "blinding_filename=" << blinding_filename << std::endl;
-    vpImageIo::read(I_blinding, blinding_filename);
-    vpImageTools::resize(I_blinding, I_blinding_resize, vpImageTools::INTERPOLATION_LINEAR);
-    // I_blinding_resize = I_blinding;
+    if (index_demo <= index_out_start) {
+      const std::string blinding_dir = "rush_3/lights/"; // TODO:
+      snprintf(buffer, FILENAME_MAX, std::string(blinding_dir + "image_%04d.png").c_str(), index_blinding);
+      const std::string blinding_filename = buffer;
+      // std::cout << "blinding_filename=" << blinding_filename << std::endl;
+#if !DEBUG
+      vpImageIo::read(I_blinding, blinding_filename);
+      vpImageTools::resize(I_blinding, I_blinding_resize, vpImageTools::INTERPOLATION_LINEAR);
 
-    // BB1
-    const int bb1_top = 0;
-    const int bb1_left = 0;
-    const int bb1_width = 1280;
-    const int bb1_height = 170;
-
-    // BB2
-    const int bb2_top = 0;
-    const int bb2_left = 0;
-    const int bb2_width = 990;
-    const int bb2_height = 470;
-
-    // if (index_demo <= end_index_demo + (end_index_blinding - start_index_blinding))
-    {
-      // const float idx_ratio = (index_out - (start_index_demo - index_demo)) / (float)(end_index_blinding - start_index_blinding);
-      const float idx_ratio = (index_out - index_out_start) / (float)(end_index_blinding - start_index_blinding);
+      const float idx_ratio = index_merge / (float)(end_index_blinding - start_index_blinding);
       const int bb_width = (bb2_width - bb1_width) * idx_ratio + bb1_width;
       const int bb_height = (bb2_height - bb1_height) * idx_ratio + bb1_height;
       // std::cout << "idx_ratio=" << idx_ratio << " ; bb_size=" << bb_width << "x" << bb_height << std::endl;
-
-      // TODO:
-      // resize_factor = 1.0f;
-
-      const float coeff_a = 0.4, coeff_b = 0.6;
-      // const int smooth_h = bb_height, smooth_w = bb_width;
-      const int smooth_h = 100, smooth_w = 100;
       // I_smooth = 255;
       // computeSmoothingTable(I_smooth, smooth_h, smooth_w, bb1_top, bb1_left, bb_width*resize_factor, bb_height*resize_factor);
 
@@ -371,13 +397,42 @@ int main()
       // // TODO:
       // I_out = I_demo;
       // smooth(I_demo, I_out, I_smooth, bb1_top, bb1_left, bb_width*resize_factor, bb_height*resize_factor);
+#endif
+
+      index_blinding++;
+      index_merge++;
+    }
+    else if (index_demo <= index_out_start + nb_frames_temporal_merge) {
+      float coeff_temporal = (index_out_start + nb_frames_temporal_merge - index_demo) / (float)nb_frames_temporal_merge;
+      // std::cout << "index_demo=" << index_demo << " ; coeff_temporal=" << coeff_temporal << std::endl;
+      // std::cout << "I_demo=" << I_demo.getCols() << "x" << I_demo.getRows() << std::endl;
+      // std::cout << "I_blinding_resize_start=" << I_blinding_resize_start.getCols() << "x" << I_blinding_resize_start.getRows() << std::endl;
+      // std::cout << "I_out=" << I_out.getCols() << "x" << I_out.getRows() << std::endl;
+
+#if !DEBUG
+      for (int i = bb1_top; i < bb1_height*resize_factor; i++) {
+        for (int j = bb1_left; j < bb1_width*resize_factor; j++) {
+          vpRGBa a = I_demo[i][j];
+          vpRGBa b = I_blinding_resize_start[i][j];
+          float coeff_smooth = I_smooth_transition[i][j] / 255.0f;
+
+          float coeff_a_ = coeff_smooth * (1 - coeff_a) + coeff_a;
+          float coeff_b_ = 1.0f - coeff_a_;
+          vpRGBa c = coeff_a_*a + coeff_b_*b;
+          vpRGBa d = (1 - coeff_temporal)*a + coeff_temporal*c;
+          I_out[i][j] = d;
+        }
+      }
+#endif
     }
 
+#if !DEBUG
     const std::string output_dir = "rush_3/out/";
     snprintf(buffer, FILENAME_MAX, std::string(output_dir + "image_%04d.png").c_str(), index_out);
     const std::string output_filename = buffer;
     // std::cout << "output_filename=" << output_filename << std::endl;
     vpImageIo::write(I_out, output_filename);
+#endif
   }
 #endif
 
