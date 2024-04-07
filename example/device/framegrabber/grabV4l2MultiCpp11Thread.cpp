@@ -468,13 +468,8 @@ int main(int argc, char *argv[])
   std::vector<std::thread> display_threads;
 
   // Synchronized queues for each camera stream
-  // std::vector<vpConcurrentQueue<vpImage<vpRGBa>>> save_queues(grabbers.size());
-  // std::vector<std::vector< std::reference_wrapper<vpConcurrentQueue<vpImage<vpRGBa>>> >> save_queues_vec;
-  // std::vector<std::vector<vpConcurrentQueue<vpImage<vpRGBa>>>> save_queues_vec;
-  std::vector<std::reference_wrapper<std::vector<std::reference_wrapper<vpConcurrentQueue<vpImage<vpRGBa>>>>>> save_queues_vec(grabbers.size());
-  // std::vector<std::reference_wrapper<std::vector<std::string>>> filenames_vec;
-  std::vector<std::vector<std::string>> filenames_vec;
-  std::vector<vpVideoWriterStorageWorker<vpImage<vpRGBa>>> storages;
+  std::vector<vpConcurrentQueue<vpImage<vpRGBa>>> save_queues(grabbers.size());
+  std::vector<vpVideoWriterStorageWorker<vpRGBa>> storages;
   std::vector<std::thread> storage_threads;
 
   std::string parent_directory = vpTime::getDateTime("%Y-%m-%d_%H.%M.%S");
@@ -483,15 +478,9 @@ int main(int argc, char *argv[])
     capture_threads.emplace_back(capture, grabbers[deviceId], std::ref(share_images[deviceId]));
     int win_x = deviceId * offsetX, win_y = deviceId * offsetY;
 
-    std::vector<std::reference_wrapper<vpConcurrentQueue<vpImage<vpRGBa>>>> save_queues;
-    vpConcurrentQueue<vpImage<vpRGBa>> concurrent_queue;
-    save_queues.emplace_back(std::ref(concurrent_queue));
-    save_queues_vec.emplace_back(std::ref(save_queues));
-    // save_queues_vec.emplace_back(save_queues);
-
     // Start the display thread for the current camera stream
     display_threads.emplace_back(display, grabbers[deviceId]->getWidth(), grabbers[deviceId]->getHeight(), win_x, win_y,
-                                 deviceId, std::ref(share_images[deviceId]), save_queues[0],
+                                 deviceId, std::ref(share_images[deviceId]), std::ref(save_queues[deviceId]),
                                  saveVideo);
 
     if (saveVideo) {
@@ -502,12 +491,7 @@ int main(int argc, char *argv[])
       ss << "/%06d.png";
       std::string filename = ss.str();
 
-      std::vector<std::string> filenames;
-      filenames.emplace_back(filename);
-      filenames_vec.emplace_back(filenames);
-
-      storages.emplace_back(save_queues_vec[deviceId].get(), filenames_vec[deviceId]);
-      // storages.emplace_back(std::ref(save_queues_single), filenames_vec[deviceId]);
+      storages.emplace_back(std::ref(save_queues[deviceId]), std::cref(filename));
     }
   }
 
@@ -538,13 +522,8 @@ int main(int argc, char *argv[])
   }
 
   // We're done reading, cancel all the queues
-  // for (auto &qu : save_queues) {
-  //   qu.cancel();
-  // }
-  for (auto &save_queues : save_queues_vec) {
-    for (auto &qu : save_queues.get()) {
-      qu.get().cancel();
-    }
+  for (auto &qu : save_queues) {
+    qu.cancel();
   }
 
   // Join all the worker threads, waiting for them to finish

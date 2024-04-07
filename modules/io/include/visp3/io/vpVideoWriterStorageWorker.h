@@ -44,12 +44,11 @@
 #include <visp3/core/vpConcurrentQueue.h>
 #include <visp3/io/vpVideoWriter.h>
 
-template <class T, class Container = std::deque<T>> class VISP_EXPORT vpVideoWriterStorageWorker
+template <class T, class Container = std::deque<vpImage<T>>> class VISP_EXPORT vpVideoWriterStorageWorker
 {
 public:
-  vpVideoWriterStorageWorker(std::vector<std::reference_wrapper<vpConcurrentQueue<vpImage<T>, Container>>> &queues,
-    const std::vector<std::string> &filenames)
-    : m_filenames(filenames), m_queues(queues), m_writers()
+  vpVideoWriterStorageWorker(vpConcurrentQueue<vpImage<T>, Container> &queue, const std::string &filename)
+    : m_filename(filename), m_queue(queue), m_writer()
   {
     assert(!m_queues.empty());
     assert(m_queues.size() == m_filenames.size());
@@ -58,24 +57,19 @@ public:
   // Thread main loop
   void run()
   {
-    m_writers.resize(m_queues.size());
-    for (size_t i = 0; i < m_queues.size(); i++) {
-      m_writers[i].setFileName(m_filenames[i]);
-    }
+    m_writer.setFileName(m_filename);
 
     try {
       bool is_opened = false;
       for (;;) {
-        for (size_t i = 0; i < m_queues.size(); i++) {
-          vpImage<T> &image = m_queues[i].get().pop();
+        vpImage<T> &image = m_queue.pop();
 
-          if (!is_opened) {
-            m_writers[i].open(image);
-            is_opened = true;
-          }
-
-          m_writers[i].saveFrame(image);
+        if (!is_opened) {
+          m_writer.open(image);
+          is_opened = true;
         }
+
+        m_writer.saveFrame(image);
       }
     }
     catch (typename vpConcurrentQueue<vpImage<T>, Container>::vpCancelled_t &) {
@@ -83,9 +77,9 @@ public:
   }
 
 private:
-  std::vector<std::string> m_filenames;
-  std::vector<std::reference_wrapper<vpConcurrentQueue<vpImage<T>, Container>>> &m_queues;
-  std::vector<vpVideoWriter> m_writers;
+  std::string m_filename;
+  vpConcurrentQueue<vpImage<T>, Container> &m_queue;
+  vpVideoWriter m_writer;
 };
 
 #endif
