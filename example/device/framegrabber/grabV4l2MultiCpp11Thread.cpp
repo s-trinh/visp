@@ -58,10 +58,12 @@
 #include <visp3/core/vpImageFilter.h>
 #include <visp3/core/vpIoTools.h>
 #include <visp3/core/vpTime.h>
+#include <visp3/core/vpConcurrentQueue.h>
 #include <visp3/gui/vpDisplayGTK.h>
 #include <visp3/gui/vpDisplayX.h>
 #include <visp3/io/vpParseArgv.h>
 #include <visp3/io/vpVideoWriter.h>
+#include <visp3/io/vpVideoWriterStorageWorker.h>
 #include <visp3/sensor/vpV4l2Grabber.h>
 
 #define GETOPTARGS "d:oh"
@@ -130,6 +132,7 @@ bool getOptions(int argc, char **argv, unsigned int &deviceCount, bool &saveVide
   return true;
 }
 
+/*
 // Code adapted from the original author Dan Mašek to be compatible with ViSP
 // image
 class vpFrameQueue
@@ -197,12 +200,14 @@ private:
   size_t m_maxQueueSize;
   std::mutex m_mutex;
 };
+*/
 
+/*
 class vpStorageWorker
 {
 
 public:
-  vpStorageWorker(vpFrameQueue &queue, const std::string &filename, unsigned int width, unsigned int height)
+  vpStorageWorker(vpConcurrentQueue<vpImage<vpRGBa>> &queue, const std::string &filename, unsigned int width, unsigned int height)
     : m_queue(queue), m_filename(filename), m_width(width), m_height(height)
   { }
 
@@ -226,16 +231,16 @@ public:
         }
       }
     }
-    catch (vpFrameQueue::vpCancelled_t &) {
+    catch (vpConcurrentQueue<vpImage<vpRGBa>>::vpCancelled_t &) {
     }
   }
 
 private:
-  vpFrameQueue &m_queue;
+  vpConcurrentQueue<vpImage<vpRGBa>> &m_queue;
   std::string m_filename;
   unsigned int m_width;
   unsigned int m_height;
-};
+};*/
 
 class vpShareImage
 {
@@ -339,7 +344,7 @@ void capture(vpV4l2Grabber *const pGrabber, vpShareImage &share_image)
 }
 
 void display(unsigned int width, unsigned int height, int win_x, int win_y, unsigned int deviceId,
-             vpShareImage &share_image, vpFrameQueue &queue, bool save)
+             vpShareImage &share_image, vpConcurrentQueue<vpImage<vpRGBa>> &queue, bool save)
 {
   vpImage<vpRGBa> local_img(height, width);
 
@@ -463,8 +468,13 @@ int main(int argc, char *argv[])
   std::vector<std::thread> display_threads;
 
   // Synchronized queues for each camera stream
-  std::vector<vpFrameQueue> save_queues(grabbers.size());
-  std::vector<vpStorageWorker> storages;
+  // std::vector<vpConcurrentQueue<vpImage<vpRGBa>>> save_queues(grabbers.size());
+  // std::vector<std::vector< std::reference_wrapper<vpConcurrentQueue<vpImage<vpRGBa>>> >> save_queues_vec;
+  // std::vector<std::vector<vpConcurrentQueue<vpImage<vpRGBa>>>> save_queues_vec;
+  std::vector<std::reference_wrapper<std::vector<std::reference_wrapper<vpConcurrentQueue<vpImage<vpRGBa>>>>>> save_queues_vec(grabbers.size());
+  // std::vector<std::reference_wrapper<std::vector<std::string>>> filenames_vec;
+  std::vector<std::vector<std::string>> filenames_vec;
+  std::vector<vpVideoWriterStorageWorker<vpImage<vpRGBa>>> storages;
   std::vector<std::thread> storage_threads;
 
   std::string parent_directory = vpTime::getDateTime("%Y-%m-%d_%H.%M.%S");
@@ -473,9 +483,15 @@ int main(int argc, char *argv[])
     capture_threads.emplace_back(capture, grabbers[deviceId], std::ref(share_images[deviceId]));
     int win_x = deviceId * offsetX, win_y = deviceId * offsetY;
 
+    std::vector<std::reference_wrapper<vpConcurrentQueue<vpImage<vpRGBa>>>> save_queues;
+    vpConcurrentQueue<vpImage<vpRGBa>> concurrent_queue;
+    save_queues.emplace_back(std::ref(concurrent_queue));
+    save_queues_vec.emplace_back(std::ref(save_queues));
+    // save_queues_vec.emplace_back(save_queues);
+
     // Start the display thread for the current camera stream
     display_threads.emplace_back(display, grabbers[deviceId]->getWidth(), grabbers[deviceId]->getHeight(), win_x, win_y,
-                                 deviceId, std::ref(share_images[deviceId]), std::ref(save_queues[deviceId]),
+                                 deviceId, std::ref(share_images[deviceId]), save_queues[0],
                                  saveVideo);
 
     if (saveVideo) {
@@ -486,15 +502,19 @@ int main(int argc, char *argv[])
       ss << "/%06d.png";
       std::string filename = ss.str();
 
-      storages.emplace_back(std::ref(save_queues[deviceId]), std::cref(filename), grabbers[deviceId]->getWidth(),
-                            grabbers[deviceId]->getHeight());
+      std::vector<std::string> filenames;
+      filenames.emplace_back(filename);
+      filenames_vec.emplace_back(filenames);
+
+      storages.emplace_back(save_queues_vec[deviceId].get(), filenames_vec[deviceId]);
+      // storages.emplace_back(std::ref(save_queues_single), filenames_vec[deviceId]);
     }
   }
 
   if (saveVideo) {
     for (auto &s : storages) {
       // Start the storage thread for the current camera stream
-      storage_threads.emplace_back(&vpStorageWorker::run, &s);
+      storage_threads.emplace_back(&vpVideoWriterStorageWorker<vpRGBa>::run, &s);
     }
   }
 
@@ -518,8 +538,13 @@ int main(int argc, char *argv[])
   }
 
   // We're done reading, cancel all the queues
-  for (auto &qu : save_queues) {
-    qu.cancel();
+  // for (auto &qu : save_queues) {
+  //   qu.cancel();
+  // }
+  for (auto &save_queues : save_queues_vec) {
+    for (auto &qu : save_queues.get()) {
+      qu.get().cancel();
+    }
   }
 
   // Join all the worker threads, waiting for them to finish

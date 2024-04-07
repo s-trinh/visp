@@ -60,7 +60,8 @@
 // List of allowed command line options
 #define GETOPTARGS "df:i:hn:o:p:s:t:v:x"
 
-typedef enum {
+typedef enum
+{
   grey_image = 0, // for ViSP unsigned char grey images
   color_image     // for ViSP vpRGBa color images
 } vpImage_type;
@@ -245,6 +246,57 @@ bool getOptions(int argc, const char **argv, unsigned &fps, unsigned &input, uns
 */
 int main(int argc, const char **argv)
 {
+  {
+    unsigned int opt_input = 0;
+    unsigned int opt_scale = 1;
+    bool opt_verbose = false;
+    std::string opt_device = "/dev/video0";
+
+    vpV4l2Grabber g;
+
+    // Initialize the grabber
+    g.setVerboseMode(opt_verbose);
+    g.setDevice(opt_device);
+    g.setInput(opt_input);
+    g.setScale(opt_scale);
+    g.setFramerate(vpV4l2Grabber::framerate_25fps);
+    // g.setFramerate(vpV4l2Grabber::framerate_50fps);
+
+    // Open the framegrabber with the specified settings on color images
+    vpImage<vpRGBa> Ic;
+    g.open(Ic);
+    // Acquire an image
+    g.acquire(Ic);
+    std::cout << "Color image size: width : " << Ic.getWidth() << " height: " << Ic.getHeight() << std::endl;
+
+    vpDisplayX display;
+    display.init(Ic, 100, 100, "V4L2 color images framegrabbing");
+    vpDisplay::display(Ic);
+    vpDisplay::flush(Ic);
+
+    bool exit = false;
+    vpMouseButton::vpMouseButtonType button;
+    while (!exit) {
+      // Measure the initial time of an iteration
+      double t = vpTime::measureTimeMs();
+      // Acquire the image
+      g.acquire(Ic);
+      // Display the image
+      vpDisplay::display(Ic);
+      // Flush the display
+      vpDisplay::flush(Ic);
+
+      // Print the iteration duration
+      std::cout << "time: " << vpTime::measureTimeMs() - t << " (ms)" << std::endl;
+
+      if (vpDisplay::getClick(Ic, button, false)) {
+        exit = true;
+      }
+    }
+
+    return 0;
+  }
+
   try {
     unsigned int opt_fps = 25;
     unsigned int opt_input = 0;
@@ -292,8 +344,9 @@ int main(int argc, const char **argv)
       // Acquire an image
       g.acquire(Ig);
       std::cout << "Grey image size: width : " << Ig.getWidth() << " height: " << Ig.getHeight() << std::endl;
-    } else {
-      // Open the framegrabber with the specified settings on color images
+    }
+    else {
+   // Open the framegrabber with the specified settings on color images
       g.open(Ic);
       // Acquire an image
       g.acquire(Ic);
@@ -318,7 +371,8 @@ int main(int argc, const char **argv)
         display.init(Ig, 100, 100, "V4L2 grey images framegrabbing");
         vpDisplay::display(Ig);
         vpDisplay::flush(Ig);
-      } else {
+      }
+      else {
         display.init(Ic, 100, 100, "V4L2 color images framegrabbing");
         vpDisplay::display(Ic);
         vpDisplay::flush(Ic);
@@ -338,7 +392,8 @@ int main(int argc, const char **argv)
           // Flush the display
           vpDisplay::flush(Ig);
         }
-      } else {
+      }
+      else {
         g.acquire(Ic);
         if (opt_display) {
           // Display the image
@@ -355,7 +410,8 @@ int main(int argc, const char **argv)
         std::cout << "Write: " << filename << std::endl;
         if (opt_image_type == grey_image) {
           vpImageIo::write(Ig, filename);
-        } else {
+        }
+        else {
           vpImageIo::write(Ic, filename);
         }
       }
@@ -366,7 +422,8 @@ int main(int argc, const char **argv)
 
     g.close();
     return EXIT_SUCCESS;
-  } catch (const vpException &e) {
+  }
+  catch (const vpException &e) {
     std::cout << "Catch an exception: " << e << std::endl;
     return EXIT_FAILURE;
   }
