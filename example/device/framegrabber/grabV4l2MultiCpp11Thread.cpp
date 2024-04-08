@@ -491,7 +491,12 @@ int main(int argc, char *argv[])
       ss << "/%06d.png";
       std::string filename = ss.str();
 
-      storages.emplace_back(std::ref(save_queues[deviceId]), std::cref(filename));
+      std::vector< std::reference_wrapper<vpConcurrentQueue<vpImage<vpRGBa>>> > save_queue_single;
+      save_queue_single.emplace_back(std::ref(save_queues[deviceId]));
+
+      std::vector<std::string> filenames;
+      filenames.emplace_back(filename);
+      storages.emplace_back(save_queue_single, filenames);
     }
   }
 

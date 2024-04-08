@@ -50,12 +50,14 @@ public:
   { };
 
   vpConcurrentQueue()
-    : m_cancelled(false), m_cond(), /*m_data(),*/ m_maxQueueSize(1024), m_mutex(), m_queue()
+    : m_cancelled(false), m_cond(), m_data(), m_maxQueueSize(1024), m_mutex(), m_queue()
   { }
 
   void cancel()
   {
-
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_cancelled = true;
+    m_cond.notify_all();
   }
 
   // Push the data into the queue (FIFO)
@@ -73,8 +75,7 @@ public:
     m_cond.notify_one();
   }
 
-  // Pop the image to save from the queue (FIFO)
-  T &pop()
+  T pop()
   {
     std::unique_lock<std::mutex> lock(m_mutex);
 
@@ -90,16 +91,10 @@ public:
       }
     }
 
-    // TODO:
-    // m_data = m_queue.front();
-    // m_queue.pop();
-
-    // return m_data;
-
-    T &data = m_queue.front();
+    m_data = m_queue.front();
     m_queue.pop();
 
-    return data;
+    return m_data;
   }
 
   void setMaxQueueSize(size_t max_queue_size)
@@ -110,7 +105,7 @@ public:
 private:
   bool m_cancelled;
   std::condition_variable m_cond;
-  // T m_data;
+  T m_data;
   size_t m_maxQueueSize;
   std::mutex m_mutex;
   std::queue<T> m_queue;
