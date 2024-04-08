@@ -324,19 +324,19 @@ public:
   }
 };
 
-void capture(vpV4l2Grabber *const pGrabber, vpShareImage &share_image)
+void capture(vpV4l2Grabber &grabber, vpShareImage &share_image)
 {
   vpImage<vpRGBa> local_img;
 
   // Open the camera stream
-  pGrabber->open(local_img);
+  grabber.open(local_img);
 
   while (true) {
     if (share_image.isCancelled()) {
       break;
     }
 
-    pGrabber->acquire(local_img);
+    grabber.acquire(local_img);
 
     // Update share_image
     share_image.setImage((unsigned char *)local_img.bitmap, local_img.getSize() * 4);
@@ -443,18 +443,18 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  std::vector<vpV4l2Grabber *> grabbers;
+  std::vector<vpV4l2Grabber> grabbers;
 
   const unsigned int offsetX = 100, offsetY = 100;
   for (unsigned int devicedId = 0; devicedId < deviceCount; devicedId++) {
     try {
-      vpV4l2Grabber *pGrabber = new vpV4l2Grabber;
+      vpV4l2Grabber grabber;
       std::stringstream ss;
       ss << "/dev/video" << devicedId;
-      pGrabber->setDevice(ss.str());
-      pGrabber->setScale(cameraScale);
+      grabber.setDevice(ss.str());
+      grabber.setScale(cameraScale);
 
-      grabbers.push_back(pGrabber);
+      grabbers.push_back(grabber);
     }
     catch (const vpException &e) {
       std::cerr << "Exception: " << e.what() << std::endl;
@@ -475,11 +475,11 @@ int main(int argc, char *argv[])
   std::string parent_directory = vpTime::getDateTime("%Y-%m-%d_%H.%M.%S");
   for (size_t deviceId = 0; deviceId < grabbers.size(); deviceId++) {
     // Start the capture thread for the current camera stream
-    capture_threads.emplace_back(capture, grabbers[deviceId], std::ref(share_images[deviceId]));
+    capture_threads.emplace_back(capture, std::ref(grabbers[deviceId]), std::ref(share_images[deviceId]));
     int win_x = deviceId * offsetX, win_y = deviceId * offsetY;
 
     // Start the display thread for the current camera stream
-    display_threads.emplace_back(display, grabbers[deviceId]->getWidth(), grabbers[deviceId]->getHeight(), win_x, win_y,
+    display_threads.emplace_back(display, grabbers[deviceId].getWidth(), grabbers[deviceId].getHeight(), win_x, win_y,
                                  deviceId, std::ref(share_images[deviceId]), std::ref(save_queues[deviceId]),
                                  saveVideo);
 
@@ -514,12 +514,6 @@ int main(int argc, char *argv[])
 
   for (auto &dt : display_threads) {
     dt.join();
-  }
-
-  // Clean first the grabbers to avoid camera problems when cancelling the
-  // storage threads in the terminal
-  for (auto &g : grabbers) {
-    delete g;
   }
 
   if (saveVideo) {
