@@ -53,6 +53,7 @@ set(example_cpp
   grabV4l2MultiCpp11Thread.cpp
   readRealSenseData.cpp
   saveRealSenseData.cpp
+  saveRealSenseData2.cpp
 )
 
 if(VISP_HAVE_FLYCAPTURE)
