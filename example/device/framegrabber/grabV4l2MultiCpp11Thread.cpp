@@ -59,11 +59,12 @@
 #include <visp3/core/vpIoTools.h>
 #include <visp3/core/vpTime.h>
 #include <visp3/core/vpConcurrentQueue.h>
+#include <visp3/core/vpWriterExecutor.h>
 #include <visp3/gui/vpDisplayGTK.h>
 #include <visp3/gui/vpDisplayX.h>
 #include <visp3/io/vpParseArgv.h>
 #include <visp3/io/vpVideoWriter.h>
-#include <visp3/io/vpVideoWriterStorageWorker.h>
+#include <visp3/io/vpVideoStorageWorker.h>
 #include <visp3/sensor/vpV4l2Grabber.h>
 
 #define GETOPTARGS "d:oh"
@@ -469,8 +470,10 @@ int main(int argc, char *argv[])
 
   // Synchronized queues for each camera stream
   std::vector<vpConcurrentQueue<vpImage<vpRGBa>>> save_queues(grabbers.size());
-  std::vector<vpVideoWriterStorageWorker<vpRGBa>> storages;
-  std::vector<std::thread> storage_threads;
+  // std::vector<vpVideoStorageWorker<vpRGBa>> storages;
+  // std::vector<std::thread> storage_threads;
+  std::vector<std::shared_ptr<vpWriterWorker>> storages;
+  std::vector<vpWriterExecutor> storage_threads;
 
   std::string parent_directory = vpTime::getDateTime("%Y-%m-%d_%H.%M.%S");
   for (size_t deviceId = 0; deviceId < grabbers.size(); deviceId++) {
@@ -496,15 +499,17 @@ int main(int argc, char *argv[])
 
       std::vector<std::string> filenames;
       filenames.emplace_back(filename);
-      storages.emplace_back(save_queue_single, filenames);
+      // storages.emplace_back(save_queue_single, filenames);
+      storages.emplace_back(std::make_shared<vpVideoStorageWorker<vpRGBa>>(save_queue_single, filenames));
     }
   }
 
   if (saveVideo) {
-    for (auto &s : storages) {
-      // Start the storage thread for the current camera stream
-      storage_threads.emplace_back(&vpVideoWriterStorageWorker<vpRGBa>::run, &s);
-    }
+    // for (auto &s : storages) {
+    //   // Start the storage thread for the current camera stream
+    //   storage_threads.emplace_back(&vpVideoStorageWorker<vpRGBa>::run, &s);
+    // }
+    storage_threads.emplace_back(storages);
   }
 
   // Join all the worker threads, waiting for them to finish

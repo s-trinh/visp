@@ -42,9 +42,10 @@
 #include <visp3/core/vpConfig.h>
 #include <visp3/core/vpImage.h>
 #include <visp3/core/vpConcurrentQueue.h>
+#include <visp3/core/vpWriterWorker.h>
 #include <visp3/io/vpVideoWriter.h>
 
-template <class T, class Container = std::deque<vpImage<T>>> class VISP_EXPORT vpVideoStorageWorker
+template <class T, class Container = std::deque<vpImage<T>>> class VISP_EXPORT vpVideoStorageWorker : public vpWriterWorker
 {
 public:
   vpVideoStorageWorker(const std::vector<std::reference_wrapper<vpConcurrentQueue<vpImage<T>, Container>>> &queues,
@@ -64,7 +65,7 @@ public:
   }
 
   // Thread main loop
-  void run()
+  void run() override
   {
     m_images.resize(m_queues.size());
     m_writers.resize(m_queues.size());

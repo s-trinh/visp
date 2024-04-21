@@ -40,21 +40,22 @@
 #define vpFileStorageWorker_h
 
 #include <visp3/core/vpConfig.h>
+#include <visp3/core/vpWriterWorker.h>
 #include <visp3/core/vpConcurrentQueue.h>
 
-template <class T, class Container = std::deque<std::vector<T>>> class VISP_EXPORT vpFileStorageWorker
+template <class T, class Container = std::deque<std::vector<T>>> class VISP_EXPORT vpFileStorageWorker : public vpWriterWorker
 {
 public:
   vpFileStorageWorker(const std::vector<std::reference_wrapper<vpConcurrentQueue<std::vector<T>, Container>>> &queues,
-    const std::vector< std::string > &filenames)
-    : m_filenames(filenames), m_data_vec(), m_queues(queues), m_writers()
+    const std::vector< std::string > &filenames, bool use_little_endian)
+    : m_filenames(filenames), m_data_vec(), m_queues(queues), m_writers(), m_use_little_endian(use_little_endian)
   {
     assert(!m_queues.empty());
     assert(m_queues.size() == m_filenames.size());
   }
 
   // Thread main loop
-  void run()
+  void run() override
   {
     m_data_vec.resize(m_queues.size());
     m_writers.resize(m_queues.size());
@@ -67,8 +68,14 @@ public:
       for (;;) {
         for (size_t i = 0; i < m_queues.size(); i++) {
           m_data_vec[i] = m_queues[i].get().pop();
-          for (const auto &data : m_data_vec[i].size()) {
-            vpIoTools::writeBinaryValueLE(m_writers[i], data);
+          if (use_little_endian) {
+            for (const auto &data : m_data_vec[i].size()) {
+              vpIoTools::writeBinaryValueLE(m_writers[i], data);
+            }
+          }
+          else {
+            const std::vector<T> &ptr_data = m_data_vec[i];
+            m_writers[i].write(reinterpret_cast<const char *>(&ptr_data[0]), ptr_data.size()*sizeof(T));
           }
         }
       }
@@ -82,6 +89,7 @@ private:
   std::vector<std::vector<T>> m_data_vec;
   std::vector< std::reference_wrapper<vpConcurrentQueue<std::vector<T>, Container>> > m_queues;
   std::vector<std::ofstream> m_writers;
+  bool m_use_little_endian;
 };
 
 #endif
