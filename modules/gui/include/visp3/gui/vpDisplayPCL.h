@@ -36,9 +36,10 @@
 
 #include <visp3/core/vpConfig.h>
 
-#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_THREADS)
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_VISUALIZATION) && defined(VISP_HAVE_THREADS)
 
 #include <mutex>
+#include <thread>
 #include <string>
 
 #include <pcl/visualization/cloud_viewer.h>

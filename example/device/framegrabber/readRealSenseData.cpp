@@ -48,6 +48,7 @@
 #include <thread>
 
 #include <visp3/core/vpImageConvert.h>
+#include <visp3/core/vpIoException.h>
 #include <visp3/core/vpIoTools.h>
 #include <visp3/gui/vpDisplayGDI.h>
 #include <visp3/gui/vpDisplayX.h>
@@ -57,7 +58,14 @@
 #include <visp3/io/vpVideoWriter.h>
 
 #if defined(VISP_HAVE_PCL)
+#include <pcl/pcl_config.h>
+#if defined(VISP_HAVE_PCL_COMMON)
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
+#endif
+#if defined(VISP_HAVE_PCL_IO)
 #include <pcl/io/pcd_io.h>
+#endif
 #endif
 
 #define GETOPTARGS "ci:bodh"
@@ -73,7 +81,7 @@ void usage(const char *name, const char *badparam)
     << std::endl
     << "SYNOPSIS " << std::endl
     << "  " << name
-    << " [--i <directory>]"
+    << " [-i <directory>]"
     << " [-c]"
     << " [-b]"
     << " [-o]"
@@ -81,7 +89,7 @@ void usage(const char *name, const char *badparam)
     << " [--help,-h]"
     << std::endl;
   std::cout << "\nOPTIONS " << std::endl
-    << "  --i <directory>" << std::endl
+    << "  -i <directory>" << std::endl
     << "    Input folder that contains the data to read." << std::endl
     << std::endl
     << "  -c" << std::endl
@@ -155,7 +163,7 @@ bool getOptions(int argc, const char *argv[], std::string &input_directory, bool
 
 bool readData(int cpt, const std::string &input_directory, vpImage<vpRGBa> &I_color, vpImage<uint16_t> &I_depth_raw,
               bool pointcloud_binary_format
-#if defined(VISP_HAVE_PCL)
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
               , pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud
 #endif
 )
@@ -183,8 +191,9 @@ bool readData(int cpt, const std::string &input_directory, vpImage<vpRGBa> &I_co
   }
 
   // Read color
-  if (vpIoTools::checkFilename(filename_color))
+  if (vpIoTools::checkFilename(filename_color)) {
     vpImageIo::read(I_color, filename_color);
+  }
 
   // Read raw depth
   std::ifstream file_depth(filename_depth.c_str(), std::ios::in | std::ios::binary);
@@ -236,9 +245,13 @@ bool readData(int cpt, const std::string &input_directory, vpImage<vpRGBa> &I_co
     }
   }
   else {
+#if defined(VISP_HAVE_PCL_IO)
     if (pcl::io::loadPCDFile<pcl::PointXYZ>(filename_pointcloud, *point_cloud) == -1) {
       std::cerr << "Cannot read PCD: " << filename_pointcloud << std::endl;
     }
+#else
+    throw(vpIoException(vpIoException::ioError, "Cannot read pcd file without PCL io module"));
+#endif
   }
 #endif
 
@@ -273,7 +286,9 @@ int main(int argc, const char *argv[])
 #if defined(VISP_HAVE_PCL)
   std::mutex mutex;
   pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud(new pcl::PointCloud<pcl::PointXYZ>());
+#if defined(VISP_HAVE_PCL_VISUALIZATION)
   vpDisplayPCL pcl_viewer;
+#endif
 #endif
 
   vpVideoWriter writer;
@@ -289,7 +304,7 @@ int main(int argc, const char *argv[])
   while (!quit) {
     double t = vpTime::measureTimeMs();
 
-#if defined(VISP_HAVE_PCL)
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
     {
       std::lock_guard<std::mutex> lock(mutex);
       quit = !readData(cpt_frame, input_directory, I_color, I_depth_raw, pointcloud_binary_format, pointcloud);
@@ -312,7 +327,7 @@ int main(int argc, const char *argv[])
       else {
         d2.init(I_depth, I_color.getWidth() + 10, 0, "Depth image");
       }
-#if defined(VISP_HAVE_PCL)
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_VISUALIZATION)
       pcl_viewer.setPosition(I_color.getWidth() + 10, I_color.getHeight() + 70);
       pcl_viewer.setWindowName("3D point cloud");
       pcl_viewer.startThread(std::ref(mutex), pointcloud);

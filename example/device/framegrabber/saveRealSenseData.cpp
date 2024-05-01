@@ -49,8 +49,14 @@
 #include <thread>
 
 #if defined(VISP_HAVE_PCL)
-#include <pcl/common/common.h>
+#include <pcl/pcl_config.h>
+#if defined(VISP_HAVE_PCL_COMMON)
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
+#endif
+#if defined(VISP_HAVE_PCL_IO)
 #include <pcl/io/pcd_io.h>
+#endif
 #endif
 
 #include <visp3/core/vpImageConvert.h>
@@ -124,6 +130,10 @@ void usage(const char *name, const char *badparam, int fps)
     << std::endl
     << "  --help, -h" << std::endl
     << "    Display this helper message." << std::endl
+    << std::endl;
+  std::cout << "\nEXAMPLE " << std::endl
+    << "- Save aligned color + depth + point cloud in data folder" << std::endl
+    << "  " << name << " -s -a -c -d -p -b -o data" << std::endl
     << std::endl;
 
   if (badparam) {
@@ -216,7 +226,7 @@ public:
 
   // Push data to save in the queue (FIFO)
   void push(const vpImage<vpRGBa> &colorImg, const vpImage<uint16_t> &depthImg,
-#ifdef VISP_HAVE_PCL
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
             const pcl::PointCloud<pcl::PointXYZ>::Ptr &pointCloud,
 #else
             const std::vector<vpColVector> &pointCloud,
@@ -255,7 +265,7 @@ public:
 
   // Pop the image to save from the queue (FIFO)
   void pop(vpImage<vpRGBa> &colorImg, vpImage<uint16_t> &depthImg,
-#ifdef VISP_HAVE_PCL
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
            pcl::PointCloud<pcl::PointXYZ>::Ptr &pointCloud,
 #else
            std::vector<vpColVector> &pointCloud,
@@ -294,7 +304,7 @@ private:
   std::condition_variable m_cond;
   std::queue<vpImage<vpRGBa>> m_queueColor;
   std::queue<vpImage<uint16_t>> m_queueDepth;
-#ifdef VISP_HAVE_PCL
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
   std::queue<pcl::PointCloud<pcl::PointXYZ>::Ptr> m_queuePointCloud;
 #else
   std::queue<std::vector<vpColVector>> m_queuePointCloud;
@@ -334,7 +344,7 @@ public:
     try {
       vpImage<vpRGBa> colorImg;
       vpImage<uint16_t> depthImg;
-#ifdef VISP_HAVE_PCL
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
       pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud;
 #else
       std::vector<vpColVector> pointCloud;
@@ -388,7 +398,7 @@ public:
               std::ofstream file_pointcloud(filename_point_cloud.c_str(), std::ios::out | std::ios::binary);
 
               if (file_pointcloud.is_open()) {
-#ifdef VISP_HAVE_PCL
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
                 uint32_t width = pointCloud->width;
                 uint32_t height = pointCloud->height;
                 // true if pointcloud does not contain NaN or Inf, not handled currently
@@ -432,7 +442,7 @@ public:
               }
             }
             else {
-#ifdef VISP_HAVE_PCL
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_IO) && defined(VISP_HAVE_PCL_COMMON)
               pcl::io::savePCDFileBinary(filename_point_cloud, *pointCloud);
 #endif
             }
@@ -534,7 +544,6 @@ int main(int argc, const char *argv[])
 #endif
 
   vpImage<vpRGBa> I_color(height, width);
-  vpImage<unsigned char> I_gray(height, width);
   vpImage<unsigned char> I_depth(height, width);
   vpImage<uint16_t> I_depth_raw(height, width);
   vpImage<unsigned char> I_infrared(height, width);
@@ -544,22 +553,21 @@ int main(int argc, const char *argv[])
 #else
   vpDisplayGDI d1, d2, d3;
 #endif
-  d1.init(I_gray, 0, 0, "RealSense color stream");
-  d2.init(I_depth, I_gray.getWidth() + 80, 0, "RealSense depth stream");
-  d3.init(I_infrared, I_gray.getWidth() + 80, I_gray.getHeight() + 70, "RealSense infrared stream");
+  d1.init(I_color, 0, 0, "RealSense color stream");
+  d2.init(I_depth, I_color.getWidth() + 80, 0, "RealSense depth stream");
+  d3.init(I_infrared, I_color.getWidth() + 80, I_color.getHeight() + 70, "RealSense infrared stream");
 
   while (true) {
     realsense.acquire((unsigned char *)I_color.bitmap, (unsigned char *)I_depth_raw.bitmap, nullptr, nullptr);
-    vpImageConvert::convert(I_color, I_gray);
     vpImageConvert::createDepthHistogram(I_depth_raw, I_depth);
 
-    vpDisplay::display(I_gray);
+    vpDisplay::display(I_color);
     vpDisplay::display(I_depth);
-    vpDisplay::displayText(I_gray, 20, 20, "Click when ready.", vpColor::red);
-    vpDisplay::flush(I_gray);
+    vpDisplay::displayText(I_color, 20, 20, "Click when ready.", vpColor::red);
+    vpDisplay::flush(I_color);
     vpDisplay::flush(I_depth);
 
-    if (vpDisplay::getClick(I_gray, false)) {
+    if (vpDisplay::getClick(I_color, false)) {
       break;
     }
   }
@@ -637,7 +645,7 @@ int main(int argc, const char *argv[])
 
   int nb_saves = 0;
   bool quit = false;
-#ifdef VISP_HAVE_PCL
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
   pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud(new pcl::PointCloud<pcl::PointXYZ>);
 #else
   std::vector<vpColVector> pointCloud;
@@ -645,7 +653,7 @@ int main(int argc, const char *argv[])
   while (!quit) {
     if (use_aligned_stream) {
 #ifdef USE_REALSENSE2
-#ifdef VISP_HAVE_PCL
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
       realsense.acquire((unsigned char *)I_color.bitmap, (unsigned char *)I_depth_raw.bitmap, nullptr, pointCloud, nullptr,
                         &align_to);
 #else
@@ -653,7 +661,7 @@ int main(int argc, const char *argv[])
                         &align_to);
 #endif
 #else
-#ifdef VISP_HAVE_PCL
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
       realsense.acquire((unsigned char *)I_color.bitmap, (unsigned char *)I_depth_raw.bitmap, nullptr, pointCloud,
                         (unsigned char *)I_infrared.bitmap, nullptr, rs::stream::rectified_color,
                         rs::stream::depth_aligned_to_rectified_color);
@@ -665,7 +673,7 @@ int main(int argc, const char *argv[])
 #endif
     }
     else {
-#ifdef VISP_HAVE_PCL
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
       realsense.acquire((unsigned char *)I_color.bitmap, (unsigned char *)I_depth_raw.bitmap, nullptr, pointCloud,
                         (unsigned char *)I_infrared.bitmap, nullptr);
 #else
@@ -674,28 +682,27 @@ int main(int argc, const char *argv[])
 #endif
     }
 
-    vpImageConvert::convert(I_color, I_gray);
     vpImageConvert::createDepthHistogram(I_depth_raw, I_depth);
 
-    vpDisplay::display(I_gray);
+    vpDisplay::display(I_color);
     vpDisplay::display(I_depth);
     vpDisplay::display(I_infrared);
 
     if (!click_to_save) {
-      vpDisplay::displayText(I_gray, 20, 20, "Click to quit.", vpColor::red);
+      vpDisplay::displayText(I_color, 20, 20, "Click to quit.", vpColor::red);
     }
     else {
       std::stringstream ss;
       ss << "Images saved: " << nb_saves;
-      vpDisplay::displayText(I_gray, 20, 20, ss.str(), vpColor::red);
+      vpDisplay::displayText(I_color, 20, 20, ss.str(), vpColor::red);
     }
 
-    vpDisplay::flush(I_gray);
+    vpDisplay::flush(I_color);
     vpDisplay::flush(I_depth);
     vpDisplay::flush(I_infrared);
 
     if (save && !click_to_save) {
-#ifdef VISP_HAVE_PCL
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
       pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud_copy = pointCloud->makeShared();
       save_queue.push(I_color, I_depth_raw, pointCloud_copy, I_infrared);
 #else
@@ -704,7 +711,7 @@ int main(int argc, const char *argv[])
     }
 
     vpMouseButton::vpMouseButtonType button;
-    if (vpDisplay::getClick(I_gray, button, false)) {
+    if (vpDisplay::getClick(I_color, button, false)) {
       if (!click_to_save) {
         save_queue.cancel();
         quit = true;
@@ -714,7 +721,7 @@ int main(int argc, const char *argv[])
         case vpMouseButton::button1:
           if (save) {
             nb_saves++;
-#ifdef VISP_HAVE_PCL
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
             pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud_copy = pointCloud->makeShared();
             save_queue.push(I_color, I_depth_raw, pointCloud_copy, I_infrared);
 #else
