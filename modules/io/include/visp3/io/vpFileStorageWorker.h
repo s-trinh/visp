@@ -47,49 +47,93 @@ template <class T, class Container = std::deque<std::vector<T>>> class VISP_EXPO
 {
 public:
   vpFileStorageWorker(const std::vector<std::reference_wrapper<vpConcurrentQueue<std::vector<T>, Container>>> &queues,
-    const std::vector< std::string > &filenames, bool use_little_endian)
-    : m_filenames(filenames), m_data_vec(), m_queues(queues), m_writers(), m_use_little_endian(use_little_endian)
+    const std::vector< std::string > &filenames, const std::vector<const char *> &ptr_header_vec,
+    const std::vector<const char *> &header_size_vec, bool write_header, bool force_little_endian = false)
+    : m_filenames(filenames), m_data_vec(), m_queues(queues), m_ptr_header_vec(ptr_header_vec),
+    m_header_size_vec(header_size_vec), m_write_header(write_header), m_force_little_endian(force_little_endian)
   {
     assert(!m_queues.empty());
     assert(m_queues.size() == m_filenames.size());
+    if (m_write_header) {
+      assert(m_queues.size() == m_ptr_header_vec.size());
+      assert(m_queues.size() == m_header_size_vec.size());
+    }
+  }
+
+  vpFileStorageWorker(const std::reference_wrapper<vpConcurrentQueue<std::vector<T>, Container>> &queue,
+    const std::string &filename, const char *ptr_header, size_t header_size, bool m_write_header,
+    bool force_little_endian = false)
+    : m_filenames(), m_data_vec(), m_queues(), m_ptr_header_vec(), m_header_size_vec(),
+    m_force_little_endian(force_little_endian)
+  {
+    m_filenames.emplace_back(filename);
+    m_queues.emplace_back(queue);
+    if (m_write_header) {
+      m_ptr_header_vec.emplace_back(ptr_header);
+      m_header_size_vec.emplace_back(header_size);
+    }
+  }
+
+  void init() override
+  {
+    m_data_vec.resize(m_queues.size());
+    m_iter = 0;
   }
 
   // Thread main loop
   void run() override
   {
-    m_data_vec.resize(m_queues.size());
-    m_writers.resize(m_queues.size());
+    init();
 
-    for (size_t i = 0; i < m_filenames.size(); i++) {
-      m_writers[i].open(m_filenames[i], std::ios::out | std::ios::binary);
-    }
+    while (runOnce());
+  }
 
+  // Code to be executed each time a new data is fed into a concurrent queue
+  // Return false when abort is called
+  bool runOnce() override
+  {
     try {
-      for (;;) {
-        for (size_t i = 0; i < m_queues.size(); i++) {
-          m_data_vec[i] = m_queues[i].get().pop();
-          if (use_little_endian) {
-            for (const auto &data : m_data_vec[i].size()) {
-              vpIoTools::writeBinaryValueLE(m_writers[i], data);
-            }
-          }
-          else {
-            const std::vector<T> &ptr_data = m_data_vec[i];
-            m_writers[i].write(reinterpret_cast<const char *>(&ptr_data[0]), ptr_data.size()*sizeof(T));
+      for (size_t i = 0; i < m_queues.size(); i++) {
+        m_data_vec[i] = m_queues[i].get().pop();
+        char filename[FILENAME_MAX];
+        snprintf(filename, FILENAME_MAX, m_filenames[i].c_str(), m_iter);
+        std::ofstream writer(filename, std::ios::out | std::ios::binary);
+
+        if (m_write_header) {
+          // Write data header
+          // WARNING: header data must already be stored in little-endian format
+          writer.write(m_ptr_header_vec[i], m_header_size_vec[i]);
+        }
+
+        if (m_force_little_endian) {
+          for (const auto &data : m_data_vec[i]) {
+            vpIoTools::writeBinaryValueLE(writer, data);
           }
         }
+        else {
+          const std::vector<T> &ptr_data = m_data_vec[i];
+          writer.write(reinterpret_cast<const char *>(&ptr_data[0]), ptr_data.size()*sizeof(T));
+        }
       }
+
+      m_iter++;
     }
-    catch (typename vpConcurrentQueue<vpImage<T>, Container>::vpCancelled_t &) {
+    catch (typename vpConcurrentQueue<std::vector<T>, Container>::vpCancelled_t &) {
+      return false;
     }
+
+    return true;
   }
 
 private:
   std::vector<std::string> m_filenames;
   std::vector<std::vector<T>> m_data_vec;
   std::vector< std::reference_wrapper<vpConcurrentQueue<std::vector<T>, Container>> > m_queues;
-  std::vector<std::ofstream> m_writers;
-  bool m_use_little_endian;
+  std::vector<const char *> m_ptr_header_vec;
+  std::vector<size_t> m_header_size_vec;
+  bool m_write_header;
+  bool m_force_little_endian;
+  int m_iter;
 };
 
 #endif

@@ -298,9 +298,10 @@ int main(int argc, const char *argv[])
     quit = !readData(cpt_frame, input_directory, I_color, I_depth_raw, pointcloud_binary_format);
 #endif
 
-    vpImageConvert::createDepthHistogram(I_depth_raw, I_depth);
     if (color_depth)
       vpImageConvert::createDepthHistogram(I_depth_raw, I_depth_color);
+    else
+      vpImageConvert::createDepthHistogram(I_depth_raw, I_depth);
 
     if (!init_display) {
       init_display = true;

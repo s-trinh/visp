@@ -49,8 +49,8 @@ public:
   struct vpCancelled_t
   { };
 
-  vpConcurrentQueue()
-    : m_cancelled(false), m_cond(), m_data(), m_maxQueueSize(1024), m_mutex(), m_queue()
+  vpConcurrentQueue(size_t max_queue_size = 1024)
+    : m_cancelled(false), m_cond(), m_data(), m_maxQueueSize(max_queue_size), m_mutex(), m_queue()
   { }
 
   void cancel()

@@ -50,7 +50,7 @@ template <class T, class Container = std::deque<vpImage<T>>> class VISP_EXPORT v
 public:
   vpVideoStorageWorker(const std::vector<std::reference_wrapper<vpConcurrentQueue<vpImage<T>, Container>>> &queues,
     const std::vector< std::string > &filenames)
-    : m_filenames(filenames), m_images(), m_queues(queues), m_writers()
+    : m_filenames(filenames), m_images(), m_is_opened_vec(), m_queues(queues), m_writers()
   {
     assert(!m_queues.empty());
     assert(m_queues.size() == m_filenames.size());
@@ -58,45 +58,57 @@ public:
 
   vpVideoStorageWorker(const std::reference_wrapper<vpConcurrentQueue<vpImage<T>, Container>> &queue,
     const std::string &filenames)
-    : m_filenames(), m_images(), m_queues(), m_writers()
+    : m_filenames(), m_images(), m_is_opened_vec(), m_queues(), m_writers()
   {
     m_filenames.emplace_back(filenames);
     m_queues.emplace_back(queue);
   }
 
+  void init() override
+  {
+    m_images.resize(m_queues.size());
+    m_is_opened_vec.resize(m_queues.size());
+    m_writers.resize(m_queues.size());
+
+    for (size_t i = 0; i < m_filenames.size(); i++) {
+      m_writers[i].setFileName(m_filenames[i]);
+      m_is_opened_vec[i] = false;
+    }
+  }
+
   // Thread main loop
   void run() override
   {
-    m_images.resize(m_queues.size());
-    m_writers.resize(m_queues.size());
+    init();
 
-    std::vector<bool> is_opened_vec;
-    for (size_t i = 0; i < m_filenames.size(); i++) {
-      m_writers[i].setFileName(m_filenames[i]);
-      is_opened_vec.push_back(false);
-    }
+    while (runOnce());
+  }
 
+  bool runOnce() override
+  {
     try {
-      for (;;) {
-        for (size_t i = 0; i < m_queues.size(); i++) {
-          m_images[i] = m_queues[i].get().pop();
+      for (size_t i = 0; i < m_queues.size(); i++) {
+        m_images[i] = m_queues[i].get().pop();
 
-          if (!is_opened_vec[i]) {
-            m_writers[i].open(m_images[i]);
-            is_opened_vec[i] = true;
-          }
-
-          m_writers[i].saveFrame(m_images[i]);
+        if (!m_is_opened_vec[i]) {
+          m_writers[i].open(m_images[i]);
+          m_is_opened_vec[i] = true;
         }
+
+        m_writers[i].saveFrame(m_images[i]);
       }
     }
     catch (typename vpConcurrentQueue<vpImage<T>, Container>::vpCancelled_t &) {
+      return false;
     }
+
+    return true;
   }
 
 private:
   std::vector<std::string> m_filenames;
   std::vector<vpImage<T>> m_images;
+  std::vector<bool> m_is_opened_vec;
   std::vector< std::reference_wrapper<vpConcurrentQueue<vpImage<T>, Container>> > m_queues;
   std::vector<vpVideoWriter> m_writers;
 };

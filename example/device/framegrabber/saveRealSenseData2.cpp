@@ -31,15 +31,15 @@
  *****************************************************************************/
 
  /*!
-   \example saveRealSenseData.cpp
+   \example saveRealSenseData2.cpp
 
-   \brief Example that show how to save realsense data that can be replayed with readRealSenseData.cpp
+   \brief Example that shows how to save realsense data using concurrent queue and NPZ format.
  */
 
 #include <iostream>
 
 #include <visp3/core/vpConfig.h>
-#if (defined(VISP_HAVE_REALSENSE) || defined(VISP_HAVE_REALSENSE2)) && defined(VISP_HAVE_THREADS) \
+#if (defined(VISP_HAVE_REALSENSE2)) && defined(VISP_HAVE_THREADS) \
   && (defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI)) && defined(VISP_HAVE_PUGIXML)
 
 #include <condition_variable>
@@ -47,11 +47,6 @@
 #include <mutex>
 #include <queue>
 #include <thread>
-
-#if defined(VISP_HAVE_PCL)
-#include <pcl/common/common.h>
-#include <pcl/io/pcd_io.h>
-#endif
 
 #include <visp3/core/vpImageConvert.h>
 #include <visp3/core/vpIoTools.h>
@@ -62,16 +57,14 @@
 #include <visp3/gui/vpDisplayX.h>
 #include <visp3/io/vpImageIo.h>
 #include <visp3/io/vpParseArgv.h>
+#include <visp3/io/vpFileStorageWorker.h>
 #include <visp3/io/vpVideoStorageWorker.h>
-#include <visp3/sensor/vpRealSense.h>
 #include <visp3/sensor/vpRealSense2.h>
 
- // Priority to libRealSense2
-#if defined(VISP_HAVE_REALSENSE2)
-#define USE_REALSENSE2
-#endif
+// If set, use a single thread to save the acquisition data
+#define TEST_SINGLE_THREAD 1
 
-#define GETOPTARGS "so:acdpiCf:bh"
+#define GETOPTARGS "so:acdpiCf:h"
 
 namespace
 {
@@ -84,7 +77,6 @@ void usage(const char *name, const char *badparam, int fps)
     << " [-c]"
     << " [-d]"
     << " [-p]"
-    << " [-b]"
     << " [-i]"
     << " [-C]"
     << " [-f <fps>]"
@@ -106,11 +98,6 @@ void usage(const char *name, const char *badparam, int fps)
     << std::endl
     << "  -p" << std::endl
     << "    Add point cloud stream to saved data when -s option is enabled." << std::endl
-    << "    By default, the point cloud is saved in Point Cloud Data file format (.PCD extension file)." << std::endl
-    << "    You can also use -b option to save the point cloud in binary format." << std::endl
-    << std::endl
-    << "  -b" << std::endl
-    << "    Point cloud stream is saved in binary format." << std::endl
     << std::endl
     << "  -i" << std::endl
     << "    Add infrared stream to saved data when -s option is enabled." << std::endl
@@ -136,7 +123,7 @@ void usage(const char *name, const char *badparam, int fps)
 
 bool getOptions(int argc, const char *argv[], bool &save, std::string &output_directory, bool &use_aligned_stream,
                 bool &save_color, bool &save_depth, bool &save_pointcloud, bool &save_infrared, bool &click_to_save,
-                int &stream_fps, bool &save_pointcloud_binary_format)
+                int &stream_fps)
 {
   const char *optarg;
   const char **argv1 = (const char **)argv;
@@ -171,9 +158,6 @@ bool getOptions(int argc, const char *argv[], bool &save, std::string &output_di
     case 'f':
       stream_fps = atoi(optarg);
       break;
-    case 'b':
-      save_pointcloud_binary_format = true;
-      break;
 
     case 'h':
       usage(argv[0], nullptr, stream_fps);
@@ -199,6 +183,105 @@ bool getOptions(int argc, const char *argv[], bool &save, std::string &output_di
   return true;
 }
 
+template <class T, class Container = std::deque<std::vector<T>>> class vpNPZStorageWorker : public vpWriterWorker
+{
+public:
+  vpNPZStorageWorker(const std::vector<std::reference_wrapper<vpConcurrentQueue<std::vector<T>, Container>>> &queues,
+    const std::vector<std::string> &filenames, const std::vector<unsigned int> &heights,
+    const std::vector<unsigned int> &widths, const std::vector<unsigned int> &channels)
+    : m_filenames(filenames), m_data_vec(), m_queues(queues), m_heights(heights), m_widths(widths),
+    m_channels(channels), m_iter()
+  {
+    assert(!m_queues.empty());
+    assert(m_queues.size() == m_filenames.size());
+    assert(m_heights.size() == m_filenames.size());
+    assert(m_widths.size() == m_filenames.size());
+    assert(m_channels.size() == m_filenames.size());
+  }
+
+  vpNPZStorageWorker(const std::reference_wrapper<vpConcurrentQueue<std::vector<T>, Container>> &queue,
+    const std::string &filename, unsigned int height, unsigned int width, unsigned int channel)
+    : m_filenames(), m_data_vec(), m_queues(), m_heights(), m_widths(), m_channels(), m_iter()
+  {
+    m_queues.push_back(queue);
+    m_filenames.push_back(filename);
+    m_heights.push_back(height);
+    m_widths.push_back(width);
+    m_channels.push_back(channel);
+  }
+
+  void init() override
+  {
+    m_data_vec.resize(m_queues.size());
+  }
+
+  // Thread main loop
+  void run() override
+  {
+    init();
+
+    while (runOnce());
+  }
+
+  bool runOnce() override
+  {
+    try {
+      for (size_t i = 0; i < m_queues.size(); i++) {
+        m_data_vec[i] = m_queues[i].get().pop();
+
+        char filename[FILENAME_MAX];
+        snprintf(filename, FILENAME_MAX, m_filenames[i].c_str(), m_iter);
+        std::string str_filename = filename;
+
+        // Write Npz headers
+        std::vector<char> vec_filename(str_filename.begin(), str_filename.end());
+        visp::cnpy::npz_save(filename, "filename", &vec_filename[0], { vec_filename.size() }, "w");
+
+        std::string current_time = vpTime::getDateTime("%Y-%m-%d_%H.%M.%S");
+        std::vector<char> vec_current_time(current_time.begin(), current_time.end());
+        visp::cnpy::npz_save(filename, "timestamp", &vec_current_time, { vec_current_time.size() }, "a");
+
+        int height = m_heights[i];
+        int width = m_widths[i];
+        int channel = m_channels[i];
+        visp::cnpy::npz_save(filename, "height", &height, { 1 }, "a");
+        visp::cnpy::npz_save(filename, "width", &width, { 1 }, "a");
+        visp::cnpy::npz_save(filename, "channel", &channel, { 1 }, "a");
+
+        // Write data
+        const std::vector<T> &ptr_data = m_data_vec[i];
+        visp::cnpy::npz_save(filename, "data", ptr_data.data(), { m_heights[i], m_widths[i], m_channels[i] }, "a");
+      }
+
+      m_iter++;
+    }
+    catch (typename vpConcurrentQueue<std::vector<T>, Container>::vpCancelled_t &) {
+      return false;
+    }
+
+    return true;
+  }
+
+private:
+  std::vector<std::string> m_filenames;
+  std::vector<std::vector<T>> m_data_vec;
+  std::vector< std::reference_wrapper<vpConcurrentQueue<std::vector<T>, Container>> > m_queues;
+  std::vector<unsigned int> m_heights;
+  std::vector<unsigned int> m_widths;
+  std::vector<unsigned int> m_channels;
+  int m_iter;
+};
+
+void convert(const std::vector<vpColVector> &vp_pcl, std::vector<float> &pcl)
+{
+  pcl.resize(3*vp_pcl.size());
+  for (size_t i = 0; i < vp_pcl.size(); i++) {
+    pcl[3*i + 0] = (float)vp_pcl[i][0];
+    pcl[3*i + 1] = (float)vp_pcl[i][1];
+    pcl[3*i + 2] = (float)vp_pcl[i][2];
+  }
+}
+
 } // Namespace
 
 int main(int argc, const char *argv[])
@@ -213,20 +296,15 @@ int main(int argc, const char *argv[])
   bool save_infrared = false;
   bool click_to_save = false;
   int stream_fps = 30;
-  bool save_pointcloud_binary_format = false;
 
   // Read the command line options
   if (!getOptions(argc, argv, save, output_directory_custom, use_aligned_stream, save_color, save_depth,
-                  save_pointcloud, save_infrared, click_to_save, stream_fps, save_pointcloud_binary_format)) {
+                  save_pointcloud, save_infrared, click_to_save, stream_fps)) {
     return EXIT_FAILURE;
   }
 
   if (!output_directory_custom.empty())
     output_directory = output_directory_custom + "/" + output_directory;
-
-#ifndef VISP_HAVE_PCL
-  save_pointcloud_binary_format = true;
-#endif
 
   std::cout << "save: " << save << std::endl;
   std::cout << "output_directory: " << output_directory << std::endl;
@@ -236,11 +314,9 @@ int main(int argc, const char *argv[])
   std::cout << "save_pointcloud: " << save_pointcloud << std::endl;
   std::cout << "save_infrared: " << save_infrared << std::endl;
   std::cout << "stream_fps: " << stream_fps << std::endl;
-  std::cout << "save_pointcloud_binary_format: " << save_pointcloud_binary_format << std::endl;
   std::cout << "click_to_save: " << click_to_save << std::endl;
 
-  int width = 640, height = 480;
-#ifdef USE_REALSENSE2
+  const int width = 640, height = 480;
   vpRealSense2 realsense;
 
   rs2::config config;
@@ -248,19 +324,6 @@ int main(int argc, const char *argv[])
   config.enable_stream(RS2_STREAM_DEPTH, width, height, RS2_FORMAT_Z16, stream_fps);
   config.enable_stream(RS2_STREAM_INFRARED, width, height, RS2_FORMAT_Y8, stream_fps);
   realsense.open(config);
-#else
-  vpRealSense realsense;
-  realsense.setStreamSettings(rs::stream::color,
-                              vpRealSense::vpRsStreamParams(width, height, rs::format::rgba8, stream_fps));
-  realsense.setStreamSettings(rs::stream::depth,
-                              vpRealSense::vpRsStreamParams(width, height, rs::format::z16, stream_fps));
-  realsense.setStreamSettings(rs::stream::infrared,
-                              vpRealSense::vpRsStreamParams(width, height, rs::format::y8, stream_fps));
-  realsense.setStreamSettings(rs::stream::infrared2,
-                              vpRealSense::vpRsStreamParams(width, height, rs::format::y8, stream_fps));
-
-  realsense.open();
-#endif
 
   vpImage<vpRGBa> I_color(height, width);
   vpImage<unsigned char> I_gray(height, width);
@@ -298,7 +361,6 @@ int main(int argc, const char *argv[])
     vpIoTools::makeDirectory(output_directory);
 
     // Save intrinsics
-#ifdef USE_REALSENSE2
     vpCameraParameters cam_color = realsense.getCameraParameters(RS2_STREAM_COLOR);
     vpXmlParserCamera xml_camera;
     xml_camera.save(cam_color, output_directory + "/camera.xml", "color_camera", width, height);
@@ -317,115 +379,86 @@ int main(int argc, const char *argv[])
     if (!use_aligned_stream) {
       depth_M_color = realsense.getTransformation(RS2_STREAM_COLOR, RS2_STREAM_DEPTH);
     }
-#else
-    vpCameraParameters cam_color = realsense.getCameraParameters(rs::stream::color);
-    vpXmlParserCamera xml_camera;
-    xml_camera.save(cam_color, output_directory + "/camera.xml", "color_camera", width, height);
-
-    vpCameraParameters cam_color_rectified = realsense.getCameraParameters(rs::stream::rectified_color);
-    xml_camera.save(cam_color_rectified, output_directory + "/camera.xml", "color_camera_rectified", width, height);
-
-    if (use_aligned_stream) {
-      vpCameraParameters cam_depth = realsense.getCameraParameters(rs::stream::depth);
-      xml_camera.save(cam_depth, output_directory + "/camera.xml", "depth_camera", width, height);
-    }
-    else {
-      xml_camera.save(cam_color, output_directory + "/camera.xml", "depth_camera", width, height);
-    }
-
-    vpCameraParameters cam_depth_aligned_to_rectified_color =
-      realsense.getCameraParameters(rs::stream::depth_aligned_to_rectified_color);
-    xml_camera.save(cam_depth_aligned_to_rectified_color, output_directory + "/camera.xml",
-                    "depth_camera_aligned_to_rectified_color", width, height);
-
-    vpCameraParameters cam_infrared = realsense.getCameraParameters(rs::stream::infrared);
-    xml_camera.save(cam_infrared, output_directory + "/camera.xml", "infrared_camera", width, height);
-    vpHomogeneousMatrix depth_M_color;
-    if (!use_aligned_stream) {
-      depth_M_color = realsense.getTransformation(rs::stream::color, rs::stream::depth);
-    }
-#endif
     std::ofstream file(std::string(output_directory + "/depth_M_color.txt"));
     depth_M_color.save(file);
     file.close();
   }
 
-  // vpFrameQueue save_queue;
-  // vpStorageWorker storage(std::ref(save_queue), std::cref(output_directory), save_color, save_depth, save_pointcloud,
-  //                       save_infrared, save_pointcloud_binary_format, width, height);
-  // std::thread storage_thread(&vpStorageWorker::run, &storage);
-
   // Synchronized queues for each camera stream
   vpConcurrentQueue<vpImage<vpRGBa>> rgb_queue;
   vpConcurrentQueue<vpImage<unsigned char>> infrared_queue;
+  vpConcurrentQueue<std::vector<uint16_t>> depth_queue;
+  vpConcurrentQueue<std::vector<float>> pointcloud_queue;
+  std::vector<unsigned int> header_vec;
   std::vector<std::shared_ptr<vpWriterWorker>> storages;
+#if TEST_SINGLE_THREAD
+  std::unique_ptr<vpWriterExecutor> storage_thread_ptr;
+#else
   std::vector<vpWriterExecutor> storage_threads;
+#endif
 
   if (save) {
     std::ostringstream oss;
     oss << output_directory;
     std::cout << "Create directory: " << oss.str() << std::endl;
     vpIoTools::makeDirectory(oss.str());
-    oss << "/rgb_%06d.png";
+    oss << "/color_image_%04d.jpg";
     std::string rgb_output = oss.str();
 
     storages.emplace_back(std::make_shared<vpVideoStorageWorker<vpRGBa>>(rgb_queue, rgb_output));
 
     oss.str("");
     oss.clear();
-    oss << output_directory << "/ir_%06d.png";
+    oss << output_directory << "/infrared_image_%04d.jpg";
     std::string ir_output = oss.str();
     storages.emplace_back(std::make_shared<vpVideoStorageWorker<unsigned char>>(infrared_queue, ir_output));
 
+    oss.str("");
+    oss.clear();
+    oss << output_directory << "/depth_image_%04d.npz";
+    std::string npz_depth_output = oss.str();
+    const unsigned int depth_channel = 1;
+    storages.emplace_back(std::make_shared<vpNPZStorageWorker<uint16_t>>(depth_queue, npz_depth_output,
+                                                                         height,
+                                                                         width,
+                                                                         depth_channel));
+
+    oss.str("");
+    oss.clear();
+    oss << output_directory << "/pointcloud_%04d.npz";
+    std::string pointcloud_output = oss.str();
+    const unsigned int pcl_channel = 3;
+    storages.emplace_back(std::make_shared<vpNPZStorageWorker<float>>(pointcloud_queue, pointcloud_output,
+                                                                      height,
+                                                                      width,
+                                                                      pcl_channel));
+
+#if TEST_SINGLE_THREAD
+    storage_thread_ptr = std::make_unique<vpWriterExecutor>(storages);
+#else
     storage_threads.emplace_back(storages);
+#endif
   }
 
-#ifdef USE_REALSENSE2
   rs2::align align_to(RS2_STREAM_COLOR);
   if (use_aligned_stream && save_infrared) {
     std::cerr << "Cannot use aligned streams with infrared acquisition currently."
       << "\nInfrared stream acquisition is disabled!"
       << std::endl;
   }
-#endif
 
   int nb_saves = 0;
   bool quit = false;
-#ifdef VISP_HAVE_PCL
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud(new pcl::PointCloud<pcl::PointXYZ>);
-#else
   std::vector<vpColVector> pointCloud;
-#endif
+  std::vector<float> vec_pointCloud;
   while (!quit) {
     if (use_aligned_stream) {
-#ifdef USE_REALSENSE2
-#ifdef VISP_HAVE_PCL
-      realsense.acquire((unsigned char *)I_color.bitmap, (unsigned char *)I_depth_raw.bitmap, nullptr, pointCloud, nullptr,
-                        &align_to);
-#else
       realsense.acquire((unsigned char *)I_color.bitmap, (unsigned char *)I_depth_raw.bitmap, &pointCloud, nullptr,
                         &align_to);
-#endif
-#else
-#ifdef VISP_HAVE_PCL
-      realsense.acquire((unsigned char *)I_color.bitmap, (unsigned char *)I_depth_raw.bitmap, nullptr, pointCloud,
-                        (unsigned char *)I_infrared.bitmap, nullptr, rs::stream::rectified_color,
-                        rs::stream::depth_aligned_to_rectified_color);
-#else
-      realsense.acquire((unsigned char *)I_color.bitmap, (unsigned char *)I_depth_raw.bitmap, &pointCloud,
-                        (unsigned char *)I_infrared.bitmap, nullptr, rs::stream::rectified_color,
-                        rs::stream::depth_aligned_to_rectified_color);
-#endif
-#endif
     }
     else {
-#ifdef VISP_HAVE_PCL
-      realsense.acquire((unsigned char *)I_color.bitmap, (unsigned char *)I_depth_raw.bitmap, nullptr, pointCloud,
-                        (unsigned char *)I_infrared.bitmap, nullptr);
-#else
       realsense.acquire((unsigned char *)I_color.bitmap, (unsigned char *)I_depth_raw.bitmap, &pointCloud,
                         (unsigned char *)I_infrared.bitmap);
-#endif
     }
 
     vpImageConvert::convert(I_color, I_gray);
@@ -449,22 +482,30 @@ int main(int argc, const char *argv[])
     vpDisplay::flush(I_infrared);
 
     if (save && !click_to_save) {
-#ifdef VISP_HAVE_PCL
-      pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud_copy = pointCloud->makeShared();
-      save_queue.push(I_color, I_depth_raw, pointCloud_copy, I_infrared);
-#else
-      // save_queue.push(I_color, I_depth_raw, pointCloud, I_infrared);
-      rgb_queue.push(I_color);
-      infrared_queue.push(I_infrared);
-#endif
+      if (save_color) {
+        rgb_queue.push(I_color);
+      }
+      if (save_infrared) {
+        infrared_queue.push(I_infrared);
+      }
+      if (save_depth) {
+        std::vector<uint16_t> I_depth_raw_vec(I_depth_raw.bitmap, I_depth_raw.bitmap + I_depth_raw.getSize());
+        std::vector<uint16_t> I_depth_raw_vec_copy = I_depth_raw_vec;
+        depth_queue.push(I_depth_raw_vec_copy);
+      }
+      if (save_pointcloud) {
+        convert(pointCloud, vec_pointCloud);
+        pointcloud_queue.push(vec_pointCloud);
+      }
     }
 
     vpMouseButton::vpMouseButtonType button;
     if (vpDisplay::getClick(I_gray, button, false)) {
       if (!click_to_save) {
-        // save_queue.cancel();
         rgb_queue.cancel();
         infrared_queue.cancel();
+        depth_queue.cancel();
+        pointcloud_queue.cancel();
 
         quit = true;
       }
@@ -473,23 +514,20 @@ int main(int argc, const char *argv[])
         case vpMouseButton::button1:
           if (save) {
             nb_saves++;
-#ifdef VISP_HAVE_PCL
-            pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud_copy = pointCloud->makeShared();
-            save_queue.push(I_color, I_depth_raw, pointCloud_copy, I_infrared);
-#else
-            // save_queue.push(I_color, I_depth_raw, pointCloud, I_infrared);
             rgb_queue.push(I_color);
             infrared_queue.push(I_infrared);
-#endif
+            depth_queue.cancel();
+            pointcloud_queue.cancel();
           }
           break;
 
         case vpMouseButton::button2:
         case vpMouseButton::button3:
         default:
-          // save_queue.cancel();
           rgb_queue.cancel();
           infrared_queue.cancel();
+          depth_queue.cancel();
+          pointcloud_queue.cancel();
 
           quit = true;
           break;
@@ -498,11 +536,16 @@ int main(int argc, const char *argv[])
     }
   }
 
-  // storage_thread.join();
   // Join all the worker threads, waiting for them to finish
+#if TEST_SINGLE_THREAD
+  if (storage_thread_ptr) {
+    storage_thread_ptr->join();
+  }
+#else
   for (auto &st : storage_threads) {
     st.join();
   }
+#endif
 
   return EXIT_SUCCESS;
 }

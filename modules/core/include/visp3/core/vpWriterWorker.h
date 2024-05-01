@@ -51,7 +51,11 @@ class VISP_EXPORT vpWriterWorker
 public:
   vpWriterWorker() = default;
 
+  virtual void init() = 0;
+
   virtual void run() = 0;
+
+  virtual bool runOnce() = 0;
 
 private:
 };

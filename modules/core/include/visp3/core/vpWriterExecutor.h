@@ -42,6 +42,7 @@
 #include <visp3/core/vpConfig.h>
 #include <thread>
 #include <vector>
+#include <visp3/core/vpConcurrentQueue.h>
 #include <visp3/core/vpWriterWorker.h>
 
 /*!
@@ -51,15 +52,23 @@
 class VISP_EXPORT vpWriterExecutor
 {
 public:
-  // vpWriterExecutor(const std::vector<std::reference_wrapper<std::shared_ptr<vpWriterWorker>>> &workers)
-  //   : m_writer_workers(workers), m_threads()
-  // { }
-
-  vpWriterExecutor(const std::vector<std::shared_ptr<vpWriterWorker>> &workers)
-    : m_writer_workers(workers), m_threads()
+  vpWriterExecutor(const std::shared_ptr<vpWriterWorker> &worker, bool single_thread = false)
+    : m_writer_workers(), m_threads()
   {
-    for (const auto &worker : m_writer_workers) {
-      m_threads.emplace_back(&vpWriterWorker::run, worker);
+    m_writer_workers.push_back(worker);
+    m_threads.emplace_back(&vpWriterWorker::run, worker);
+  }
+
+  vpWriterExecutor(const std::vector<std::shared_ptr<vpWriterWorker>> &workers, bool single_thread = false)
+    : m_single_thread(single_thread), m_writer_workers(workers), m_threads()
+  {
+    if (m_single_thread) {
+      m_threads.emplace_back(&vpWriterExecutor::run, this);
+    }
+    else {
+      for (const auto &worker : m_writer_workers) {
+        m_threads.emplace_back(&vpWriterWorker::run, worker);
+      }
     }
   }
 
@@ -71,7 +80,23 @@ public:
   }
 
 private:
-  // std::vector<std::reference_wrapper<std::shared_ptr<vpWriterWorker>>> m_writer_workers;
+  void run()
+  {
+    for (const auto &worker : m_writer_workers) {
+      worker->init();
+    }
+
+    bool cancel = false;
+    while (!cancel) {
+      for (const auto &worker : m_writer_workers) {
+        // bitwise OR assignemnt
+        // https://stackoverflow.com/a/9021094
+        cancel |= !worker->runOnce();
+      }
+    }
+  }
+
+  bool m_single_thread;
   std::vector<std::shared_ptr<vpWriterWorker>> m_writer_workers;
   std::vector<std::thread> m_threads;
 };
