@@ -1,6 +1,6 @@
 /*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2023 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,12 +28,19 @@
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  * Description:
- * TODO: .
+ * Video worker to execute code inside runOnce():
+ *   - pop data from the concurrent queue (thread-safe queue)
+ *   - still images are supported (e.g. JPEG, PNG)
+ *   - see vpVideoWriter class
  */
 
 /*!
   \file vpVideoStorageWorker.h
-  \brief TODO:, see https://stackoverflow.com/a/37146523.
+  \brief See https://stackoverflow.com/a/37146523 for inspiration
+  Video worker to execute code inside runOnce():
+    - pop data from the concurrent queue (thread-safe queue)
+    - still images are supported (e.g. JPEG, PNG)
+    - see vpVideoWriter class
 */
 
 #ifndef vpVideoStorageWorker_h

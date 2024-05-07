@@ -1,6 +1,6 @@
 /*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2023 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,12 +28,12 @@
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  * Description:
- * TODO: .
+ * Virtual base class providing different methods to be adapted.
  */
 
 /*!
   \file vpWriterWorker.h
-  \brief TODO: .
+  \brief Virtual base class providing different methods to be adapted.
 */
 
 #ifndef _vpWriterWorker_h_
@@ -43,9 +43,8 @@
 
 /*!
   \class vpWriterWorker
-
+  Virtual base class providing different methods to be adapted.
 */
-
 class VISP_EXPORT vpWriterWorker
 {
 public:

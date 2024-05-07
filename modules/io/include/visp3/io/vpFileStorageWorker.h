@@ -1,6 +1,6 @@
 /*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2023 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,12 +28,17 @@
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  * Description:
- * TODO: .
+ * Binary file worker to execute code inside runOnce():
+ *   - pop data from the concurrent queue (thread-safe queue)
+ *   - write data to a file in binary format
  */
 
 /*!
   \file vpFileStorageWorker.h
-  \brief TODO:, see https://stackoverflow.com/a/37146523.
+  \brief See https://stackoverflow.com/a/37146523 for inspiration
+  Binary file worker to execute code inside runOnce():
+    - pop data from the concurrent queue (thread-safe queue)
+    - write data to a file in binary format
 */
 
 #ifndef vpFileStorageWorker_h
@@ -101,7 +106,7 @@ public:
 
         if (m_write_header) {
           // Write data header
-          // WARNING: header data must already be stored in little-endian format
+          // WARNING: header data must already be stored in little-endian format if endianness is needed
           writer.write(m_ptr_header_vec[i], m_header_size_vec[i]);
         }
 

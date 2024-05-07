@@ -1,6 +1,6 @@
 /*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2023 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,12 +28,12 @@
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  * Description:
- * C++ std::queue with mutex for concurrent IO operations.
+ * C++ std::queue with mutex for concurrent I/O operations.
  */
 
 /*!
   \file vpConcurrentQueue.h
-  \brief C++ std::queue with mutex for concurrent IO operations, see https://stackoverflow.com/a/37146523.
+  \brief C++ std::queue with mutex for concurrent IO operations, see https://stackoverflow.com/a/37146523
 */
 
 #ifndef vpConcurrentQueue_h

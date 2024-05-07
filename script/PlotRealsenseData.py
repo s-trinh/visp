@@ -32,18 +32,14 @@ def load_data(iter, input_color_filenames, input_infrared_filenames, input_depth
     with np.load(depth_filename) as data:
         height = data['height'][0]
         width = data['width'][0]
-        # print(f"Depth height={height} ; widht={width}")
         depth_data_raw = data['data'].reshape((height, width))
 
         max_uint16 = 65536
         hist, bin_edges = np.histogram(depth_data_raw, bins=max_uint16, range=(0, max_uint16-1))
-        # print(f"hist={len(hist)} ; bin_edges={bin_edges}")
         # https://stackoverflow.com/a/30460089
         dx = bin_edges[1] - bin_edges[0]
         cumsum = np.cumsum(hist)*dx
         depth = np.zeros(depth_data_raw.shape, dtype=np.uint8)
-        # print(f"cumsum={cumsum.shape}")
-        # print(f"depth_data={depth_data.shape}")
         for i in range(depth_data_raw.shape[0]):
             for j in range(depth_data_raw.shape[1]):
                 try:
@@ -70,14 +66,16 @@ def main():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-i', '--input', type=str, default="",
                         help='Input data folder.')
-    parser.add_argument('--color-pattern', type=str, default="color_image_*.jpg",
+    parser.add_argument('--color-pattern', type=str, default="color_image_*.png",
                         help='Filename pattern for the color images.')
-    parser.add_argument('--infrared-pattern', type=str, default="infrared_image_*.jpg",
+    parser.add_argument('--infrared-pattern', type=str, default="infrared_image_*.png",
                         help='Filename pattern for the infrared images.')
     parser.add_argument('--depth-pattern', type=str, default="depth_image_*.npz",
                         help='Filename pattern for the depth images.')
     parser.add_argument('--pcl-pattern', type=str, default="pointcloud_*.npz",
                         help='Filename pattern for the pointcloud data.')
+    parser.add_argument('--pcl-channel', type=int, default=2,
+                        help='Pointcloud channel (0, 1 or 2) to be displayed.')
     args = parser.parse_args()
 
     input_folder = Path(args.input)
@@ -85,11 +83,13 @@ def main():
     infrared_pattern = Path(input_folder) / args.infrared_pattern
     depth_pattern = Path(input_folder) / args.depth_pattern
     pcl_pattern = Path(input_folder) / args.pcl_pattern
+    pcl_channel = args.pcl_channel
     print(f"Input folder: {input_folder}")
     print(f"Color filename pattern: {color_pattern}")
     print(f"Infrared filename pattern: {infrared_pattern}")
     print(f"Depth filename pattern: {depth_pattern}")
     print(f"Pointcloud filename pattern: {pcl_pattern}")
+    print(f"Pointcloud channel to be displayed: {pcl_channel}")
 
     if not input_folder.is_dir():
         print(f"Invalid folder: {input_folder}")
@@ -123,7 +123,7 @@ def main():
     # https://matplotlib.org/stable/gallery/mplot3d/mixed_subplots.html
     # https://matplotlib.org/stable/gallery/mplot3d/subplot3d.html
     fig = plt.figure()
-    fig.suptitle('RGB + IR + Depth + PCL')
+    fig.suptitle('RGB + IR + Depth + PCL', fontsize=30)
     ax00 = fig.add_subplot(2, 2, 1)
     ax01 = fig.add_subplot(2, 2, 2)
     ax10 = fig.add_subplot(2, 2, 3)
@@ -134,22 +134,20 @@ def main():
     im3 = ax11.scatter(pcl_vec[0][::10,::10,0], pcl_vec[0][::10,::10,1], pcl_vec[0][::10,::10,2])
 
     def init():
-        # print(f"init")
-
         im0.set_array(color_vec[0])
         im1.set_array(ir_vec[0])
         im2.set_array(depth_vec[0])
         subsample = pcl_vec[0][::10,::10,:2]
         # https://stackoverflow.com/a/9416663
         im3.set_offsets(subsample.reshape(-1,2))
-        im3.set_array(pcl_vec[0][::10,::10,2].flatten())
+        im3.set_array(pcl_vec[0][::10,::10,pcl_channel].flatten())
 
     # https://stackoverflow.com/a/57259405
     def update_func(frame):
-        # print(f"update_func={frame} ; color_vec={len(color_vec)}")
-
         if frame >= len(color_vec):
-            color_data, ir_data, depth_data, pcl_data = load_data(frame, input_color_filenames, input_infrared_filenames, input_depth_filenames, input_pcl_filenames)
+            color_data, ir_data, depth_data, pcl_data = load_data(frame, input_color_filenames,
+                                                                  input_infrared_filenames, input_depth_filenames,
+                                                                  input_pcl_filenames)
             color_vec.append(color_data)
             ir_vec.append(ir_data)
             depth_vec.append(depth_data)
@@ -158,9 +156,9 @@ def main():
         im0.set_array(color_vec[frame])
         im1.set_array(ir_vec[frame])
         im2.set_array(depth_vec[frame])
-        subsample = pcl_vec[frame][::10,::10,:2]
+        subsample = pcl_vec[frame][::10,::10,:pcl_channel]
         im3.set_offsets(subsample.reshape(-1,2))
-        im3.set_array(pcl_vec[frame][::10,::10,2].flatten())
+        im3.set_array(pcl_vec[frame][::10,::10,pcl_channel].flatten())
 
     # https://matplotlib.org/stable/api/animation_api.html
     anim = animation.FuncAnimation(

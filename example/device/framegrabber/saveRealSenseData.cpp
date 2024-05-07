@@ -33,7 +33,7 @@
  /*!
    \example saveRealSenseData.cpp
 
-   \brief Example that show how to save realsense data that can be replayed with readRealSenseData.cpp
+   \brief Example that shows how to save realsense data that can be replayed with readRealSenseData.cpp
  */
 
 #include <iostream>
@@ -69,12 +69,12 @@
 #include <visp3/sensor/vpRealSense.h>
 #include <visp3/sensor/vpRealSense2.h>
 
- // Priority to libRealSense2
+// Priority to libRealSense2
 #if defined(VISP_HAVE_REALSENSE2)
 #define USE_REALSENSE2
 #endif
 
-#define GETOPTARGS "so:acdpiCf:bh"
+#define GETOPTARGS "so:acdpijCf:bh"
 
 namespace
 {
@@ -89,6 +89,7 @@ void usage(const char *name, const char *badparam, int fps)
     << " [-p]"
     << " [-b]"
     << " [-i]"
+    << " [-j]"
     << " [-C]"
     << " [-f <fps>]"
     << " [-o <directory>]"
@@ -118,6 +119,9 @@ void usage(const char *name, const char *badparam, int fps)
     << "  -i" << std::endl
     << "    Add infrared stream to saved data when -s option is enabled." << std::endl
     << std::endl
+    << "  -j" << std::endl
+    << "    Save image data using JPEG format (otherwise PNG is used)." << std::endl
+    << std::endl
     << "  -C" << std::endl
     << "    Trigger one shot data saver after each user click." << std::endl
     << std::endl
@@ -143,7 +147,7 @@ void usage(const char *name, const char *badparam, int fps)
 
 bool getOptions(int argc, const char *argv[], bool &save, std::string &output_directory, bool &use_aligned_stream,
                 bool &save_color, bool &save_depth, bool &save_pointcloud, bool &save_infrared, bool &click_to_save,
-                int &stream_fps, bool &save_pointcloud_binary_format)
+                int &stream_fps, bool &save_pointcloud_binary_format, bool &save_jpeg)
 {
   const char *optarg;
   const char **argv1 = (const char **)argv;
@@ -171,6 +175,9 @@ bool getOptions(int argc, const char *argv[], bool &save, std::string &output_di
       break;
     case 'i':
       save_infrared = true;
+      break;
+    case 'j':
+      save_jpeg = true;
       break;
     case 'C':
       click_to_save = true;
@@ -206,6 +213,11 @@ bool getOptions(int argc, const char *argv[], bool &save, std::string &output_di
   return true;
 }
 
+// Code adapted from: https://stackoverflow.com/a/37146523
+// See example/device/framegrabber/saveRealSenseData2.cpp which uses ViSP:
+//  - vpConcurrentQueue
+//  - vpWriterWorker
+//  - vpWriterExecutor
 class vpFrameQueue
 {
 public:
@@ -318,7 +330,7 @@ class vpStorageWorker
 {
 public:
   vpStorageWorker(vpFrameQueue &queue, const std::string &directory, bool save_color, bool save_depth, bool save_pointcloud,
-                bool save_infrared, bool save_pointcloud_binary_format,
+                bool save_infrared, bool save_pointcloud_binary_format, bool save_jpeg,
                 int
 #ifndef VISP_HAVE_PCL
                     width
@@ -331,7 +343,7 @@ public:
   )
     : m_queue(queue), m_directory(directory), m_cpt(0), m_save_color(save_color), m_save_depth(save_depth),
     m_save_pointcloud(save_pointcloud), m_save_infrared(save_infrared),
-    m_save_pointcloud_binary_format(save_pointcloud_binary_format)
+    m_save_pointcloud_binary_format(save_pointcloud_binary_format), m_save_jpeg(save_jpeg)
 #ifndef VISP_HAVE_PCL
     ,
     m_size_height(height), m_size_width(width)
@@ -352,6 +364,7 @@ public:
       vpImage<unsigned char> infraredImg;
 
       char buffer[FILENAME_MAX];
+      std::string image_filename_ext = m_save_jpeg ? ".jpg" : ".png";
       for (;;) {
         m_queue.pop(colorImg, depthImg, pointCloud, infraredImg);
 
@@ -359,7 +372,7 @@ public:
           std::stringstream ss;
 
           if (m_save_color) {
-            ss << m_directory << "/color_image_%04d.jpg";
+            ss << m_directory << "/color_image_%04d" << image_filename_ext;
             snprintf(buffer, FILENAME_MAX, ss.str().c_str(), m_cpt);
 
             std::string filename_color = buffer;
@@ -421,7 +434,7 @@ public:
                 uint32_t width = m_size_width;
                 uint32_t height = m_size_height;
                 // to be consistent with PCL version
-                char is_dense = 1;
+                const char is_dense = 1;
 
                 vpIoTools::writeBinaryValueLE(file_pointcloud, height);
                 vpIoTools::writeBinaryValueLE(file_pointcloud, width);
@@ -450,7 +463,7 @@ public:
 
           if (m_save_infrared) {
             ss.str("");
-            ss << m_directory << "/infrared_image_%04d.jpg";
+            ss << m_directory << "/infrared_image_%04d" << image_filename_ext;
             snprintf(buffer, FILENAME_MAX, ss.str().c_str(), m_cpt);
 
             std::string filename_infrared = buffer;
@@ -475,6 +488,7 @@ private:
   bool m_save_pointcloud;
   bool m_save_infrared;
   bool m_save_pointcloud_binary_format;
+  bool m_save_jpeg;
 #ifndef VISP_HAVE_PCL
   int m_size_height;
   int m_size_width;
@@ -495,10 +509,12 @@ int main(int argc, const char *argv[])
   bool click_to_save = false;
   int stream_fps = 30;
   bool save_pointcloud_binary_format = false;
+  bool save_jpeg = false;
 
   // Read the command line options
   if (!getOptions(argc, argv, save, output_directory_custom, use_aligned_stream, save_color, save_depth,
-                  save_pointcloud, save_infrared, click_to_save, stream_fps, save_pointcloud_binary_format)) {
+                  save_pointcloud, save_infrared, click_to_save, stream_fps, save_pointcloud_binary_format,
+                  save_jpeg)) {
     return EXIT_FAILURE;
   }
 
@@ -516,6 +532,7 @@ int main(int argc, const char *argv[])
   std::cout << "save_depth: " << save_depth << std::endl;
   std::cout << "save_pointcloud: " << save_pointcloud << std::endl;
   std::cout << "save_infrared: " << save_infrared << std::endl;
+  std::cout << "save_jpeg: " << save_jpeg << std::endl;
   std::cout << "stream_fps: " << stream_fps << std::endl;
   std::cout << "save_pointcloud_binary_format: " << save_pointcloud_binary_format << std::endl;
   std::cout << "click_to_save: " << click_to_save << std::endl;
@@ -631,7 +648,7 @@ int main(int argc, const char *argv[])
 
   vpFrameQueue save_queue;
   vpStorageWorker storage(std::ref(save_queue), std::cref(output_directory), save_color, save_depth, save_pointcloud,
-                        save_infrared, save_pointcloud_binary_format, width, height);
+                        save_infrared, save_pointcloud_binary_format, save_jpeg, width, height);
   std::thread storage_thread(&vpStorageWorker::run, &storage);
 
 #ifdef USE_REALSENSE2

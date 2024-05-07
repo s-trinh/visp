@@ -33,7 +33,7 @@
 /*!
   \example readRealSenseData.cpp
 
-  \brief Example that show how to replay realsense data saved with saveRealSenseData.cpp
+  \brief Example that shows how to replay realsense data saved with saveRealSenseData.cpp
 */
 
 #include <iostream>
@@ -68,7 +68,7 @@
 #endif
 #endif
 
-#define GETOPTARGS "ci:bodh"
+#define GETOPTARGS "ci:jbnodh"
 
 namespace
 {
@@ -83,7 +83,9 @@ void usage(const char *name, const char *badparam)
     << "  " << name
     << " [-i <directory>]"
     << " [-c]"
+    << " [-j]"
     << " [-b]"
+    << " [-n]"
     << " [-o]"
     << " [-d]"
     << " [--help,-h]"
@@ -95,11 +97,17 @@ void usage(const char *name, const char *badparam)
     << "  -c" << std::endl
     << "    Flag to display data in step by step mode triggered by a user click." << std::endl
     << std::endl
+    << "  -j" << std::endl
+    << "    Image data are saved in JPEG format, otherwise in PNG." << std::endl
+    << std::endl
+    << "  -n" << std::endl
+    << "    Binary data (depth or pointcloud) are saved in NPZ format." << std::endl
+    << std::endl
     << "  -b" << std::endl
-    << "    Point cloud stream is saved in binary format." << std::endl
+    << "    Point cloud stream is saved in binary format, otherwise in .pcd." << std::endl
     << std::endl
     << "  -o" << std::endl
-    << "    Save color images in png format in a new folder." << std::endl
+    << "    Save color images in PNG format (lossless) in a new folder." << std::endl
     << std::endl
     << "  -d" << std::endl
     << "    Display depth in color." << std::endl
@@ -114,7 +122,7 @@ void usage(const char *name, const char *badparam)
 }
 
 bool getOptions(int argc, const char *argv[], std::string &input_directory, bool &click, bool &pointcloud_binary_format,
-                bool &save_video, bool &color_depth)
+                bool &read_jpeg, bool &read_npz, bool &save_video, bool &color_depth)
 {
   const char *optarg;
   const char **argv1 = (const char **)argv;
@@ -127,6 +135,12 @@ bool getOptions(int argc, const char *argv[], std::string &input_directory, bool
       break;
     case 'c':
       click = true;
+      break;
+    case 'j':
+      read_jpeg = true;
+      break;
+    case 'n':
+      read_npz = true;
       break;
     case 'b':
       pointcloud_binary_format = true;
@@ -162,25 +176,27 @@ bool getOptions(int argc, const char *argv[], std::string &input_directory, bool
 }
 
 bool readData(int cpt, const std::string &input_directory, vpImage<vpRGBa> &I_color, vpImage<uint16_t> &I_depth_raw,
-              bool pointcloud_binary_format
+              bool pointcloud_binary_format, bool read_jpeg, bool read_npz
 #if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
               , pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud
 #endif
 )
 {
+  std::string image_filename_ext = read_jpeg ? ".jpg" : ".png";
+  std::string binary_filename_ext = read_npz ? ".npz" : ".bin";
   char buffer[FILENAME_MAX];
   std::stringstream ss;
-  ss << input_directory << "/color_image_%04d.jpg";
+  ss << input_directory << "/color_image_%04d" << image_filename_ext;
   snprintf(buffer, FILENAME_MAX, ss.str().c_str(), cpt);
   std::string filename_color = buffer;
 
   ss.str("");
-  ss << input_directory << "/depth_image_%04d.bin";
+  ss << input_directory << "/depth_image_%04d" << binary_filename_ext;
   snprintf(buffer, FILENAME_MAX, ss.str().c_str(), cpt);
   std::string filename_depth = buffer;
 
   ss.str("");
-  ss << input_directory << "/point_cloud_%04d" << (pointcloud_binary_format ? ".bin" : ".pcd");
+  ss << input_directory << "/point_cloud_%04d" << (read_npz ? ".npz" : (pointcloud_binary_format ? ".bin" : ".pcd"));
   snprintf(buffer, FILENAME_MAX, ss.str().c_str(), cpt);
   std::string filename_pointcloud = buffer;
 
@@ -196,32 +212,82 @@ bool readData(int cpt, const std::string &input_directory, vpImage<vpRGBa> &I_co
   }
 
   // Read raw depth
-  std::ifstream file_depth(filename_depth.c_str(), std::ios::in | std::ios::binary);
-  if (file_depth.is_open()) {
-    unsigned int height = 0, width = 0;
-    vpIoTools::readBinaryValueLE(file_depth, height);
-    vpIoTools::readBinaryValueLE(file_depth, width);
-    I_depth_raw.resize(height, width);
+  if (read_npz) {
+    visp::cnpy::npz_t npz_data = visp::cnpy::npz_load(filename_depth);
 
-    uint16_t depth_value = 0;
-    for (unsigned int i = 0; i < height; i++) {
-      for (unsigned int j = 0; j < width; j++) {
-        vpIoTools::readBinaryValueLE(file_depth, depth_value);
-        I_depth_raw[i][j] = depth_value;
+    // Load depth data
+    visp::cnpy::NpyArray arr_depth_data = npz_data["data"];
+    if (arr_depth_data.data_holder == nullptr) {
+      throw vpIoException(vpIoException::ioError, "Loaded NPZ data is null.");
+    }
+
+    uint16_t *depth_data_ptr = arr_depth_data.data<uint16_t>();
+    assert(arr_depth_data.shape.size() == 3); // H x W x C
+    assert(arr_depth_data.shape[2] == 1); // Single channel
+
+    unsigned int height = arr_depth_data.shape[0], width = arr_depth_data.shape[1];
+    const bool copyData = true;
+    I_depth_raw = vpImage<uint16_t>(depth_data_ptr, height, width, copyData);
+  }
+  else {
+    std::ifstream file_depth(filename_depth.c_str(), std::ios::in | std::ios::binary);
+    if (file_depth.is_open()) {
+      unsigned int height = 0, width = 0;
+      vpIoTools::readBinaryValueLE(file_depth, height);
+      vpIoTools::readBinaryValueLE(file_depth, width);
+      I_depth_raw.resize(height, width);
+
+      uint16_t depth_value = 0;
+      for (unsigned int i = 0; i < height; i++) {
+        for (unsigned int j = 0; j < width; j++) {
+          vpIoTools::readBinaryValueLE(file_depth, depth_value);
+          I_depth_raw[i][j] = depth_value;
+        }
       }
     }
   }
 
   // Read pointcloud
 #if defined(VISP_HAVE_PCL)
-  if (pointcloud_binary_format) {
+  if (read_npz) {
+    // TODO: not tested
+    visp::cnpy::npz_t npz_data = visp::cnpy::npz_load(filename_pointcloud);
+
+    // Load pointcloud data
+    visp::cnpy::NpyArray arr_pcl_data = npz_data["data"];
+    if (arr_pcl_data.data_holder == nullptr) {
+      throw vpIoException(vpIoException::ioError, "Loaded NPZ data is null.");
+    }
+
+    float *pcl_data_ptr = arr_pcl_data.data<float>();
+    assert(arr_pcl_data.shape.size() == 3); // H x W x C
+    assert(arr_pcl_data.shape[2] == 3); // 3-channels: X, Y, Z
+
+    uint32_t height = arr_pcl_data.shape[0], width = arr_pcl_data.shape[1];
+    const char is_dense = 1;
+
+    point_cloud->width = width;
+    point_cloud->height = height;
+    point_cloud->is_dense = (is_dense != 0);
+    point_cloud->resize((size_t)width * height);
+
+    float x = 0.0f, y = 0.0f, z = 0.0f;
+    for (uint32_t i = 0; i < height; i++) {
+      for (uint32_t j = 0; j < width; j++) {
+        point_cloud->points[(size_t)(i * width + j)].x = pcl_data_ptr[(size_t)(i * width + j)*3 + 0];
+        point_cloud->points[(size_t)(i * width + j)].y = pcl_data_ptr[(size_t)(i * width + j)*3 + 1];
+        point_cloud->points[(size_t)(i * width + j)].z = pcl_data_ptr[(size_t)(i * width + j)*3 + 2];
+      }
+    }
+  }
+  else if (pointcloud_binary_format) {
     std::ifstream file_pointcloud(filename_pointcloud.c_str(), std::ios::in | std::ios::binary);
     if (!file_pointcloud.is_open()) {
       std::cerr << "Cannot read pointcloud file: " << filename_pointcloud << std::endl;
     }
 
     uint32_t height = 0, width = 0;
-    char is_dense = 1;
+    const char is_dense = 1;
     vpIoTools::readBinaryValueLE(file_pointcloud, height);
     vpIoTools::readBinaryValueLE(file_pointcloud, width);
     file_pointcloud.read((char *)(&is_dense), sizeof(is_dense));
@@ -266,9 +332,12 @@ int main(int argc, const char *argv[])
   bool pointcloud_binary_format = false;
   bool save_video = false;
   bool color_depth = false;
+  bool read_jpeg = false;
+  bool read_npz = false;
 
   // Read the command line options
-  if (!getOptions(argc, argv, input_directory, click, pointcloud_binary_format, save_video, color_depth)) {
+  if (!getOptions(argc, argv, input_directory, click, pointcloud_binary_format, read_jpeg, read_npz,
+                  save_video, color_depth)) {
     return EXIT_FAILURE;
   }
 
@@ -307,10 +376,10 @@ int main(int argc, const char *argv[])
 #if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
     {
       std::lock_guard<std::mutex> lock(mutex);
-      quit = !readData(cpt_frame, input_directory, I_color, I_depth_raw, pointcloud_binary_format, pointcloud);
+      quit = !readData(cpt_frame, input_directory, I_color, I_depth_raw, pointcloud_binary_format, read_jpeg, read_npz, pointcloud);
     }
 #else
-    quit = !readData(cpt_frame, input_directory, I_color, I_depth_raw, pointcloud_binary_format);
+    quit = !readData(cpt_frame, input_directory, I_color, I_depth_raw, pointcloud_binary_format, read_jpeg, read_npz);
 #endif
 
     if (color_depth)

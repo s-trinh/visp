@@ -64,7 +64,7 @@
 // If set, use a single thread to save the acquisition data
 #define TEST_SINGLE_THREAD 1
 
-#define GETOPTARGS "so:acdpiCf:h"
+#define GETOPTARGS "so:acdpijCf:h"
 
 namespace
 {
@@ -78,6 +78,7 @@ void usage(const char *name, const char *badparam, int fps)
     << " [-d]"
     << " [-p]"
     << " [-i]"
+    << " [-j]"
     << " [-C]"
     << " [-f <fps>]"
     << " [-o <directory>]"
@@ -102,6 +103,9 @@ void usage(const char *name, const char *badparam, int fps)
     << "  -i" << std::endl
     << "    Add infrared stream to saved data when -s option is enabled." << std::endl
     << std::endl
+    << "  -j" << std::endl
+    << "    Save image data using JPEG format (otherwise PNG is used)." << std::endl
+    << std::endl
     << "  -C" << std::endl
     << "    Trigger one shot data saver after each user click." << std::endl
     << std::endl
@@ -123,7 +127,7 @@ void usage(const char *name, const char *badparam, int fps)
 
 bool getOptions(int argc, const char *argv[], bool &save, std::string &output_directory, bool &use_aligned_stream,
                 bool &save_color, bool &save_depth, bool &save_pointcloud, bool &save_infrared, bool &click_to_save,
-                int &stream_fps)
+                int &stream_fps, bool &save_jpeg)
 {
   const char *optarg;
   const char **argv1 = (const char **)argv;
@@ -151,6 +155,9 @@ bool getOptions(int argc, const char *argv[], bool &save, std::string &output_di
       break;
     case 'i':
       save_infrared = true;
+      break;
+    case 'j':
+      save_jpeg = true;
       break;
     case 'C':
       click_to_save = true;
@@ -223,6 +230,8 @@ public:
     while (runOnce());
   }
 
+  // TODO: currently data are saved using the default platform endianness (most likely little-endian)
+  // this will not work using different platform endianness
   bool runOnce() override
   {
     try {
@@ -235,6 +244,10 @@ public:
 
         // Write Npz headers
         std::vector<char> vec_filename(str_filename.begin(), str_filename.end());
+        // Null-terminated character is handled at reading
+        // For null-terminated character handling, see:
+        // https://stackoverflow.com/a/8247804
+        // https://stackoverflow.com/a/45491652
         visp::cnpy::npz_save(filename, "filename", &vec_filename[0], { vec_filename.size() }, "w");
 
         std::string current_time = vpTime::getDateTime("%Y-%m-%d_%H.%M.%S");
@@ -296,10 +309,11 @@ int main(int argc, const char *argv[])
   bool save_infrared = false;
   bool click_to_save = false;
   int stream_fps = 30;
+  bool save_jpeg = false;
 
   // Read the command line options
   if (!getOptions(argc, argv, save, output_directory_custom, use_aligned_stream, save_color, save_depth,
-                  save_pointcloud, save_infrared, click_to_save, stream_fps)) {
+                  save_pointcloud, save_infrared, click_to_save, stream_fps, save_jpeg)) {
     return EXIT_FAILURE;
   }
 
@@ -313,6 +327,7 @@ int main(int argc, const char *argv[])
   std::cout << "save_depth: " << save_depth << std::endl;
   std::cout << "save_pointcloud: " << save_pointcloud << std::endl;
   std::cout << "save_infrared: " << save_infrared << std::endl;
+  std::cout << "save_jpeg: " << save_jpeg << std::endl;
   std::cout << "stream_fps: " << stream_fps << std::endl;
   std::cout << "click_to_save: " << click_to_save << std::endl;
 
@@ -397,19 +412,21 @@ int main(int argc, const char *argv[])
   std::vector<vpWriterExecutor> storage_threads;
 #endif
 
+  std::string image_filename_ext = save_jpeg ? ".jpg" : ".png";
+
   if (save) {
     std::ostringstream oss;
     oss << output_directory;
     std::cout << "Create directory: " << oss.str() << std::endl;
     vpIoTools::makeDirectory(oss.str());
-    oss << "/color_image_%04d.jpg";
+    oss << "/color_image_%04d" << image_filename_ext;
     std::string rgb_output = oss.str();
 
     storages.emplace_back(std::make_shared<vpVideoStorageWorker<vpRGBa>>(rgb_queue, rgb_output));
 
     oss.str("");
     oss.clear();
-    oss << output_directory << "/infrared_image_%04d.jpg";
+    oss << output_directory << "/infrared_image_%04d" << image_filename_ext;
     std::string ir_output = oss.str();
     storages.emplace_back(std::make_shared<vpVideoStorageWorker<unsigned char>>(infrared_queue, ir_output));
 

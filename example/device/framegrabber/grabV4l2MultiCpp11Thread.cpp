@@ -133,119 +133,8 @@ bool getOptions(int argc, char **argv, unsigned int &deviceCount, bool &saveVide
   return true;
 }
 
-/*
-// Code adapted from the original author Dan Mašek to be compatible with ViSP
-// image
-class vpFrameQueue
-{
-
-public:
-  struct vpCancelled_t
-  { };
-
-  vpFrameQueue()
-    : m_cancelled(false), m_cond(), m_queueColor(), m_maxQueueSize(std::numeric_limits<size_t>::max()), m_mutex()
-  { }
-
-  void cancel()
-  {
-    std::lock_guard<std::mutex> lock(m_mutex);
-    m_cancelled = true;
-    m_cond.notify_all();
-  }
-
-  // Push the image to save in the queue (FIFO)
-  void push(const vpImage<vpRGBa> &image)
-  {
-    std::lock_guard<std::mutex> lock(m_mutex);
-
-    m_queueColor.push(image);
-
-    // Pop extra images in the queue
-    while (m_queueColor.size() > m_maxQueueSize) {
-      m_queueColor.pop();
-    }
-
-    m_cond.notify_one();
-  }
-
-  // Pop the image to save from the queue (FIFO)
-  vpImage<vpRGBa> pop()
-  {
-    std::unique_lock<std::mutex> lock(m_mutex);
-
-    while (m_queueColor.empty()) {
-      if (m_cancelled) {
-        throw vpCancelled_t();
-      }
-
-      m_cond.wait(lock);
-
-      if (m_cancelled) {
-        throw vpCancelled_t();
-      }
-    }
-
-    vpImage<vpRGBa> image(m_queueColor.front());
-    m_queueColor.pop();
-
-    return image;
-  }
-
-  void setMaxQueueSize(const size_t max_queue_size) { m_maxQueueSize = max_queue_size; }
-
-private:
-  bool m_cancelled;
-  std::condition_variable m_cond;
-  std::queue<vpImage<vpRGBa> > m_queueColor;
-  size_t m_maxQueueSize;
-  std::mutex m_mutex;
-};
-*/
-
-/*
-class vpStorageWorker
-{
-
-public:
-  vpStorageWorker(vpConcurrentQueue<vpImage<vpRGBa>> &queue, const std::string &filename, unsigned int width, unsigned int height)
-    : m_queue(queue), m_filename(filename), m_width(width), m_height(height)
-  { }
-
-  // Thread main loop
-  void run()
-  {
-    vpImage<vpRGBa> O_color(m_height, m_width);
-
-    vpVideoWriter writer;
-    if (!m_filename.empty()) {
-      writer.setFileName(m_filename);
-      writer.open(O_color);
-    }
-
-    try {
-      for (;;) {
-        vpImage<vpRGBa> image(m_queue.pop());
-
-        if (!m_filename.empty()) {
-          writer.saveFrame(image);
-        }
-      }
-    }
-    catch (vpConcurrentQueue<vpImage<vpRGBa>>::vpCancelled_t &) {
-    }
-  }
-
-private:
-  vpConcurrentQueue<vpImage<vpRGBa>> &m_queue;
-  std::string m_filename;
-  unsigned int m_width;
-  unsigned int m_height;
-};*/
-
 class vpShareImage
 {
-
 private:
   bool m_cancelled;
   std::condition_variable m_cond;
@@ -470,8 +359,6 @@ int main(int argc, char *argv[])
 
   // Synchronized queues for each camera stream
   std::vector<vpConcurrentQueue<vpImage<vpRGBa>>> save_queues(grabbers.size());
-  // std::vector<vpVideoStorageWorker<vpRGBa>> storages;
-  // std::vector<std::thread> storage_threads;
   std::vector<std::shared_ptr<vpWriterWorker>> storages;
   std::vector<vpWriterExecutor> storage_threads;
 
@@ -505,10 +392,6 @@ int main(int argc, char *argv[])
   }
 
   if (saveVideo) {
-    // for (auto &s : storages) {
-    //   // Start the storage thread for the current camera stream
-    //   storage_threads.emplace_back(&vpVideoStorageWorker<vpRGBa>::run, &s);
-    // }
     storage_threads.emplace_back(storages);
   }
 
