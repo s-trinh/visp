@@ -307,7 +307,9 @@ void vpImageConvert::convert(const cv::Mat &src, vpImage<float> &dest, bool flip
       }
   }
   else {
-    throw vpException(vpException::badValue, "cv::Mat type is not supported!");
+    std::ostringstream oss;
+    oss << "cv::Mat type: " << src.type() << " is not supported!";
+    throw vpException(vpException::badValue, oss.str());
   }
 }
 

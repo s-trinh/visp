@@ -53,8 +53,9 @@ void computeCanny(const vpImage<unsigned char> &I, vpCannyEdgeDetection &cannyDe
   vpImage<unsigned char> &dIxy_uchar, vpImage<unsigned char> &I_canny_visp)
 {
   vpImage<float> dIx, dIy, dIxy(I.getHeight(), I.getWidth());
+  int nb_iters = 1;
   vpImageFilter::computePartialDerivatives(I, dIx, dIy, true, true, true, gaussianKernelSize, gaussianStdev,
-      apertureSize, filteringType);
+      apertureSize, filteringType, vpImageFilter::CANNY_VISP_BACKEND, nullptr, nb_iters); // CANNY_OPENCV_BACKEND
 
   for (unsigned int i = 0; i < dIx.getHeight(); i++) {
     for (unsigned int j = 0; j < dIx.getWidth(); j++) {
@@ -71,19 +72,110 @@ void computeCanny(const vpImage<unsigned char> &I, vpCannyEdgeDetection &cannyDe
 
   I_canny_visp = cannyDetector.detect(I);
 }
+
+void process(const vpImage<unsigned char> &I, vpImage<unsigned char> &I_gamma, float gamma, vpCannyEdgeDetection &cannyDetector,
+  int gaussianKernelSize, float gaussianStdev, int apertureSize, vpImageFilter::vpCannyFilteringAndGradientType filteringType,
+  vpImage<unsigned char> &I_canny_visp)
+{
+  visp::gammaCorrection(I, I_gamma, gamma);
+  vpImage<unsigned char> dIxy_uchar;
+  computeCanny(I_gamma, cannyDetector, gaussianKernelSize, gaussianStdev, apertureSize, filteringType, dIxy_uchar, I_canny_visp);
+}
+
+double getGammaCorrectionBST(const vpImage<unsigned char> &I_ori, vpCannyEdgeDetection &cannyDetector, int gaussianKernelSize,
+  float gaussianStdev, int apertureSize, vpImageFilter::vpCannyFilteringAndGradientType filteringType, int max_iters, bool auto_decimate)
+{
+  vpImage<unsigned char> I;
+  // if (downsample > 1) {
+  //   vpImageTools::resize(I_ori, I, I_ori.getWidth() / downsample, I_ori.getHeight() / downsample, vpImageTools::INTERPOLATION_AREA);
+  // }
+  // else {
+  //   I = I_ori;
+  // }
+  if (auto_decimate) {
+    const int max_decimate = 6;
+    int decimate_value = 1;
+    for (int decimate = 1; decimate < max_decimate; decimate++) {
+      decimate_value = decimate;
+      unsigned int decimate_w = I_ori.getWidth() / decimate_value;
+      unsigned int decimate_h = I_ori.getHeight() / decimate_value;
+
+      if (decimate_w <= 800 && decimate_h <= 800) {
+        break;
+      }
+    }
+
+    std::cout << "decimate_value=" << decimate_value << std::endl;
+    if (decimate_value > 1) {
+      vpImageTools::resize(I_ori, I, I_ori.getWidth()/decimate_value, I_ori.getHeight()/decimate_value, vpImageTools::INTERPOLATION_AREA);
+    }
+    else {
+      I = I_ori;
+    }
+  }
+  else {
+    I = I_ori;
+  }
+  vpImage<unsigned char> I_gamma = I;
+  vpImage<unsigned char> dIx_uchar(I.getHeight(), I.getWidth()), dIy_uchar(I.getHeight(), I.getWidth()),
+    I_canny_visp(I.getHeight(), I.getWidth());
+
+  double gamma_min = 1;
+  double gamma_max = 20;
+
+  cv::Mat cv_img_uchar, cv_img, edges;
+
+  double gamma_current = (gamma_min + gamma_max) / 2;
+  for (int i = 0; i < max_iters; i++) {
+    double gamma_left = (gamma_min + gamma_current) / 2;
+    process(I, I_gamma, gamma_left, cannyDetector, gaussianKernelSize, gaussianStdev, apertureSize, filteringType, I_canny_visp);
+    double mean_left = I_canny_visp.getMeanValue();
+
+    double gamma_right = (gamma_current + gamma_max) / 2;
+    process(I, I_gamma, gamma_right, cannyDetector, gaussianKernelSize, gaussianStdev, apertureSize, filteringType, I_canny_visp);
+    double mean_right = I_canny_visp.getMeanValue();
+
+    if (mean_left > mean_right) {
+      gamma_current = gamma_left;
+      gamma_max = gamma_current + (gamma_current - gamma_left);
+    }
+    else {
+      gamma_current = gamma_right;
+      gamma_min = gamma_current - (gamma_max - gamma_current);
+    }
+
+    if (std::fabs(mean_left - mean_right) < 5e-3) {
+      break;
+    }
+  }
+
+  return gamma_current;
+}
 } // namespace
 
 int main(int argc, const char **argv)
 {
+  // ./tutorial-compare-auto-gamma --input "LoL_Test/Test/DICM/%02d.JPG" --output "LoL_Test_results/DICM" --jpeg --lower-thresh-ratio 0.6 --upper-thresh-ratio 1.5 --gaussian-kernel-size 7 --gaussian-std 0.5
+  // ./tutorial-compare-auto-gamma --input "LoL_Test/Test/VV/P%07d.jpg" --output "LoL_Test_results/VV" --jpeg --half --lower-thresh-ratio 0.6 --upper-thresh-ratio 1.5 --gaussian-kernel-size 3 --gaussian-std 0.5 --downsample 4
+  // ./tutorial-compare-auto-gamma --input "LoL_Test/Test/DICM/%02d.JPG" --output "LoL_Test_results/DICM" --jpeg --auto-decimate
+
   std::string input = "Sample_low_brightness.png";
   std::string output = "Results";
   int gaussianKernelSize = 3;
-  float gaussianStdev = 1.;
+  float gaussianStdev = 0.5f; // 1.0f
   int apertureSize = 3;
-  bool half = false;
+  int half = false;
+  // int downsample = 1;
+  bool auto_decimate = false;
   vpImageFilter::vpCannyFilteringAndGradientType filteringType = vpImageFilter::CANNY_GBLUR_SOBEL_FILTERING;
   VISP_NAMESPACE_NAME::vpGammaColorHandling gamma_colorspace = VISP_NAMESPACE_NAME::GAMMA_HSV;
   bool jpeg = false;
+  int max_iters_BST = 10;
+  // Canny parameters
+  float lowerThresh = -1.;
+  float upperThresh = -1.;
+  float lowerThreshRatio = 0.6f;
+  float upperThreshRatio = 1.5f; // 0.8f;
 
   for (int i = 1; i < argc; i++) {
     if (std::string(argv[i]) == "--input" && i + 1 < argc) {
@@ -92,6 +184,15 @@ int main(int argc, const char **argv)
     }
     else if (std::string(argv[i]) == "--half") {
       half = true;
+    }
+    // else if (std::string(argv[i]) == "--downsample" && i + 1 < argc) {
+    //   ++i;
+    //   downsample = std::atoi(argv[i]);
+    //   downsample = std::max(downsample, 1);
+    //   downsample = std::min(downsample, 4);
+    // }
+    else if (std::string(argv[i]) == "--auto-decimate") {
+      auto_decimate = true;
     }
     else if (std::string(argv[i]) == "--gaussian-kernel-size" && i + 1 < argc) {
       ++i;
@@ -118,6 +219,26 @@ int main(int argc, const char **argv)
     else if (std::string(argv[i]) == "--jpeg") {
       jpeg = true;
     }
+    else if (std::string(argv[i]) == "--max-iters-BST" && i + 1 < argc) {
+      ++i;
+      max_iters_BST = std::atoi(argv[i]);
+    }
+    else if (std::string(argv[i]) == "--lower-thresh" && i + 1 < argc) {
+      ++i;
+      lowerThresh = std::atof(argv[i]);
+    }
+    else if (std::string(argv[i]) == "--upper-thresh" && i + 1 < argc) {
+      ++i;
+      upperThresh = std::atof(argv[i]);
+    }
+    else if (std::string(argv[i]) == "--lower-thresh-ratio" && i + 1 < argc) {
+      ++i;
+      lowerThreshRatio = std::atof(argv[i]);
+    }
+    else if (std::string(argv[i]) == "--upper-thresh-ratio" && i + 1 < argc) {
+      ++i;
+      upperThreshRatio = std::atof(argv[i]);
+    }
     else if (std::string(argv[i]) == "--output" && i + 1 < argc) {
       ++i;
       output = std::string(argv[i]);
@@ -130,8 +251,9 @@ int main(int argc, const char **argv)
         " [--gaussian-std <e.g. 1>]"
         " [--aperture-size <e.g. 3>]"
         " [--canny-filtering-type <0=CANNY_GBLUR_SOBEL_FILTERING, 1=CANNY_GBLUR_SCHARR_FILTERING>]"
-        " [--gamma-rgb (RGB colorspace, else HSV]"
-        " [--jpeg (save in jpeg, otherwise png]"
+        " [--gamma-rgb (RGB colorspace, else HSV)]"
+        " [--jpeg (save in jpeg, otherwise png)]"
+        " [--max-iters-BST"
         " [--output <folder path> (to save results)]"
         << std::endl;
       return EXIT_SUCCESS;
@@ -140,19 +262,21 @@ int main(int argc, const char **argv)
 
   std::cout << "Input: " << input << std::endl;
   std::cout << "Process on half image resolution? " << half << std::endl;
+  // std::cout << "Downsample: " << downsample << std::endl;
+  std::cout << "Automatic decimation: " << auto_decimate << std::endl;
   std::cout << "Gaussian kernel size: " << gaussianKernelSize << std::endl;
   std::cout << "Gaussian standard deviation: " << gaussianStdev << std::endl;
   std::cout << "Aperture size: " << apertureSize << std::endl;
   std::cout << "Canny filtering type: " << filteringType << std::endl;
   std::cout << "RGB colorspace? " << (gamma_colorspace == VISP_NAMESPACE_NAME::GAMMA_RGB) << std::endl;
   std::cout << "Save in jpeg? " << jpeg << std::endl;
+  std::cout << "Max iters BST: " << max_iters_BST << std::endl;
+  std::cout << "Canny lower threshold: " << lowerThresh << std::endl;
+  std::cout << "Canny upper threshold: " << upperThresh << std::endl;
+  std::cout << "Canny lower threshold ratio: " << lowerThreshRatio << std::endl;
+  std::cout << "Canny upper threshold ratio: " << upperThreshRatio << std::endl;
   std::cout << "Output result folder: " << output << std::endl;
 
-  // Canny parameters
-  float lowerThresh = -1.;
-  float upperThresh = -1.;
-  float lowerThreshRatio = 0.6f;
-  float upperThreshRatio = 0.8f;
   vpCannyEdgeDetection cannyDetector(gaussianKernelSize, gaussianStdev, apertureSize,
                                     lowerThresh, upperThresh, lowerThreshRatio, upperThreshRatio,
                                     filteringType);
@@ -178,7 +302,7 @@ int main(int argc, const char **argv)
   vpIoTools::makeDirectory(output);
 
   vpImage<vpRGBa> I_color_gamma_correction, I_res_stack;
-  vpImage<unsigned char> I_gray_gamma_correction, dIxy_uchar, I_canny_visp;
+  vpImage<unsigned char> I_gray, I_gray_gamma_correction, dIxy_uchar, I_canny_visp;
   vpImage<vpRGBa> dIxy_uchar_color, I_canny_visp_color;
   vpFont font(32);
   bool read_single_image = false;
@@ -194,7 +318,7 @@ int main(int argc, const char **argv)
       I_color = I_color_ori;
     }
 
-    const int nb_methods = VISP_NAMESPACE_NAME::GAMMA_METHOD_COUNT - 1; // all except GAMMA_MANUAL
+    const int nb_methods = 1 + VISP_NAMESPACE_NAME::GAMMA_METHOD_COUNT - 1; // all except GAMMA_MANUAL
     I_res_stack.init(nb_methods*I_color.getHeight(), 4*I_color.getWidth());
     dIxy_uchar.init(I_color.getHeight(), I_color.getWidth());
     I_canny_visp.init(I_color.getHeight(), I_color.getWidth());
@@ -205,6 +329,29 @@ int main(int argc, const char **argv)
     int offset_idx = 0;
     double start_time = 0, end_time = 0;
     char buffer[FILENAME_MAX];
+
+    vpImageConvert::convert(I_color, I_gray);
+
+    start_time = vpTime::measureTimeMs();
+    double gamma_BST = getGammaCorrectionBST(I_gray, cannyDetector, gaussianKernelSize, gaussianStdev, apertureSize, filteringType, max_iters_BST, auto_decimate);
+    end_time = vpTime::measureTimeMs();
+    std::cout << "Computation time (Gamma BST): " << (end_time-start_time) << " ms" << std::endl;
+
+    visp::gammaCorrection(I_color, I_color_gamma_correction, gamma_BST);
+    vpImageConvert::convert(I_color_gamma_correction, I_gray_gamma_correction);
+    computeCanny(I_gray_gamma_correction, cannyDetector, gaussianKernelSize, gaussianStdev, apertureSize,
+      filteringType, dIxy_uchar, I_canny_visp);
+    vpImageConvert::convert(dIxy_uchar, dIxy_uchar_color);
+    vpImageConvert::convert(I_canny_visp, I_canny_visp_color);
+    I_res_stack.insert(I_color, vpImagePoint(offset_idx*I_color.getHeight(), 0));
+    I_res_stack.insert(I_color_gamma_correction, vpImagePoint(offset_idx*I_color.getHeight(), I_color.getWidth()));
+    I_res_stack.insert(I_canny_visp_color, vpImagePoint(offset_idx*I_color.getHeight(), 2*I_color.getWidth()));
+    I_res_stack.insert(dIxy_uchar_color, vpImagePoint(offset_idx*I_color.getHeight(), 3*I_color.getWidth()));
+    snprintf(buffer, FILENAME_MAX, "gamma_BST (%.2f) (%.2f ms)", gamma_BST, (end_time-start_time));
+    font.drawText(I_res_stack, buffer, vpImagePoint(offset_idx*I_color.getHeight() + offset_text_start_y, 0.35*I_res_stack.getWidth()), vpColor::red);
+    snprintf(buffer, FILENAME_MAX, "Canny mean: (%.2f)", I_canny_visp.getMeanValue());
+    font.drawText(I_res_stack, buffer, vpImagePoint(offset_idx*I_color.getHeight() + offset_text_start_y+text_h, 0.35*I_res_stack.getWidth()), vpColor::red);
+    offset_idx++;
 
     for (int gamma_idx = 1; gamma_idx < VISP_NAMESPACE_NAME::GAMMA_METHOD_COUNT; ++gamma_idx, offset_idx++) {
       VISP_NAMESPACE_NAME::vpGammaMethod gamma_method = static_cast<VISP_NAMESPACE_NAME::vpGammaMethod>(gamma_idx);
