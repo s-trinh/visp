@@ -49,8 +49,8 @@ void computeMeanMaxStdev(const vpImage<T> &I, float &mean, float &max, float &st
 }
 
 void computeCanny(const vpImage<unsigned char> &I, vpCannyEdgeDetection &cannyDetector, int gaussianKernelSize,
-  float gaussianStdev, int apertureSize, vpImageFilter::vpCannyFilteringAndGradientType filteringType,
-  vpImage<unsigned char> &dIxy_uchar, vpImage<unsigned char> &I_canny_visp)
+                  float gaussianStdev, int apertureSize, vpImageFilter::vpCannyFilteringAndGradientType filteringType,
+                  vpImage<unsigned char> &dIxy_uchar, vpImage<unsigned char> &I_canny_visp)
 {
   vpImage<float> dIx, dIy, dIxy(I.getHeight(), I.getWidth());
   int nb_iters = 1;
@@ -75,20 +75,6 @@ void computeCanny(const vpImage<unsigned char> &I, vpCannyEdgeDetection &cannyDe
 
 double computeImageEntropy(const vpImage<unsigned char> &I)
 {
-  // cv::Mat img;
-  // vpImageConvert::convert(I, img);
-
-  // int channels[] = {0};
-  // cv::MatND hist;
-  // int histSize[] = {255};
-  // // hue varies from 0 to 179, see cvtColor
-  // float lum_ranges[] = { 0, 255 };
-  // const float* ranges[] = { lum_ranges };
-  // cv::calcHist(&img, 1, channels, cv::Mat(), // do not use mask
-  //           hist, 1, histSize, ranges,
-  //           true, // the histogram is uniform
-  //           false);
-
   // https://github.com/dengyueyun666/Image-Contrast-Enhancement/blob/cd2b1eb5bf6396e2fc3b94cd27f73933d5467147/src/Ying_2017_CAIP.cpp#L186-L207
   std::vector<int> hist(256, 0);
   for (unsigned int i = 0; i < I.getHeight(); i++) {
@@ -357,7 +343,7 @@ int main(int argc, const char **argv)
   std::string input = "Sample_low_brightness.png";
   std::string output = "Results";
   int gaussianKernelSize = 3;
-  float gaussianStdev = 0.5f; // 1.0f
+  float gaussianStdev = 1.0f;
   int apertureSize = 3;
   bool auto_decimate = true;
   unsigned int max_decimate_resolution = 400;
@@ -369,7 +355,7 @@ int main(int argc, const char **argv)
   float lowerThresh = -1.;
   float upperThresh = -1.;
   float lowerThreshRatio = 0.6f;
-  float upperThreshRatio = 1.5f; // 0.8f;
+  float upperThreshRatio = 0.8f;
   bool apply_k = false;
 
   for (int i = 1; i < argc; i++) {
@@ -658,7 +644,7 @@ int main(int argc, const char **argv)
 
     if (!output.empty()) {
       std::stringstream output_filename;
-      const std::string extension = jpeg ? ".jpeg" : ".png";
+      const std::string extension = ".jpeg";
       if (single_image) {
         output_filename << vpIoTools::createFilePath(output, vpIoTools::getNameWE(input)) << extension;
       }

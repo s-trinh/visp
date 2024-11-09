@@ -1,7 +1,7 @@
 #############################################################################
 #
 # ViSP, open source Visual Servoing Platform software.
-# Copyright (C) 2005 - 2023 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2024 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -687,6 +687,17 @@ if(USE_PCL)
   set(PCL_REQUIRED_COMPONENTS "common;filters;io;visualization;segmentation")
   # Create cmake vars corresponding to pcl components used by ViSP like VISP_HAVE_PCL_COMMON...
   vp_detect_required_pcl_components(PCL_REQUIRED_COMPONENTS)
+
+  # USE_NLOHMANN_JSON is set to ON if nlohmann_json is installed and found thanks to nlohmann_jsonConfig.cmake.
+  # VTK that is a PCL 3rd party embbed also a built in version of nlohmann_json.
+  # Here we add a specific case to consider the nlohmann version coming from VTK when the system version is not found
+  if(NOT USE_NLOHMANN_JSON)
+    if(VISP_HAVE_NLOHMANN_JSON_FROM_VTK)
+      message(WARNING "json 3rd party is detected and used as a VTK 3rd party which is itself a PCL 3rd party. Thus we enable nlohmann json usage turning USE_NLOHMANN_JSON=ON.")
+      unset(USE_NLOHMANN_JSON)
+      set(USE_NLOHMANN_JSON ON CACHE BOOL "Include nlohmann json support thanks to VTK" FORCE)
+    endif()
+  endif()
 endif()
 
 # ----------------------------------------------------------------------------
@@ -1090,7 +1101,8 @@ VP_SET(VISP_HAVE_THREADS     TRUE IF (BUILD_MODULE_visp_core AND USE_THREADS))
 VP_SET(VISP_HAVE_XML2        TRUE IF (BUILD_MODULE_visp_core AND USE_XML2))
 VP_SET(VISP_HAVE_PCL         TRUE IF (BUILD_MODULE_visp_core AND USE_PCL))
 VP_SET(VISP_HAVE_TENSORRT    TRUE IF (BUILD_MODULE_visp_core AND USE_TENSORRT))
-VP_SET(VISP_HAVE_NLOHMANN_JSON   TRUE IF (BUILD_MODULE_visp_core AND USE_NLOHMANN_JSON))
+VP_SET(VISP_HAVE_NLOHMANN_JSON          TRUE IF (BUILD_MODULE_visp_core AND USE_NLOHMANN_JSON))
+VP_SET(VISP_HAVE_NLOHMANN_JSON_FROM_VTK TRUE IF (BUILD_MODULE_visp_core AND VISP_HAVE_NLOHMANN_JSON_FROM_VTK))
 
 VP_SET(VISP_HAVE_OGRE        TRUE IF (BUILD_MODULE_visp_ar AND USE_OGRE))
 VP_SET(VISP_HAVE_OIS         TRUE IF (BUILD_MODULE_visp_ar AND USE_OIS))
@@ -1765,7 +1777,7 @@ status("    \\- Use ZLIB:"           USE_ZLIB         THEN "yes (ver ${ZLIB_VERS
 status("    Use OpenCV:"             USE_OPENCV       THEN "yes (ver ${OpenCV_VERSION})" ELSE "no")
 status("    Use stb_image (built-in):" WITH_STBIMAGE  THEN "yes (ver ${STBIMAGE_VERSION})" ELSE "no")
 status("    Use TinyEXR (built-in):" WITH_TINYEXR     THEN "yes (ver ${TINYEXR_VERSION})" ELSE "no")
-status("    Use simdlib (built-in):" WITH_SIMDLIB     THEN "yes" ELSE "no")
+status("    Use simdlib (built-in):" WITH_SIMDLIB       THEN "yes (ver ${SIMD_VERSION})" ELSE "no")
 status("    Use npz I/O (built-in):" WITH_MINIZ       THEN "yes" ELSE "no")
 status("")
 status("  Real robots: ")
@@ -1844,13 +1856,17 @@ status("  Misc: ")
 status("    Use Clipper (built-in):"  WITH_CLIPPER     THEN "yes (ver ${CLIPPER_VERSION})" ELSE "no")
 status("    Use pugixml (built-in):"  WITH_PUGIXML     THEN "yes (ver ${PUGIXML_VERSION})" ELSE "no")
 status("    Use libxml2:"             USE_XML2         THEN "yes (ver ${XML2_VERSION_STRING})" ELSE "no")
-status("    Use json (nlohmann):"     USE_NLOHMANN_JSON THEN "yes (ver ${nlohmann_json_VERSION})" ELSE "no")
+if(VISP_HAVE_NLOHMANN_JSON_FROM_VTK)
+status("    Use json (nlohmann vtk):"     USE_NLOHMANN_JSON THEN "yes (ver ${VTK_NLOHMANN_JSON_VERSION})" ELSE "no")
+else()
+status("    Use json (nlohmann system):"  USE_NLOHMANN_JSON THEN "yes (ver ${nlohmann_json_VERSION})" ELSE "no")
+endif()
 status("")
 status("  Optimization: ")
-status("    Use OpenMP:"             USE_OPENMP         THEN "yes" ELSE "no")
+status("    Use OpenMP:"             USE_OPENMP         THEN "yes (ver ${OpenMP_CXX_VERSION})" ELSE "no")
 status("    Use std::thread:"        USE_THREADS        THEN "yes" ELSE "no")
 status("    Use pthread:"            USE_PTHREAD        THEN "yes" ELSE "no")
-status("    Use simdlib (built-in):" WITH_SIMDLIB       THEN "yes" ELSE "no")
+status("    Use simdlib (built-in):" WITH_SIMDLIB       THEN "yes (ver ${SIMD_VERSION})" ELSE "no")
 status("")
 status("  DNN: ")
 status("    Use CUDA Toolkit:"       USE_TENSORRT AND CUDA_FOUND  THEN "yes (ver ${CUDA_VERSION})" ELSE "no")
@@ -1859,7 +1875,7 @@ status("    Use TensorRT:"           USE_TENSORRT       THEN "yes (ver ${TENSORR
 # ========================== documentation ==========================
 status("")
 status("  Documentation: ")
-status("    Use doxygen:"            DOXYGEN_FOUND    THEN "yes" ELSE "no")
+status("    Use doxygen:"            DOXYGEN_FOUND    THEN "yes (ver ${DOXYGEN_VERSION})" ELSE "no")
 status("    \\- Use mathjax:"        USE_MATHJAX      THEN "yes" ELSE "no")
 
 # ========================== samples and tests ==========================
@@ -1880,7 +1896,7 @@ endif()
 status("")
 status("  Library dirs:")
 if(USE_EIGEN3)
-  status("    Eigen3 include dir:" "${Eigen3_DIR}")
+  status("    Eigen3 dir:" "${Eigen3_DIR}")
 endif()
 if(USE_MKL)
   status("    MKL include dir:" "${MKL_INCLUDE_DIRS}")
@@ -1893,6 +1909,16 @@ if(USE_OPENCV)
 endif()
 if(USE_PCL)
   status("    PCL dir:" "${PCL_DIR}")
+endif()
+if(USE_PANDA3D)
+  if(Panda3D_DIR)
+    status("    Panda3D dir:" "${Panda3D_DIR}")
+  else()
+    status("    Panda3D dir:" "$ENV{Panda3D_DIR}")
+  endif()
+endif()
+if(USE_YARP)
+  status("    Yarp dir:" "${YARP_DIR}")
 endif()
 
 # ========================== auxiliary ==========================
