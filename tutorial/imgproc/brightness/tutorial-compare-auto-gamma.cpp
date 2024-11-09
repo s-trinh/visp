@@ -211,14 +211,16 @@ double getGammaCorrectionBST(const vpImage<unsigned char> &I_ori, vpCannyEdgeDet
     process(I, I_gamma, gamma_left, cannyDetector, gaussianKernelSize, gaussianStdev, apertureSize, filteringType, dIxy_uchar, I_canny_visp);
     // TODO:
     // mean_left = I_canny_visp.getMeanValue();
-    mean_left = dIxy_uchar.getMeanValue();
+    // mean_left = dIxy_uchar.getMeanValue();
+    mean_left = computeImageEntropy(dIxy_uchar);
 
     double gamma_right = (gamma_current + gamma_max) / 2;
     double mean_right = 0;
     process(I, I_gamma, gamma_right, cannyDetector, gaussianKernelSize, gaussianStdev, apertureSize, filteringType, dIxy_uchar, I_canny_visp);
     // TODO:
     // mean_right = I_canny_visp.getMeanValue();
-    mean_right = dIxy_uchar.getMeanValue();
+    // mean_right = dIxy_uchar.getMeanValue();
+    mean_right = computeImageEntropy(dIxy_uchar);
 
     if (mean_left > mean_right) {
       gamma_current = gamma_left;
@@ -343,6 +345,10 @@ int main(int argc, const char **argv)
   // ./tutorial-compare-auto-gamma --input "LoL_Test/Test/MEF_rename/img_%04d.png" --output "LoL_Test_results/MEF_rename_entropy"
   // ./tutorial-compare-auto-gamma --input "LoL_Test/Test/NPE_rename/img_%04d.jpg" --output "LoL_Test_results/NPE_rename_entropy"
   // ./tutorial-compare-auto-gamma --input "LoL_Test/Test/VV/P%07d.jpg" --output "LoL_Test_results/VV_entropy"
+
+  // https://scikit-image.org/docs/stable/api/skimage.filters.rank.html#skimage.filters.rank.entropy
+  // Exposure Control Using Bayesian Optimization Based on Entropy Weighted Image Gradient / 10.1109/ICRA.2018.8462881
+  // Gradient entropy metric and p-Laplace diffusion constraint-based algorithm for noisy multispectral image fusion / https://doi.org/10.1016/j.inffus.2015.06.003
 
   std::string input = "Sample_low_brightness.png";
   std::string output = "Results";
@@ -559,10 +565,10 @@ int main(int argc, const char **argv)
       snprintf(buffer, FILENAME_MAX, "Entropy: %.3f", img_ori_entropy);
       font.drawText(I_res_stack, buffer, vpImagePoint(offset_idx*I_color.getHeight() + offset_text_start_y, offset_text1*I_res_stack.getWidth()), vpColor::red);
       // Computation time
-      snprintf(buffer, FILENAME_MAX, "gamma_BST (%.2f) (%.2f ms)", gamma_BST, (end_time-start_time));
+      snprintf(buffer, FILENAME_MAX, "gamma_BST: %.2f (%.2f ms)", gamma_BST, (end_time-start_time));
       font.drawText(I_res_stack, buffer, vpImagePoint(offset_idx*I_color.getHeight() + offset_text_start_y, offset_text2*I_res_stack.getWidth()), vpColor::red);
       // Canny
-      snprintf(buffer, FILENAME_MAX, "Mean Canny / dIxy: (%.2f) / (%.2f)", I_canny_visp.getMeanValue(), dIxy_uchar.getMeanValue());
+      snprintf(buffer, FILENAME_MAX, "Mean Canny / dIxy: %.2f / %.2f", I_canny_visp.getMeanValue(), dIxy_uchar.getMeanValue());
       font.drawText(I_res_stack, buffer, vpImagePoint(offset_idx*I_color.getHeight() + offset_text_start_y+text_h, offset_text2*I_res_stack.getWidth()), vpColor::red);
       // Entropy
       snprintf(buffer, FILENAME_MAX, "Entropy: %.3f", img_corrected_entropy);
@@ -592,10 +598,10 @@ int main(int argc, const char **argv)
       snprintf(buffer, FILENAME_MAX, "Entropy: %.3f", img_ori_entropy);
       font.drawText(I_res_stack, buffer, vpImagePoint(offset_idx*I_color.getHeight() + offset_text_start_y, offset_text1*I_res_stack.getWidth()), vpColor::red);
       // Computation time
-      snprintf(buffer, FILENAME_MAX, "gamma_BST_entropy (%.2f) (%.2f ms)", gamma_BST_entropy, (end_time-start_time));
+      snprintf(buffer, FILENAME_MAX, "gamma_BST_entropy: %.2f (%.2f ms)", gamma_BST_entropy, (end_time-start_time));
       font.drawText(I_res_stack, buffer, vpImagePoint(offset_idx*I_color.getHeight() + offset_text_start_y, offset_text2*I_res_stack.getWidth()), vpColor::red);
       // Canny
-      snprintf(buffer, FILENAME_MAX, "Mean Canny / dIxy: (%.2f) / (%.2f)", I_canny_visp.getMeanValue(), dIxy_uchar.getMeanValue());
+      snprintf(buffer, FILENAME_MAX, "Mean Canny / dIxy: %.2f / %.2f", I_canny_visp.getMeanValue(), dIxy_uchar.getMeanValue());
       font.drawText(I_res_stack, buffer, vpImagePoint(offset_idx*I_color.getHeight() + offset_text_start_y+text_h, offset_text2*I_res_stack.getWidth()), vpColor::red);
       // Entropy
       snprintf(buffer, FILENAME_MAX, "Entropy: %.3f", img_corrected_entropy);
@@ -638,7 +644,7 @@ int main(int argc, const char **argv)
       font.drawText(I_res_stack, buffer, vpImagePoint(offset_idx*I_color.getHeight() + offset_text_start_y,
                                                       offset_text2*I_res_stack.getWidth()), vpColor::red);
       // Canny
-      snprintf(buffer, FILENAME_MAX, "Mean Canny / dIxy: (%.2f) / (%.2f)", I_canny_visp.getMeanValue(), dIxy_uchar.getMeanValue());
+      snprintf(buffer, FILENAME_MAX, "Mean Canny / dIxy: %.2f / %.2f", I_canny_visp.getMeanValue(), dIxy_uchar.getMeanValue());
       font.drawText(I_res_stack, buffer, vpImagePoint(offset_idx*I_color.getHeight() + offset_text_start_y+text_h,
                                                       offset_text2*I_res_stack.getWidth()), vpColor::red);
       // Entropy
