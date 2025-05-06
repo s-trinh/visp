@@ -1,8 +1,9 @@
 /*
 * Simd Library (http://ermig1979.github.io/Simd).
 *
-* Copyright (c) 2011-2022 Yermalayeu Ihar,
-*               2022-2022 Fabien Spindler.
+* Copyright (c) 2011-2025 Yermalayeu Ihar,
+*               2022-2022 Fabien Spindler,
+*               2024-2024 Ties Dirksen.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -119,6 +120,11 @@ namespace Simd
                 return false;
         }
 
+        SIMD_INLINE uint8_t Get8u()
+        {
+            return _pos < _size ? _data[_pos++] : 0;
+        }
+
         SIMD_INLINE bool Read16u(uint16_t& value)
         {
             if (_pos + 2 <= _size)
@@ -158,6 +164,17 @@ namespace Simd
                 return false;
         }
 
+        SIMD_INLINE uint16_t GetBe16u()
+        {
+            uint32_t hi = Get8u();
+            uint32_t lo = Get8u();
+#if defined(SIMD_BIG_ENDIAN)
+            return (uint16_t)(hi | (lo >> 8));
+#else
+            return (uint16_t)((hi << 8) | lo);
+#endif
+        }
+
         SIMD_INLINE bool ReadBe32u(uint32_t& value)
         {
             if (Read32u(value))
@@ -180,7 +197,7 @@ namespace Simd
             if (!SkipGap())
                 return false;
             value = 0;
-            while (!IsGap(_data[_pos]) && _pos < _size)
+            while (_pos < _size && !IsGap(_data[_pos]))
             {
                 if (_data[_pos] >= '0' && _data[_pos] <= '9')
                     value = value * 10 + Unsigned(_data[_pos] - '0');
@@ -193,7 +210,7 @@ namespace Simd
 
         SIMD_INLINE bool Skip(size_t size)
         {
-            if (_pos + size < _size)
+            if (_pos + size <= _size)
             {
                 _pos += size;
                 return true;
@@ -203,21 +220,21 @@ namespace Simd
 
         SIMD_INLINE bool SkipValue(uint8_t value)
         {
-            while (_data[_pos] == value && _pos < _size)
+            while (_pos < _size && _data[_pos] == value)
                 _pos++;
             return _pos < _size;
         }
 
         SIMD_INLINE bool SkipNotGap()
         {
-            while (!IsGap(_data[_pos]) && _pos < _size)
+            while (_pos < _size && !IsGap(_data[_pos]))
                 _pos++;
             return _pos < _size;
-        }
-
+        }        
+        
         SIMD_INLINE bool SkipGap()
         {
-            while (IsGap(_data[_pos]) && _pos < _size)
+            while (_pos < _size && IsGap(_data[_pos]))
                 _pos++;
             return _pos < _size;
         }
@@ -262,7 +279,7 @@ namespace Simd
         SIMD_INLINE void FillBits()
         {
             static const size_t canReadByte = (sizeof(_bitBuffer) - 1) * 8;
-            while (_bitCount <= canReadByte && _pos < _size)
+            while (_pos < _size && _bitCount <= canReadByte)
             {
                 _bitBuffer |= (size_t)_data[_pos++] << _bitCount;
                 _bitCount += 8;
@@ -444,6 +461,15 @@ namespace Simd
             memset(_data + _pos, value, count);
             _pos += count;
             _size = Max(_size, _pos);
+        }
+
+        SIMD_INLINE void WriteBe16u(const uint16_t& value)
+        {
+#if defined(SIMD_BIG_ENDIAN)
+            Write<uint16_t>(value);
+#else
+            Write<uint16_t>((value & 0x00FF) << 8 | (value & 0xFF00) >> 8);
+#endif
         }
 
         SIMD_INLINE void WriteBe32u(const uint32_t & value)

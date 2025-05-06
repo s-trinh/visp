@@ -1374,6 +1374,108 @@ extern "C"
     SIMD_API void SimdStretchGray2x2(const uint8_t * src, size_t srcWidth, size_t srcHeight, size_t srcStride,
         uint8_t * dst, size_t dstWidth, size_t dstHeight, size_t dstStride);
 
+    /*! @ingroup yuv_conversion
+
+        \fn void SimdYuv444pToBgrV2(const uint8_t * y, size_t yStride, const uint8_t * u, size_t uStride, const uint8_t * v, size_t vStride, size_t width, size_t height, uint8_t * bgr, size_t bgrStride, SimdYuvType yuvType);
+
+        \short Converts YUV444P image to 24-bit BGR image.
+
+        The input Y, U, V and output BGR images must have the same width and height.
+
+        \note This function has a C++ wrappers: Simd::Yuv444pToBgr(const View<A>& y, const View<A>& u, const View<A>& v, View<A>& bgr, SimdYuvType yuvType = SimdYuvBt601);
+
+        \param [in] y - a pointer to pixels data of input 8-bit image with Y color plane.
+        \param [in] yStride - a row size of the y image.
+        \param [in] u - a pointer to pixels data of input 8-bit image with U color plane.
+        \param [in] uStride - a row size of the u image.
+        \param [in] v - a pointer to pixels data of input 8-bit image with V color plane.
+        \param [in] vStride - a row size of the v image.
+        \param [in] width - an image width.
+        \param [in] height - an image height.
+        \param [out] bgr - a pointer to pixels data of output 24-bit BGR image.
+        \param [in] bgrStride - a row size of the bgr image.
+        \param [in] yuvType - a type of input YUV image (see descriprion of ::SimdYuvType).
+    */
+    SIMD_API void SimdYuv444pToBgrV2(const uint8_t* y, size_t yStride, const uint8_t* u, size_t uStride, const uint8_t* v, size_t vStride,
+        size_t width, size_t height, uint8_t* bgr, size_t bgrStride, SimdYuvType yuvType);
+
+    /*! @ingroup yuv_conversion
+
+        \fn void SimdYuv444pToBgraV2(const uint8_t * y, size_t yStride, const uint8_t * u, size_t uStride, const uint8_t * v, size_t vStride, size_t width, size_t height, uint8_t * bgra, size_t bgraStride, uint8_t alpha, SimdYuvType yuvType);
+
+        \short Converts YUV444P image to 32-bit BGRA image.
+
+        The input Y, U, V and output BGRA images must have the same width and height.
+
+        \note This function has a C++ wrappers: Simd::Yuv444pToBgra(const View<A>& y, const View<A>& u, const View<A>& v, View<A>& bgra, uint8_t alpha, SimdYuvType yuvType).
+
+        \param [in] y - a pointer to pixels data of input 8-bit image with Y color plane.
+        \param [in] yStride - a row size of the y image.
+        \param [in] u - a pointer to pixels data of input 8-bit image with U color plane.
+        \param [in] uStride - a row size of the u image.
+        \param [in] v - a pointer to pixels data of input 8-bit image with V color plane.
+        \param [in] vStride - a row size of the v image.
+        \param [in] width - an image width.
+        \param [in] height - an image height.
+        \param [out] bgra - a pointer to pixels data of output 32-bit BGRA image.
+        \param [in] bgraStride - a row size of the bgra image.
+        \param [in] alpha - a value of alpha channel.
+        \param [in] yuvType - a type of input YUV image (see descriprion of ::SimdYuvType).
+    */
+    SIMD_API void SimdYuv444pToBgraV2(const uint8_t* y, size_t yStride, const uint8_t* u, size_t uStride, const uint8_t* v, size_t vStride,
+        size_t width, size_t height, uint8_t* bgra, size_t bgraStride, uint8_t alpha, SimdYuvType yuvType);
+
+    /*! @ingroup yuv_conversion
+
+        \fn void SimdYuv444pToRgbV2(const uint8_t * y, size_t yStride, const uint8_t * u, size_t uStride, const uint8_t * v, size_t vStride, size_t width, size_t height, uint8_t * rgb, size_t rgbStride, SimdYuvType yuvType);
+
+        \short Converts YUV444P image to 24-bit RGB image.
+
+        The input Y, U, V and output RGB images must have the same width and height.
+
+        \note This function has a C++ wrappers: Simd::Yuv444pToRgb(const View<A>& y, const View<A>& u, const View<A>& v, View<A>& rgb, SimdYuvType yuvType = SimdYuvBt601);
+
+        \param [in] y - a pointer to pixels data of input 8-bit image with Y color plane.
+        \param [in] yStride - a row size of the y image.
+        \param [in] u - a pointer to pixels data of input 8-bit image with U color plane.
+        \param [in] uStride - a row size of the u image.
+        \param [in] v - a pointer to pixels data of input 8-bit image with V color plane.
+        \param [in] vStride - a row size of the v image.
+        \param [in] width - an image width.
+        \param [in] height - an image height.
+        \param [out] rgb - a pointer to pixels data of output 24-bit RGB image.
+        \param [in] rgbStride - a row size of the rgb image.
+        \param [in] yuvType - a type of input YUV image (see descriprion of ::SimdYuvType).
+    */
+    SIMD_API void SimdYuv444pToRgbV2(const uint8_t* y, size_t yStride, const uint8_t* u, size_t uStride, const uint8_t* v, size_t vStride,
+        size_t width, size_t height, uint8_t* rgb, size_t rgbStride, SimdYuvType yuvType);
+
+    /*! @ingroup yuv_conversion
+
+        \fn void void SimdYuv444pToRgbaV2(const uint8_t* y, size_t yStride, const uint8_t* u, size_t uStride, const uint8_t* v, size_t vStride, size_t width, size_t height, uint8_t* rgba, size_t rgbaStride, uint8_t alpha, SimdYuvType yuvType);
+
+        \short Converts YUV444P image to 32-bit RGBA image.
+
+        The input Y, U, V and output RGBA images must have the same width and height.
+
+        \note This function has a C++ wrappers: Simd::Yuv444pToRgba(const View<A>& y, const View<A>& u, const View<A>& v, View<A>& rgba, uint8_t alpha, SimdYuvType yuvType = SimdYuvBt601);
+
+        \param [in] y - a pointer to pixels data of input 8-bit image with Y color plane.
+        \param [in] yStride - a row size of the y image.
+        \param [in] u - a pointer to pixels data of input 8-bit image with U color plane.
+        \param [in] uStride - a row size of the u image.
+        \param [in] v - a pointer to pixels data of input 8-bit image with V color plane.
+        \param [in] vStride - a row size of the v image.
+        \param [in] width - an image width.
+        \param [in] height - an image height.
+        \param [out] rgba - a pointer to pixels data of output 32-bit RGBA image.
+        \param [in] rgbaStride - a row size of the rgba image.
+        \param [in] alpha - a value of alpha channel.
+        \param [in] yuvType - a type of input YUV image (see descriprion of ::SimdYuvType).
+    */
+    SIMD_API void SimdYuv444pToRgbaV2(const uint8_t* y, size_t yStride, const uint8_t* u, size_t uStride, const uint8_t* v, size_t vStride,
+        size_t width, size_t height, uint8_t* rgba, size_t rgbaStride, uint8_t alpha, SimdYuvType yuvType);
+
     /* ViSP custom SIMD code */
     // vpImageMorphology::erosion()
     SIMD_API void SimdImageErosion(uint8_t * img, const uint8_t * buff, size_t width, size_t height, SimdImageConnexityType connexityType);

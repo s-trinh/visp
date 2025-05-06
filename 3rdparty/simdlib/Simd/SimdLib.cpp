@@ -839,6 +839,94 @@ SIMD_API void SimdStretchGray2x2(const uint8_t *src, size_t srcWidth, size_t src
         Base::StretchGray2x2(src, srcWidth, srcHeight, srcStride, dst, dstWidth, dstHeight, dstStride);
 }
 
+SIMD_API void SimdYuv444pToBgrV2(const uint8_t* y, size_t yStride, const uint8_t* u, size_t uStride, const uint8_t* v, size_t vStride,
+  size_t width, size_t height, uint8_t* bgr, size_t bgrStride, SimdYuvType yuvType)
+{
+  SIMD_EMPTY();
+#ifdef SIMD_AVX2_ENABLE
+  if (Avx2::Enable && width >= Avx2::A)
+      Avx2::Yuv444pToBgrV2(y, yStride, u, uStride, v, vStride, width, height, bgr, bgrStride, yuvType);
+  else
+#endif
+#ifdef SIMD_SSE41_ENABLE
+  if (Sse41::Enable && width >= Sse41::A)
+      Sse41::Yuv444pToBgrV2(y, yStride, u, uStride, v, vStride, width, height, bgr, bgrStride, yuvType);
+  else
+#endif
+#ifdef SIMD_NEON_ENABLE
+  if (Neon::Enable && width >= Neon::A)
+      Neon::Yuv444pToBgrV2(y, yStride, u, uStride, v, vStride, width, height, bgr, bgrStride, yuvType);
+  else
+#endif
+      Base::Yuv444pToBgrV2(y, yStride, u, uStride, v, vStride, width, height, bgr, bgrStride, yuvType);
+}
+
+SIMD_API void SimdYuv444pToBgraV2(const uint8_t* y, size_t yStride, const uint8_t* u, size_t uStride, const uint8_t* v, size_t vStride,
+    size_t width, size_t height, uint8_t* bgra, size_t bgraStride, uint8_t alpha, SimdYuvType yuvType)
+{
+    SIMD_EMPTY();
+#ifdef SIMD_AVX2_ENABLE
+    if (Avx2::Enable && width >= Avx2::A)
+        Avx2::Yuv444pToBgraV2(y, yStride, u, uStride, v, vStride, width, height, bgra, bgraStride, alpha, yuvType);
+    else
+#endif
+#ifdef SIMD_SSE41_ENABLE
+    if (Sse41::Enable && width >= Sse41::A)
+        Sse41::Yuv444pToBgraV2(y, yStride, u, uStride, v, vStride, width, height, bgra, bgraStride, alpha, yuvType);
+    else
+#endif
+#ifdef SIMD_NEON_ENABLE
+    if (Neon::Enable && width >= Neon::A)
+        Neon::Yuv444pToBgraV2(y, yStride, u, uStride, v, vStride, width, height, bgra, bgraStride, alpha, yuvType);
+    else
+#endif
+        Base::Yuv444pToBgraV2(y, yStride, u, uStride, v, vStride, width, height, bgra, bgraStride, alpha, yuvType);
+}
+
+SIMD_API void SimdYuv444pToRgbV2(const uint8_t* y, size_t yStride, const uint8_t* u, size_t uStride, const uint8_t* v, size_t vStride,
+    size_t width, size_t height, uint8_t* rgb, size_t rgbStride, SimdYuvType yuvType)
+{
+    SIMD_EMPTY();
+#ifdef SIMD_AVX2_ENABLE
+    if (Avx2::Enable && width >= Avx2::A)
+        Avx2::Yuv444pToRgbV2(y, yStride, u, uStride, v, vStride, width, height, rgb, rgbStride, yuvType);
+    else
+#endif
+#ifdef SIMD_SSE41_ENABLE
+    if (Sse41::Enable && width >= Sse41::A)
+        Sse41::Yuv444pToRgbV2(y, yStride, u, uStride, v, vStride, width, height, rgb, rgbStride, yuvType);
+    else
+#endif
+#ifdef SIMD_NEON_ENABLE
+    if (Neon::Enable && width >= Neon::A)
+        Neon::Yuv444pToRgbV2(y, yStride, u, uStride, v, vStride, width, height, rgb, rgbStride, yuvType);
+    else
+#endif
+        Base::Yuv444pToRgbV2(y, yStride, u, uStride, v, vStride, width, height, rgb, rgbStride, yuvType);
+}
+
+SIMD_API void SimdYuv444pToRgbaV2(const uint8_t* y, size_t yStride, const uint8_t* u, size_t uStride, const uint8_t* v, size_t vStride,
+    size_t width, size_t height, uint8_t* rgba, size_t rgbaStride, uint8_t alpha, SimdYuvType yuvType)
+{
+    SIMD_EMPTY();
+#ifdef SIMD_AVX2_ENABLE
+    if (Avx2::Enable && width >= Avx2::A)
+        Avx2::Yuv444pToRgbaV2(y, yStride, u, uStride, v, vStride, width, height, rgba, rgbaStride, alpha, yuvType);
+    else
+#endif
+#ifdef SIMD_SSE41_ENABLE
+    if (Sse41::Enable && width >= Sse41::A)
+        Sse41::Yuv444pToRgbaV2(y, yStride, u, uStride, v, vStride, width, height, rgba, rgbaStride, alpha, yuvType);
+    else
+#endif
+//#ifdef SIMD_NEON_ENABLE
+//    if (Neon::Enable && width >= Neon::A)
+//        Neon::Yuv444pToRgbaV2(y, yStride, u, uStride, v, vStride, width, height, rgba, rgbaStride, alpha, yuvType);
+//    else
+//#endif
+        Base::Yuv444pToRgbaV2(y, yStride, u, uStride, v, vStride, width, height, rgba, rgbaStride, alpha, yuvType);
+}
+
 /* ViSP custom SIMD code */
 SIMD_API void SimdImageErosion(uint8_t * img, const uint8_t * buff, size_t width, size_t height, SimdImageConnexityType connexityType)
 {

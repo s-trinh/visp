@@ -147,6 +147,8 @@ namespace Simd
             virtual void SetConverters();
         };
 
+        //-------------------------------------------------------------------------------------------------
+
         class ImagePngLoader : public ImageLoader
         {
         public:
@@ -154,23 +156,23 @@ namespace Simd
 
             virtual bool FromStream();
 
-        protected:
-            typedef void (*ToAny8Ptr)(const uint8_t* src, size_t width, size_t height, size_t srcStride, uint8_t* dst, size_t dstStride);
-            typedef void (*ToBgra8Ptr)(const uint8_t* src, size_t width, size_t height, size_t srcStride, uint8_t* bgra, size_t bgraStride, uint8_t alpha);
-            typedef void (*ToAny16Ptr)(const uint16_t* src, size_t width, size_t height, size_t srcStride, uint8_t* dst, size_t dstStride);
-            typedef void (*ToBgra16Ptr)(const uint16_t* src, size_t width, size_t height, size_t srcStride, uint8_t* bgra, size_t bgraStride, uint8_t alpha);
-            ToAny8Ptr _toAny8;
-            ToBgra8Ptr _toBgra8, _bgrToBgra;
-            ToAny16Ptr _toAny16;
-            ToBgra16Ptr _toBgra16;
+            typedef void (*DecodeLinePtr)(const uint8_t* curr, const uint8_t* prev, int width, int srcN, int dstN, uint8_t* dst);
+            typedef void (*ExpandPalettePtr)(const uint8_t* src, size_t size, int outN, const uint8_t* palette, uint8_t* dst);
+            typedef void (*ConverterPtr)(const uint8_t* src, size_t width, size_t height, size_t srcStride, uint8_t* dst, size_t dstStride);
 
-            virtual void SetConverters();
+        protected:
+
+            DecodeLinePtr _decodeLine[7];
+            ExpandPalettePtr _expandPalette;
+            ConverterPtr _converter;
+            virtual void SetConverter();
+
         private:
             bool _first, _hasTrans, _iPhone;
-            uint32_t _width, _height, _channels;
+            uint32_t _width, _height, _channels, _outN;
             uint16_t _tc16[3];
             uint8_t _depth, _color, _interlace, _paletteChannels, _tc[3];
-            Array8u _palette, _idat;
+            Array8u _palette, _idat, _buffer;
 
             struct Chunk
             {
@@ -189,14 +191,25 @@ namespace Simd
             bool ReadTransparency(const Chunk& chunk);
             bool ReadData(const Chunk& chunk);
             InputMemoryStream MergedDataStream();
+            bool CreateImage(const uint8_t* data, size_t size);
+            bool CreateImageRaw(const uint8_t* data, uint32_t size, uint32_t width, uint32_t height);
+            void ExpandPalette();
+            void ConvertImage();
         };
+
+        //-------------------------------------------------------------------------------------------------
 
         class ImageJpegLoader : public ImageLoader
         {
         public:
             ImageJpegLoader(const ImageLoaderParam& param);
 
+            virtual ~ImageJpegLoader();
+
             virtual bool FromStream();
+
+        protected:
+            struct JpegContext* _context;
         };
 
         //---------------------------------------------------------------------
@@ -251,6 +264,12 @@ namespace Simd
             virtual bool FromStream();
         };
 
+        class ImageJpegLoader : public Base::ImageJpegLoader
+        {
+        public:
+            ImageJpegLoader(const ImageLoaderParam& param);
+        };
+
         //---------------------------------------------------------------------
 
         uint8_t* ImageLoadFromMemory(const uint8_t* data, size_t size, size_t* stride, size_t* width, size_t* height, SimdPixelFormatType* format);
@@ -294,6 +313,14 @@ namespace Simd
 
         protected:
             virtual void SetConverters();
+        };
+
+        class ImageJpegLoader : public Sse41::ImageJpegLoader
+        {
+        public:
+            ImageJpegLoader(const ImageLoaderParam& param);
+
+            virtual bool FromStream();
         };
 
         //---------------------------------------------------------------------

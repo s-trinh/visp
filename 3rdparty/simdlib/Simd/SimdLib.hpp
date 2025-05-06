@@ -1204,6 +1204,100 @@ namespace Simd
         SimdStretchGray2x2(src.data, src.width, src.height, src.stride, dst.data, dst.width, dst.height, dst.stride);
     }
 
+    /*! @ingroup yuv_conversion
+
+        \fn void Yuv444pToBgr(const View<A>& y, const View<A>& u, const View<A>& v, View<A>& bgr, SimdYuvType yuvType = SimdYuvBt601)
+
+        \short Converts YUV444P image to 24-bit BGR image.
+
+        The input Y, U, V and output BGR images must have the same width and height.
+
+        \note This function is a C++ wrapper for function ::SimdYuv444pToBgrV2.
+
+        \param [in] y - an input 8-bit image with Y color plane.
+        \param [in] u - an input 8-bit image with U color plane.
+        \param [in] v - an input 8-bit image with V color plane.
+        \param [out] bgr - an output 24-bit BGR image.
+        \param [in] yuvType - a type of input YUV image (see descriprion of ::SimdYuvType). By default it is equal to ::SimdYuvBt601.
+    */
+    template<template<class> class A> SIMD_INLINE void Yuv444pToBgr(const View<A>& y, const View<A>& u, const View<A>& v, View<A>& bgr, SimdYuvType yuvType = SimdYuvBt601)
+    {
+        assert(Compatible(y, u, v) && EqualSize(y, bgr) && y.format == View<A>::Gray8 && bgr.format == View<A>::Bgr24);
+
+        SimdYuv444pToBgrV2(y.data, y.stride, u.data, u.stride, v.data, v.stride, y.width, y.height, bgr.data, bgr.stride, yuvType);
+    }
+
+    /*! @ingroup yuv_conversion
+
+        \fn void Yuv444pToBgra(const View<A>& y, const View<A>& u, const View<A>& v, View<A>& bgra, uint8_t alpha = 0xFF, SimdYuvType yuvType = SimdYuvBt601)
+
+        \short Converts YUV444P image to 32-bit BGRA image.
+
+        The input Y, U, V and output BGRA images must have the same width and height.
+
+        \note This function is a C++ wrapper for function ::SimdYuv444pToBgraV2.
+
+        \param [in] y - an input 8-bit image with Y color plane.
+        \param [in] u - an input 8-bit image with U color plane.
+        \param [in] v - an input 8-bit image with V color plane.
+        \param [out] bgra - an output 32-bit BGRA image.
+        \param [in] alpha - a value of alpha channel. It is equal to 255 by default.
+        \param [in] yuvType - a type of input YUV image (see descriprion of ::SimdYuvType). By default it is equal to ::SimdYuvBt601.
+    */
+    template<template<class> class A> SIMD_INLINE void Yuv444pToBgra(const View<A>& y, const View<A>& u, const View<A>& v, View<A>& bgra, uint8_t alpha = 0xFF, SimdYuvType yuvType = SimdYuvBt601)
+    {
+        assert(Compatible(y, u, v) && EqualSize(y, bgra) && y.format == View<A>::Gray8 && bgra.format == View<A>::Bgra32);
+
+        SimdYuv444pToBgraV2(y.data, y.stride, u.data, u.stride, v.data, v.stride, y.width, y.height, bgra.data, bgra.stride, alpha, yuvType);
+    }
+
+    /*! @ingroup yuv_conversion
+
+        \fn void Yuv444pToRgb(const View<A>& y, const View<A>& u, const View<A>& v, View<A>& rgb, SimdYuvType yuvType = SimdYuvBt601)
+
+        \short Converts YUV444P image to 24-bit RGB image.
+
+        The input Y, U, V and output RGB images must have the same width and height.
+
+        \note This function is a C++ wrapper for function ::SimdYuv444pToRgbV2.
+
+        \param [in] y - an input 8-bit image with Y color plane.
+        \param [in] u - an input 8-bit image with U color plane.
+        \param [in] v - an input 8-bit image with V color plane.
+        \param [out] rgb - an output 24-bit RGB image.
+        \param [in] yuvType - a type of input YUV image (see descriprion of ::SimdYuvType). By default it is equal to ::SimdYuvBt601.
+    */
+    template<template<class> class A> SIMD_INLINE void Yuv444pToRgb(const View<A>& y, const View<A>& u, const View<A>& v, View<A>& rgb, SimdYuvType yuvType = SimdYuvBt601)
+    {
+        assert(Compatible(y, u, v) && EqualSize(y, rgb) && y.format == View<A>::Gray8 && rgb.format == View<A>::Rgb24);
+
+        SimdYuv444pToRgbV2(y.data, y.stride, u.data, u.stride, v.data, v.stride, y.width, y.height, rgb.data, rgb.stride, yuvType);
+    }
+
+    /*! @ingroup yuv_conversion
+
+        \fn void Yuv444pToRgba(const View<A>& y, const View<A>& u, const View<A>& v, View<A>& rgba, uint8_t alpha = 0xFF, SimdYuvType yuvType = SimdYuvBt601)
+
+        \short Converts YUV444P image to 32-bit RGBA image.
+
+        The input Y, U, V and output RGBA images must have the same width and height.
+
+        \note This function is a C++ wrapper for function ::SimdYuv444pToRgbaV2.
+
+        \param [in] y - an input 8-bit image with Y color plane.
+        \param [in] u - an input 8-bit image with U color plane.
+        \param [in] v - an input 8-bit image with V color plane.
+        \param [out] rgba - an output 32-bit RGBA image.
+        \param [in] alpha - a value of alpha channel. It is equal to 255 by default.
+        \param [in] yuvType - a type of input YUV image (see descriprion of ::SimdYuvType). By default it is equal to ::SimdYuvBt601.
+    */
+    template<template<class> class A> SIMD_INLINE void Yuv444pToRgba(const View<A>& y, const View<A>& u, const View<A>& v, View<A>& rgba, uint8_t alpha = 0xFF, SimdYuvType yuvType = SimdYuvBt601)
+    {
+        assert(Compatible(y, u, v) && EqualSize(y, rgba) && y.format == View<A>::Gray8 && rgba.format == View<A>::Rgba32);
+
+        SimdYuv444pToRgbaV2(y.data, y.stride, u.data, u.stride, v.data, v.stride, y.width, y.height, rgba.data, rgba.stride, alpha, yuvType);
+    }
+
     /*! @ingroup universal_conversion
 
         \fn void Convert(const View<A> & src, View<A> & dst)

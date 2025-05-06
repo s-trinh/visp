@@ -59,8 +59,7 @@ def nanoToMicro(nano):
     return nano / 1000
 
 def nanoToMilli(nano):
-    # return nano / (1000*1000)
-    return nano
+    return nano / (1000*1000)
 
 def nanoToSec(nano):
     return nano / (1000*1000*1000)
@@ -99,30 +98,42 @@ tree_after = ET.parse(file_after)
 root_before = tree_before.getroot()
 root_after = tree_after.getroot()
 
+def iterOnResults(test_case, current_test):
+    for bench_res in test_case.iter('BenchmarkResults'):
+        bench_name = bench_res.attrib['name']
+
+        mean_node = bench_res.find('mean')
+        mean = float(mean_node.attrib['value'])
+        mean_lower = float(mean_node.attrib['lowerBound'])
+        mean_upper = float(mean_node.attrib['upperBound'])
+
+        std_node = bench_res.find('standardDeviation')
+        std = float(std_node.attrib['value'])
+        std_lower = float(std_node.attrib['lowerBound'])
+        std_upper = float(std_node.attrib['upperBound'])
+
+        current_test.results[bench_name] = BenchmarkResult(bench_name, mean, mean_lower, mean_upper, std, std_lower, std_upper)
+
+    return current_test
+
 def loadResults(root):
     results = OrderedDict()
 
     for test_case in root.iter('TestCase'):
         test_name = test_case.attrib['name']
+        if test_case.find('Section') is not None:
+            for section_res in test_case.iter('Section'):
+                section_name = section_res.attrib['name']
+                test_name = test_case.attrib['name'] + ' - ' + section_name
+                current_test = TestCase(test_name)
+                current_test = iterOnResults(section_res, current_test)
 
-        current_test = TestCase(test_name)
+                results[test_name] = current_test
+        else:
+            current_test = TestCase(test_name)
+            current_test = iterOnResults(test_case, current_test)
 
-        for bench_res in test_case.iter('BenchmarkResults'):
-            bench_name = bench_res.attrib['name']
-
-            mean_node = bench_res.find('mean')
-            mean = float(mean_node.attrib['value'])
-            mean_lower = float(mean_node.attrib['lowerBound'])
-            mean_upper = float(mean_node.attrib['upperBound'])
-
-            std_node = bench_res.find('standardDeviation')
-            std = float(std_node.attrib['value'])
-            std_lower = float(std_node.attrib['lowerBound'])
-            std_upper = float(std_node.attrib['upperBound'])
-
-            current_test.results[bench_name] = BenchmarkResult(bench_name, mean, mean_lower, mean_upper, std, std_lower, std_upper)
-
-        results[test_name] = current_test
+            results[test_name] = current_test
 
     return results
 
@@ -130,7 +141,7 @@ results_before = loadResults(root_before)
 results_after = loadResults(root_after)
 
 for r_before_name, r_before in results_before.items():
-    title = '{} - time unit: {}'.format(r_before_name, displayUnit(unit))
+    title = '{} - ({})'.format(r_before_name, displayUnit(unit))
     print('| {} | {} | {} | Speed-up |'.format(title, args.before_label, args.after_label))
     print('| --- | --- | --- | --- |')
     if r_before_name in results_after:

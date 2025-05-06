@@ -98,6 +98,15 @@ namespace Simd
         void StretchGray2x2(const uint8_t *src, size_t srcWidth, size_t srcHeight, size_t srcStride,
             uint8_t *dst, size_t dstWidth, size_t dstHeight, size_t dstStride);
 
+        void Yuv444pToBgrV2(const uint8_t* y, size_t yStride, const uint8_t* u, size_t uStride, const uint8_t* v, size_t vStride,
+            size_t width, size_t height, uint8_t* bgr, size_t bgrStride, SimdYuvType yuvType);
+
+        void Yuv444pToBgraV2(const uint8_t* y, size_t yStride, const uint8_t* u, size_t uStride, const uint8_t* v, size_t vStride,
+            size_t width, size_t height, uint8_t* bgra, size_t bgraStride, uint8_t alpha, SimdYuvType yuvType);
+
+        void Yuv444pToRgbV2(const uint8_t* y, size_t yStride, const uint8_t* u, size_t uStride, const uint8_t* v, size_t vStride,
+            size_t width, size_t height, uint8_t* rgb, size_t rgbStride, SimdYuvType yuvType);
+
         // ViSP custom SIMD code
         void SimdMatMulTwist(const double * mat, size_t rows, const double * twist, double * dst);
 
