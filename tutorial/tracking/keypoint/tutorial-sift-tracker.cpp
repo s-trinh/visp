@@ -48,10 +48,12 @@ int main(int argc, const char *argv[])
     //! [Create reader]
 
     //! [Acquire]
-    vpImage<unsigned char> I, Iacq;
+    vpImage<unsigned char> I, I_prev, Iacq;
     reader.acquire(Iacq);
     Iacq.subsample(opt_subsample, opt_subsample, I);
     //! [Acquire]
+    I_prev = I;
+    vpImage<unsigned char> I_match(I.getRows(), 2*I.getCols());
 
     //! [Convert to OpenCV image]
     cv::Mat cvI;
@@ -59,9 +61,13 @@ int main(int argc, const char *argv[])
     //! [Convert to OpenCV image]
 
     //! [Init display]
-    vpDisplayOpenCV d(I, 0, 0, "Klt tracking");
+    vpDisplayOpenCV d(I, 0, 0, "SIFT tracking");
     vpDisplay::display(I);
     vpDisplay::flush(I);
+
+    vpDisplayOpenCV d_match(I_match, 0, 0, "Matching");
+    vpDisplay::display(I_match);
+    vpDisplay::flush(I_match);
     //! [Init display]
 
     //! [Create tracker]
@@ -77,25 +83,43 @@ int main(int argc, const char *argv[])
 
     //! [While loop]
     while (!reader.end()) {
+      std::cout << "\n" << reader.getFrameIndex() << ")" << std::endl;
+
       double t = vpTime::measureTimeMs();
       reader.acquire(Iacq);
       Iacq.subsample(opt_subsample, opt_subsample, I);
+
+      I_match.insert(I_prev, vpImagePoint(0, 0));
+      I_match.insert(I, vpImagePoint(0, I_prev.getCols()));
+
       vpDisplay::display(I);
+      vpDisplay::display(I_match);
 
       vpImageConvert::convert(I, cvI);
 
       tracker.track(cvI);
       tracker.display(I, vpColor::red);
 
+      std::vector<cv::Point2f> features_prev = tracker.getPrevFeatures();
+      std::vector<cv::Point2f> features_cur = tracker.getFeatures();
+      for (size_t i = 0; i < features_prev.size(); i++) {
+        vpImagePoint ip1(features_prev[i].y, features_prev[i].x);
+        vpImagePoint ip2(features_cur[i].y, I_prev.getCols() + features_cur[i].x);
+        vpDisplay::displayLine(I_match, ip1, ip2, vpColor::green);
+      }
+
       vpDisplay::displayText(I, 10, 10, "Click to quit", vpColor::red);
       if (vpDisplay::getClick(I, false))
         break;
 
       vpDisplay::flush(I);
+      vpDisplay::flush(I_match);
       if (!reader.isVideoFormat()) {
         vpTime::wait(t, 40);
       }
       vpDisplay::getClick(I, click);
+
+      I_prev = I;
     }
     //! [While loop]
 

@@ -269,7 +269,8 @@ protected:
   cv::Mat m_descriptorsCur;
   cv::Ptr<cv::DescriptorMatcher> m_descriptorsMatcher;
   std::vector<std::vector<cv::DMatch> > m_knnMatches;
-  std::vector<cv::DMatch> m_matches;
+  std::vector<cv::DMatch> m_matches01;
+  std::vector<cv::DMatch> m_matches10;
 };
 
 END_VISP_NAMESPACE
