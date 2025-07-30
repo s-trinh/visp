@@ -50,17 +50,36 @@
 #include <visp3/klt/vpSiftOpencv.h>
 
 BEGIN_VISP_NAMESPACE
-vpSiftOpencv::vpSiftOpencv()
+vpSiftOpencv::vpSiftOpencv(bool useAKAZE, const MatchingFilterType &type)
   : m_gray(), m_points_id(),
   m_next_points_id(0),
   m_siftDetector(),
   m_keyPointsRef(), m_keyPointsCur(),
   m_descriptorsRef(), m_descriptorsCur(),
-  m_descriptorsMatcher(), m_knnMatches(), m_matches01(), m_matches10()
+  m_descriptorsMatcher(), m_knnMatches(), m_ratioThreshold(0.8), m_matches01(), m_matches10(),
+  m_filterType(type), m_AKAZE(useAKAZE)
 {
-  m_siftDetector = cv::SiftFeatureDetector::create();
-  const bool cross_check = true;
-  m_descriptorsMatcher = cv::BFMatcher::create(cv::NORM_L2, cross_check);
+  cv::NormTypes normType = cv::NORM_L2;
+  if (m_AKAZE) {
+    normType = cv::NORM_HAMMING;
+    m_siftDetector = cv::AKAZE::create();
+  }
+  else {
+    m_siftDetector = cv::SiftFeatureDetector::create();
+  }
+
+  if (m_filterType == RatioTest) {
+    if (m_AKAZE) {
+      m_descriptorsMatcher = cv::makePtr<cv::FlannBasedMatcher>(cv::makePtr<cv::flann::LshIndexParams>(12, 20, 2));
+    }
+    else {
+      m_descriptorsMatcher = cv::FlannBasedMatcher::create();
+    }
+  }
+  else {
+    const bool cross_check = m_filterType == CrossCheck;
+    m_descriptorsMatcher = cv::BFMatcher::create(normType, cross_check);
+  }
 }
 
 vpSiftOpencv::vpSiftOpencv(const vpSiftOpencv &copy)
@@ -69,7 +88,8 @@ vpSiftOpencv::vpSiftOpencv(const vpSiftOpencv &copy)
   m_siftDetector(),
   m_keyPointsRef(), m_keyPointsCur(),
   m_descriptorsRef(), m_descriptorsCur(),
-  m_descriptorsMatcher(), m_knnMatches(), m_matches01(), m_matches10()
+  m_descriptorsMatcher(), m_knnMatches(), m_ratioThreshold(0.8), m_matches01(), m_matches10(),
+  m_filterType(MatchingFilterType::CrossCheck), m_AKAZE(false)
 {
   *this = copy;
 }
@@ -92,8 +112,11 @@ vpSiftOpencv &vpSiftOpencv::operator=(const vpSiftOpencv &copy)
 
   m_descriptorsMatcher = copy.m_descriptorsMatcher;
   m_knnMatches = copy.m_knnMatches;
+  m_ratioThreshold = copy.m_ratioThreshold;
   m_matches01 = copy.m_matches01;
   m_matches10 = copy.m_matches10;
+  m_filterType = copy.m_filterType;
+  m_AKAZE = copy.m_AKAZE;
 
   return *this;
 }
@@ -156,13 +179,29 @@ void vpSiftOpencv::track(const cv::Mat &I)
   std::cout << "m_keyPointsCur=" << m_keyPointsCur.size() << " ; m_keyPointsRef=" << m_keyPointsRef.size() << std::endl;
   std::cout << "m_descriptorsCur=" << m_descriptorsCur.rows << "x" << m_descriptorsCur.cols << std::endl;
   std::cout << "m_descriptorsRef=" << m_descriptorsRef.rows << "x" << m_descriptorsRef.cols << std::endl;
-  // m_descriptorsMatcher->match(m_descriptorsRef, m_descriptorsCur, m_matches01);
-  m_descriptorsMatcher->match(m_descriptorsCur, m_descriptorsRef, m_matches10);
+  if (m_filterType == RatioTest) {
+    m_knnMatches.clear();
+    m_descriptorsMatcher->clear();
+    m_descriptorsMatcher->add(std::vector<cv::Mat>(1, m_descriptorsRef));
+    m_descriptorsMatcher->knnMatch(m_descriptorsCur, m_knnMatches, 2);
+
+    for (size_t idx = 0; idx < m_knnMatches.size(); idx++) {
+      if (m_knnMatches[idx].size() >= 2) {
+        float ratio = m_knnMatches[idx][0].distance / m_knnMatches[idx][1].distance;
+
+        if (ratio < m_ratioThreshold) {
+          m_matches10.push_back(cv::DMatch(m_knnMatches[idx][0].queryIdx, m_knnMatches[idx][0].trainIdx, m_knnMatches[idx][0].distance));
+        }
+      }
+    }
+  }
+  else {
+    m_descriptorsMatcher->match(m_descriptorsCur, m_descriptorsRef, m_matches10);
+  }
   std::cout << "m_matches01=" << m_matches01.size() << " ; m_matches10=" << m_matches10.size() << std::endl;
 
   m_points[0].clear();
   m_points[1].clear();
-  // m_points_id.clear();
   std::vector<long> points_id;
   if (!m_points_id.empty()) {
     points_id = m_points_id;
@@ -171,37 +210,25 @@ void vpSiftOpencv::track(const cv::Mat &I)
 
   std::vector<uchar> status0(m_keyPointsRef.size(), 0);
   std::vector<uchar> status1(m_keyPointsCur.size(), 0);
-  int nb_correct0 = 0;
   int nb_correct1 = 0;
 
   for (size_t i = 0; i < m_matches10.size(); i++) {
     const cv::DMatch &match = m_matches10[i];
-    // m_points[0].push_back(m_keyPointsRef[match.queryIdx].pt);
-    // m_points[1].push_back(m_keyPointsCur[match.trainIdx].pt);
     m_points[0].push_back(m_keyPointsRef[match.trainIdx].pt);
     m_points[1].push_back(m_keyPointsCur[match.queryIdx].pt);
 
-    // m_points_id.push_back(match.queryIdx);
-    // m_points_id.push_back(match.trainIdx);
     if (!points_id.empty()) {
       m_points_id[match.queryIdx] = points_id[match.trainIdx];
     }
     else {
       m_points_id[match.queryIdx] = match.trainIdx;
     }
-    // m_points_id.push_back(i);
     status0[match.trainIdx] = 1;
     status1[match.queryIdx] = 1;
-    nb_correct0++;
     nb_correct1++;
   }
 
-  // // Remove points that are lost
-  // for (int i = static_cast<int>(status0.size()) - 1; i >= 0; i--) {
-  //   if (status0[static_cast<size_t>(i)] == 0) {
-  //     m_keyPointsRef.erase(m_keyPointsRef.begin() + i);
-  //   }
-  // }
+  // Remove points that are lost
   for (int i = static_cast<int>(status1.size()) - 1; i >= 0; i--) {
     if (status1[static_cast<size_t>(i)] == 0) {
       m_keyPointsCur.erase(m_keyPointsCur.begin() + i);
@@ -210,30 +237,12 @@ void vpSiftOpencv::track(const cv::Mat &I)
   }
   std::cout << "After filter, m_keyPointsCur=" << m_keyPointsCur.size() << std::endl;
 
-  // cv::Mat descriptorsRef(nb_correct0, m_descriptorsRef.cols, m_descriptorsRef.type());
-  // for (int i = 0, idx = 0; i < m_descriptorsRef.rows; i++) {
-  //   if (status0[static_cast<size_t>(i)] == 1) {
-  //     descriptorsRef(cv::Range(idx, idx+1), cv::Range::all()) = m_descriptorsRef(cv::Range(i, i+1), cv::Range::all()).clone();
-  //     idx++;
-  //   }
-  // }
-  // m_descriptorsRef = descriptorsRef.clone();
-
   cv::Mat descriptorsCur(nb_correct1, m_descriptorsCur.cols, m_descriptorsCur.type());
   std::cout << "Before filter, nb_correct1=" << nb_correct1 << " ; descriptorsCur=" << descriptorsCur.rows << "x" << descriptorsCur.cols << std::endl;
   for (int i = 0, idx = 0; i < m_descriptorsCur.rows; i++) {
     if (status1[static_cast<size_t>(i)] == 1) {
-      // descriptorsCur(cv::Range(idx, idx+1), cv::Range::all()) = m_descriptorsCur(cv::Range(i, i+1), cv::Range::all()).clone();
-      // descriptorsCur.rowRange(idx, idx+1).colRange(cv::Range::all()) = m_descriptorsCur(cv::Range(i, i+1), cv::Range::all()).clone();
-      // descriptorsCur.rowRange(idx, idx+1).colRange(cv::Range::all()) = m_descriptorsCur.rowRange(i, i+1).colRange(cv::Range::all()).clone();
-      // cv::Mat tmp_cur = m_descriptorsCur(cv::Range(i, i+1), cv::Range::all()).clone();
       cv::Mat dest = descriptorsCur(cv::Range(idx, idx+1), cv::Range::all());
-      // tmp_cur.copyTo(dest);
       m_descriptorsCur(cv::Range(i, i+1), cv::Range::all()).copyTo(dest);
-
-      // for (int col0 = 0; col0 < 128; col0++) {
-        // descriptorsCur.at<float>(idx, col0) = m_descriptorsCur.at<float>(i, col0);
-      // }
       idx++;
     }
   }

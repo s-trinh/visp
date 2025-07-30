@@ -24,23 +24,48 @@ int main(int argc, const char *argv[])
     std::string opt_videoname = "video-postcard.mp4";
     unsigned int opt_subsample = 1;
     bool click = false;
+    int filterType = 0;
+    float ratioThresh = 0.8;
+    bool useAKAZE = false;
+
     for (int i = 1; i < argc; i++) {
-      if (std::string(argv[i]) == "--videoname") {
+      if (std::string(argv[i]) == "--videoname" && i+1 < argc) {
         opt_videoname = std::string(argv[++i]);
       }
-      else if (std::string(argv[i]) == "--subsample") {
+      else if (std::string(argv[i]) == "--subsample" && i+1 < argc) {
         opt_subsample = static_cast<unsigned int>(std::atoi(argv[++i]));
       }
       else if (std::string(argv[i]) == "--click") {
         click = true;
       }
+      else if (std::string(argv[i]) == "--filter" && i+1 < argc) {
+        filterType = std::atoi(argv[++i]);
+      }
+      else if (std::string(argv[i]) == "--ratioThresh" && i+1 < argc) {
+        ratioThresh = std::atof(argv[++i]);
+      }
+      else if (std::string(argv[i]) == "--AKAZE") {
+        useAKAZE = true;
+      }
       else if (std::string(argv[i]) == "--help" || std::string(argv[i]) == "-h") {
         std::cout << "Usage: " << argv[0]
           << " [--videoname <video name>] [--subsample <scale factor>] [--click]"
+          << " [--filter (0: None, 1: CrossCheck, 2: RatioTest)]"
+          << " [--ratioThresh <0.8>]"
+          << " [--AKAZE]"
           << " [--help] [-h]" << std::endl;
         return EXIT_SUCCESS;
       }
     }
+
+    std::cout << "Input: " << opt_videoname << std::endl;
+    std::cout << "Subsample: " << opt_subsample << std::endl;
+    std::cout << "Click? " << click << std::endl;
+    std::cout << "Filter type: " << filterType << std::endl;
+    if (filterType == static_cast<int>(vpSiftOpencv::RatioTest)) {
+      std::cout << "Ratio test threshold: " << ratioThresh << std::endl;
+    }
+    std::cout << "Use AKAZE? " << useAKAZE << std::endl;
 
     //! [Create reader]
     vpVideoReader reader;
@@ -71,7 +96,10 @@ int main(int argc, const char *argv[])
     //! [Init display]
 
     //! [Create tracker]
-    vpSiftOpencv tracker;
+    vpSiftOpencv tracker(useAKAZE, static_cast<vpSiftOpencv::MatchingFilterType>(filterType));
+    if (filterType == static_cast<int>(vpSiftOpencv::RatioTest)) {
+      tracker.setRatioThreshold(ratioThresh);
+    }
 
     //! [Init tracker]
     tracker.initTracking(cvI);

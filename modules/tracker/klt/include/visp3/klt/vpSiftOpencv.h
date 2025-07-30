@@ -78,10 +78,17 @@ BEGIN_VISP_NAMESPACE
 class VISP_EXPORT vpSiftOpencv
 {
 public:
+  enum MatchingFilterType
+  {
+    None,
+    CrossCheck,
+    RatioTest
+  };
+
   /*!
    * Default constructor.
    */
-  vpSiftOpencv();
+  vpSiftOpencv(bool useAKAZE = false, const MatchingFilterType &type = CrossCheck);
   /*!
    * Copy constructor.
    */
@@ -252,6 +259,16 @@ public:
    */
   void suppressFeature(const int &index);
 
+  float getRatioThreshold() const
+  {
+    return m_ratioThreshold;
+  }
+
+  void setRatioThreshold(float ratio)
+  {
+    m_ratioThreshold = ratio;
+  }
+
 #ifdef VISP_HAVE_NLOHMANN_JSON
   friend void to_json(nlohmann::json &j, const vpSiftOpencv &array);
   friend void from_json(const nlohmann::json &j, vpSiftOpencv &array);
@@ -269,8 +286,11 @@ protected:
   cv::Mat m_descriptorsCur;
   cv::Ptr<cv::DescriptorMatcher> m_descriptorsMatcher;
   std::vector<std::vector<cv::DMatch> > m_knnMatches;
+  float m_ratioThreshold;
   std::vector<cv::DMatch> m_matches01;
   std::vector<cv::DMatch> m_matches10;
+  MatchingFilterType m_filterType;
+  bool m_AKAZE;
 };
 
 END_VISP_NAMESPACE
