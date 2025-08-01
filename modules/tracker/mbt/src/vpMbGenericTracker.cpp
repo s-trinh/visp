@@ -6809,13 +6809,13 @@ void vpMbGenericTracker::TrackerWrapper::loadConfigFile(const std::string &confi
 
   // KLT
 #if defined(VISP_HAVE_MODULE_KLT) && defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO)
-  tracker.setMaxFeatures(static_cast<int>(xmlp.getKltMaxFeatures()));
-  tracker.setWindowSize(static_cast<int>(xmlp.getKltWindowSize()));
-  tracker.setQuality(xmlp.getKltQuality());
-  tracker.setMinDistance(xmlp.getKltMinDistance());
-  tracker.setHarrisFreeParameter(xmlp.getKltHarrisParam());
-  tracker.setBlockSize(static_cast<int>(xmlp.getKltBlockSize()));
-  tracker.setPyramidLevels(static_cast<int>(xmlp.getKltPyramidLevels()));
+  // trackerKlt.setMaxFeatures(static_cast<int>(xmlp.getKltMaxFeatures()));
+  // trackerKlt.setWindowSize(static_cast<int>(xmlp.getKltWindowSize()));
+  // trackerKlt.setQuality(xmlp.getKltQuality());
+  // trackerKlt.setMinDistance(xmlp.getKltMinDistance());
+  // trackerKlt.setHarrisFreeParameter(xmlp.getKltHarrisParam());
+  // trackerKlt.setBlockSize(static_cast<int>(xmlp.getKltBlockSize()));
+  // trackerKlt.setPyramidLevels(static_cast<int>(xmlp.getKltPyramidLevels()));
   maskBorder = xmlp.getKltMaskBorder();
 
   // if(useScanLine)

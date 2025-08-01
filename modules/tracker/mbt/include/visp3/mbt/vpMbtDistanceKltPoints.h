@@ -47,6 +47,7 @@
 #include <visp3/core/vpPlane.h>
 #include <visp3/core/vpPolygon3D.h>
 #include <visp3/klt/vpKltOpencv.h>
+#include <visp3/klt/vpSiftOpencv.h>
 #include <visp3/mbt/vpMbHiddenFaces.h>
 #include <visp3/vision/vpHomography.h>
 
@@ -139,7 +140,8 @@ public:
   vpMbtDistanceKltPoints();
   virtual ~vpMbtDistanceKltPoints();
 
-  unsigned int computeNbDetectedCurrent(const vpKltOpencv &_tracker, const vpImage<bool> *mask = nullptr);
+  // unsigned int computeNbDetectedCurrent(const vpKltOpencv &_tracker, const vpImage<bool> *mask = nullptr);
+  unsigned int computeNbDetectedCurrent(const vpSiftOpencv &_tracker, const vpImage<bool> *mask = nullptr);
   void computeHomography(const vpHomogeneousMatrix &_cTc0, vpHomography &cHc0);
   void computeInteractionMatrixAndResidu(vpColVector &_R, vpMatrix &_J);
 
@@ -191,7 +193,8 @@ public:
 
   inline bool hasEnoughPoints() const { return enoughPoints; }
 
-  void init(const vpKltOpencv &_tracker, const vpImage<bool> *mask = nullptr);
+  // void init(const vpKltOpencv &_tracker, const vpImage<bool> *mask = nullptr);
+  void init(const vpSiftOpencv &_tracker, const vpImage<bool> *mask = nullptr);
 
   /*!
    Return if the klt points are used for tracking.

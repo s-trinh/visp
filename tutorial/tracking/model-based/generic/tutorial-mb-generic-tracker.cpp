@@ -25,6 +25,9 @@ int main(int argc, char **argv)
     std::string opt_videoname = "model/teabox/teabox.mp4";
     std::string opt_modelname = "model/teabox/teabox.cao";
     int opt_tracker = 2; // Hybrid tracker
+    // int filterType = 0;
+    // float ratioThresh = 0.8;
+    // bool useAKAZE = false;
 
     for (int i = 1; i < argc; i++) {
       if (std::string(argv[i]) == "--video" && i + 1 < argc) {
@@ -36,11 +39,23 @@ int main(int argc, char **argv)
       else if (std::string(argv[i]) == "--tracker" && i + 1 < argc) {
         opt_tracker = atoi(argv[++i]);
       }
+      // else if (std::string(argv[i]) == "--filter" && i+1 < argc) {
+      //   filterType = std::atoi(argv[++i]);
+      // }
+      // else if (std::string(argv[i]) == "--ratioThresh" && i+1 < argc) {
+      //   ratioThresh = std::atof(argv[++i]);
+      // }
+      // else if (std::string(argv[i]) == "--AKAZE") {
+      //   useAKAZE = true;
+      // }
       else if (std::string(argv[i]) == "--help" || std::string(argv[i]) == "-h") {
         std::cout << "\nUsage: " << argv[0]
           << " [--video <video name>]"
           << " [--model <model name>]"
           << " [--tracker <0=egde|1=keypoint|2=hybrid>]"
+          // << " [--filter (0: None, 1: CrossCheck, 2: RatioTest)]"
+          // << " [--ratioThresh <0.8>]"
+          // << " [--AKAZE]"
           << " [--help] [-h]\n"
           << std::endl;
         return EXIT_SUCCESS;
@@ -55,6 +70,11 @@ int main(int argc, char **argv)
     std::cout << "Video name: " << opt_videoname << std::endl;
     std::cout << "Tracker requested config files: " << objectname << ".[init, cao]" << std::endl;
     std::cout << "Tracker optional config files: " << objectname << ".[ppm]" << std::endl;
+    // std::cout << "Filter type: " << filterType << std::endl;
+    // if (filterType == static_cast<int>(vpSiftOpencv::RatioTest)) {
+    //   std::cout << "Ratio test threshold: " << ratioThresh << std::endl;
+    // }
+    // std::cout << "Use AKAZE? " << useAKAZE << std::endl;
 
     //! [Image]
     vpImage<unsigned char> I;
@@ -145,6 +165,7 @@ int main(int argc, char **argv)
     //! [Init]
 
     while (!g.end()) {
+      std::cout << "\n" << g.getFrameIndex() << ")" << std::endl;
       g.acquire(I);
       vpDisplay::display(I);
       //! [Track]
@@ -161,8 +182,8 @@ int main(int argc, char **argv)
       vpDisplay::displayText(I, 10, 10, "A click to exit...", vpColor::red);
       vpDisplay::flush(I);
 
-      if (vpDisplay::getClick(I, false)) {
-        break;
+      if (vpDisplay::getClick(I, true)) {
+        // break;
       }
     }
     vpDisplay::getClick(I);

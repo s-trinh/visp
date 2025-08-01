@@ -88,7 +88,7 @@ public:
   /*!
    * Default constructor.
    */
-  vpSiftOpencv(bool useAKAZE = false, const MatchingFilterType &type = CrossCheck);
+  vpSiftOpencv(bool useAKAZE = true, const MatchingFilterType &type = RatioTest);
   /*!
    * Copy constructor.
    */
@@ -291,7 +291,19 @@ protected:
   std::vector<cv::DMatch> m_matches10;
   MatchingFilterType m_filterType;
   bool m_AKAZE;
+  int m_history;
+
+  cv::Mat m_leftMat;
+  cv::Mat m_displayMat;
 };
+
+#ifdef VISP_HAVE_NLOHMANN_JSON
+inline void to_json(nlohmann::json &j, const vpSiftOpencv &klt)
+{ }
+
+inline void from_json(const nlohmann::json &j, vpSiftOpencv &klt)
+{ }
+#endif
 
 END_VISP_NAMESPACE
 #endif

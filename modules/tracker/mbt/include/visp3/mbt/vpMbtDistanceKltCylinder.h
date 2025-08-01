@@ -49,6 +49,7 @@
 #include <visp3/core/vpPlane.h>
 #include <visp3/core/vpPolygon3D.h>
 #include <visp3/klt/vpKltOpencv.h>
+#include <visp3/klt/vpSiftOpencv.h>
 #include <visp3/mbt/vpMbHiddenFaces.h>
 #include <visp3/vision/vpHomography.h>
 
@@ -140,7 +141,8 @@ public:
 
   void buildFrom(const vpPoint &p1, const vpPoint &p2, const double &r);
 
-  unsigned int computeNbDetectedCurrent(const vpKltOpencv &_tracker);
+  // unsigned int computeNbDetectedCurrent(const vpKltOpencv &_tracker);
+  unsigned int computeNbDetectedCurrent(const vpSiftOpencv &_tracker);
   void computeInteractionMatrixAndResidu(const vpHomogeneousMatrix &cMc0, vpColVector &_R, vpMatrix &_J);
 
   void display(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam,
@@ -198,7 +200,8 @@ public:
   */
   inline bool isTracked() const { return isTrackedKltCylinder; }
 
-  void init(const vpKltOpencv &_tracker, const vpHomogeneousMatrix &cMo);
+  // void init(const vpKltOpencv &_tracker, const vpHomogeneousMatrix &cMo);
+  void init(const vpSiftOpencv &_tracker, const vpHomogeneousMatrix &cMo);
 
   void removeOutliers(const vpColVector &weight, const double &threshold_outlier);
 

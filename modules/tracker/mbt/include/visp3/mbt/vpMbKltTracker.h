@@ -49,6 +49,7 @@
 #include <visp3/core/vpSubColVector.h>
 #include <visp3/core/vpSubMatrix.h>
 #include <visp3/klt/vpKltOpencv.h>
+#include <visp3/klt/vpSiftOpencv.h>
 #include <visp3/mbt/vpMbTracker.h>
 #include <visp3/mbt/vpMbtDistanceCircle.h>
 #include <visp3/mbt/vpMbtDistanceKltCylinder.h>
@@ -237,7 +238,8 @@ protected:
   //! the initial position.
   vpHomogeneousMatrix ctTc0;
   //! Points tracker.
-  vpKltOpencv tracker;
+  // vpKltOpencv trackerKlt;
+  vpSiftOpencv trackerKlt;
   //!
   std::list<vpMbtDistanceKltPoints *> kltPolygons;
   //!
@@ -286,7 +288,7 @@ public:
    *
    * \return the list of KLT points through vpKltOpencv.
    */
-  inline std::vector<cv::Point2f> getKltPoints() const { return tracker.getFeatures(); }
+  inline std::vector<cv::Point2f> getKltPoints() const { return trackerKlt.getFeatures(); }
 
   std::vector<vpImagePoint> getKltImagePoints() const;
 
@@ -297,7 +299,11 @@ public:
    *
    * \return klt tracker.
    */
-  inline vpKltOpencv getKltOpencv() const { return tracker; }
+  inline vpKltOpencv getKltOpencv() const
+  {
+    // return trackerKlt;
+    return vpKltOpencv();
+  }
 
   /*!
    * Get the erosion of the mask used on the Model faces.
@@ -311,7 +317,7 @@ public:
    *
    * \return the number of features
    */
-  inline int getKltNbPoints() const { return tracker.getNbFeatures(); }
+  inline int getKltNbPoints() const { return trackerKlt.getNbFeatures(); }
 
   /*!
    * Get the threshold for the acceptation of a point.
@@ -430,7 +436,7 @@ public:
    *
    * \return the number of features
    */
-  /* VP_DEPRECATED */ inline int getNbKltPoints() const { return tracker.getNbFeatures(); }
+  /* VP_DEPRECATED */ inline int getNbKltPoints() const { return trackerKlt.getNbFeatures(); }
 
   /*!
    * Get the threshold for the acceptation of a point.

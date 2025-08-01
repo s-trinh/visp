@@ -72,7 +72,70 @@ vpMbtDistanceKltPoints::~vpMbtDistanceKltPoints() { }
   \param mask : Mask image or nullptr if not wanted. Mask values that are set to true are considered in the tracking. To
   disable a pixel, set false.
 */
-void vpMbtDistanceKltPoints::init(const vpKltOpencv &_tracker, const vpImage<bool> *mask)
+// void vpMbtDistanceKltPoints::init(const vpKltOpencv &_tracker, const vpImage<bool> *mask)
+// {
+//   // extract ids of the points in the face
+//   nbPointsInit = 0;
+//   nbPointsCur = 0;
+//   initPoints = std::map<int, vpImagePoint>();
+//   curPoints = std::map<int, vpImagePoint>();
+//   curPointsInd = std::map<int, int>();
+//   std::vector<vpImagePoint> roi;
+//   polygon->getRoiClipped(cam, roi);
+
+//   for (unsigned int i = 0; i < static_cast<unsigned int>(_tracker.getNbFeatures()); i++) {
+//     long id;
+//     float x_tmp, y_tmp;
+//     _tracker.getFeature(static_cast<int>(i), id, x_tmp, y_tmp);
+
+//     bool add = false;
+
+//     // Add points inside visibility mask only
+//     if (vpMeTracker::inRoiMask(mask, static_cast<unsigned int>(y_tmp), static_cast<unsigned int>(x_tmp))) {
+//       if (useScanLine) {
+//         if (static_cast<unsigned int>(y_tmp) < hiddenface->getMbScanLineRenderer().getPrimitiveIDs().getHeight() &&
+//             static_cast<unsigned int>(x_tmp) < hiddenface->getMbScanLineRenderer().getPrimitiveIDs().getWidth() &&
+//             hiddenface->getMbScanLineRenderer().getPrimitiveIDs()[static_cast<unsigned int>(y_tmp)][static_cast<unsigned int>(x_tmp)] ==
+//                 polygon->getIndex())
+//           add = true;
+//       }
+//       else if (vpPolygon::isInside(roi, y_tmp, x_tmp)) {
+//         add = true;
+//       }
+//     }
+
+//     if (add) {
+// #ifdef TARGET_OS_IPHONE
+//       initPoints[static_cast<int>(id)] = vpImagePoint(y_tmp, x_tmp);
+//       curPoints[static_cast<int>(id)] = vpImagePoint(y_tmp, x_tmp);
+//       curPointsInd[static_cast<int>(id)] = static_cast<int>(i);
+// #else
+//       initPoints[id] = vpImagePoint(y_tmp, x_tmp);
+//       curPoints[id] = vpImagePoint(y_tmp, x_tmp);
+//       curPointsInd[id] = static_cast<int>(i);
+// #endif
+//     }
+//   }
+
+//   nbPointsInit = static_cast<unsigned int>(initPoints.size());
+//   nbPointsCur = static_cast<unsigned int>(curPoints.size());
+
+//   if (nbPointsCur >= minNbPoint)
+//     enoughPoints = true;
+//   else
+//     enoughPoints = false;
+
+//   // initialisation of the value for the computation in SE3
+//   vpPlane plan(polygon->getPoint(0), polygon->getPoint(1), polygon->getPoint(2));
+
+//   d0 = plan.getD();
+//   N = plan.getNormal();
+
+//   N.normalize();
+//   N_cur = N;
+//   invd0 = 1.0 / d0;
+// }
+void vpMbtDistanceKltPoints::init(const vpSiftOpencv &_tracker, const vpImage<bool> *mask)
 {
   // extract ids of the points in the face
   nbPointsInit = 0;
@@ -147,7 +210,37 @@ void vpMbtDistanceKltPoints::init(const vpKltOpencv &_tracker, const vpImage<boo
   \return the number of points that are tracked in this face and in this
   instanciation of the tracker.
 */
-unsigned int vpMbtDistanceKltPoints::computeNbDetectedCurrent(const vpKltOpencv &_tracker, const vpImage<bool> *mask)
+// unsigned int vpMbtDistanceKltPoints::computeNbDetectedCurrent(const vpKltOpencv &_tracker, const vpImage<bool> *mask)
+// {
+//   long id;
+//   float x, y;
+//   nbPointsCur = 0;
+//   curPoints = std::map<int, vpImagePoint>();
+//   curPointsInd = std::map<int, int>();
+
+//   for (unsigned int i = 0; i < static_cast<unsigned int>(_tracker.getNbFeatures()); i++) {
+//     _tracker.getFeature(static_cast<int>(i), id, x, y);
+//     if (isTrackedFeature(static_cast<int>(id)) && vpMeTracker::inRoiMask(mask, static_cast<unsigned int>(y), static_cast<unsigned int>(x))) {
+// #ifdef TARGET_OS_IPHONE
+//       curPoints[static_cast<int>(id)] = vpImagePoint(static_cast<double>(y), static_cast<double>(x));
+//       curPointsInd[static_cast<int>(id)] = static_cast<int>(i);
+// #else
+//       curPoints[id] = vpImagePoint(static_cast<double>(y), static_cast<double>(x));
+//       curPointsInd[id] = static_cast<int>(i);
+// #endif
+//     }
+//   }
+
+//   nbPointsCur = static_cast<unsigned int>(curPoints.size());
+
+//   if (nbPointsCur >= minNbPoint)
+//     enoughPoints = true;
+//   else
+//     enoughPoints = false;
+
+//   return nbPointsCur;
+// }
+unsigned int vpMbtDistanceKltPoints::computeNbDetectedCurrent(const vpSiftOpencv &_tracker, const vpImage<bool> *mask)
 {
   long id;
   float x, y;

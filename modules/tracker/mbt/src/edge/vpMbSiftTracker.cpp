@@ -117,16 +117,6 @@ vpMbSiftTracker::vpMbSiftTracker()
   kltPolygons(), kltCylinders(), circles_disp(), m_nbInfos(0), m_nbFaceUsed(0), m_L_klt(), m_error_klt(), m_w_klt(),
   m_weightedError_klt(), m_robust_klt(), m_featuresToBeDisplayedKlt()
 {
-  tracker.setTrackerId(1);
-  tracker.setUseHarris(1);
-  tracker.setMaxFeatures(10000);
-  tracker.setWindowSize(5);
-  tracker.setQuality(0.01);
-  tracker.setMinDistance(5);
-  tracker.setHarrisFreeParameter(0.01);
-  tracker.setBlockSize(3);
-  tracker.setPyramidLevels(3);
-
 #ifdef VISP_HAVE_OGRE
   faces.getOgreContext()->setWindowName("MBT Klt");
 #endif
@@ -320,17 +310,6 @@ void vpMbSiftTracker::resetTracker()
   firstInitialisation = true;
   computeCovariance = false;
 
-  tracker.setTrackerId(1);
-  tracker.setUseHarris(1);
-
-  tracker.setMaxFeatures(10000);
-  tracker.setWindowSize(5);
-  tracker.setQuality(0.01);
-  tracker.setMinDistance(5);
-  tracker.setHarrisFreeParameter(0.01);
-  tracker.setBlockSize(3);
-  tracker.setPyramidLevels(3);
-
   angleAppears = vpMath::rad(89);
   angleDisappears = vpMath::rad(89);
 
@@ -405,16 +384,8 @@ std::map<int, vpImagePoint> vpMbSiftTracker::getKltImagePointsWithId() const
 
   \param t : Klt tracker containing the new values.
 */
-void vpMbSiftTracker::setKltOpencv(const vpKltOpencv &t)
-{
-  tracker.setMaxFeatures(t.getMaxFeatures());
-  tracker.setWindowSize(t.getWindowSize());
-  tracker.setQuality(t.getQuality());
-  tracker.setMinDistance(t.getMinDistance());
-  tracker.setHarrisFreeParameter(t.getHarrisFreeParameter());
-  tracker.setBlockSize(t.getBlockSize());
-  tracker.setPyramidLevels(t.getPyramidLevels());
-}
+void vpMbSiftTracker::setSiftOpencv(const vpSiftOpencv &t)
+{ }
 
 /*!
   Set the camera parameters.
@@ -557,7 +528,7 @@ void vpMbSiftTracker::setPose(const vpImage<unsigned char> *const I, const vpIma
       vpImageConvert::convert(m_I, cur);
     }
 
-    tracker.setInitialGuess(init_pts, guess_pts, init_ids);
+    // tracker.setInitialGuess(init_pts, guess_pts, init_ids);
 
     bool reInitialisation = false;
     if (!useOgre) {
@@ -1041,13 +1012,6 @@ void vpMbSiftTracker::loadConfigFile(const std::string &configFile, bool verbose
   xmlp.getCameraParameters(camera);
   setCameraParameters(camera);
 
-  tracker.setMaxFeatures(static_cast<int>(xmlp.getKltMaxFeatures()));
-  tracker.setWindowSize(static_cast<int>(xmlp.getKltWindowSize()));
-  tracker.setQuality(xmlp.getKltQuality());
-  tracker.setMinDistance(xmlp.getKltMinDistance());
-  tracker.setHarrisFreeParameter(xmlp.getKltHarrisParam());
-  tracker.setBlockSize(static_cast<int>(xmlp.getKltBlockSize()));
-  tracker.setPyramidLevels(static_cast<int>(xmlp.getKltPyramidLevels()));
   maskBorder = xmlp.getKltMaskBorder();
   angleAppears = vpMath::rad(xmlp.getAngleAppear());
   angleDisappears = vpMath::rad(xmlp.getAngleDisappear());

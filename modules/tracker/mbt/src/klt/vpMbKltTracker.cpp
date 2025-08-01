@@ -113,19 +113,19 @@ vpMatrix homography2collineation(const vpMatrix &H, const vpCameraParameters &ca
 
 vpMbKltTracker::vpMbKltTracker()
   :
-  cur(), c0Mo(), firstInitialisation(true), maskBorder(5), threshold_outlier(0.5), percentGood(0.6), ctTc0(), tracker(),
+  cur(), c0Mo(), firstInitialisation(true), maskBorder(5), threshold_outlier(0.5), percentGood(0.6), ctTc0(), trackerKlt(),
   kltPolygons(), kltCylinders(), circles_disp(), m_nbInfos(0), m_nbFaceUsed(0), m_L_klt(), m_error_klt(), m_w_klt(),
   m_weightedError_klt(), m_robust_klt(), m_featuresToBeDisplayedKlt()
 {
-  tracker.setTrackerId(1);
-  tracker.setUseHarris(1);
-  tracker.setMaxFeatures(10000);
-  tracker.setWindowSize(5);
-  tracker.setQuality(0.01);
-  tracker.setMinDistance(5);
-  tracker.setHarrisFreeParameter(0.01);
-  tracker.setBlockSize(3);
-  tracker.setPyramidLevels(3);
+  trackerKlt.setTrackerId(1);
+  // trackerKlt.setUseHarris(1);
+  // trackerKlt.setMaxFeatures(10000);
+  // trackerKlt.setWindowSize(5);
+  // trackerKlt.setQuality(0.01);
+  // trackerKlt.setMinDistance(5);
+  // trackerKlt.setHarrisFreeParameter(0.01);
+  // trackerKlt.setBlockSize(3);
+  // trackerKlt.setPyramidLevels(3);
 
 #ifdef VISP_HAVE_OGRE
   faces.getOgreContext()->setWindowName("MBT Klt");
@@ -255,7 +255,7 @@ void vpMbKltTracker::reinit(const vpImage<unsigned char> &I)
     }
   }
 
-  tracker.initTracking(cur, mask);
+  trackerKlt.initTracking(cur, mask);
   //  tracker.track(cur); // AY: Not sure to be usefull but makes sure that
   //  the points are valid for tracking and avoid too fast reinitialisations.
   //  vpCTRACE << "init klt. detected " << tracker.getNbFeatures() << "
@@ -264,7 +264,7 @@ void vpMbKltTracker::reinit(const vpImage<unsigned char> &I)
   for (std::list<vpMbtDistanceKltPoints *>::const_iterator it = kltPolygons.begin(); it != kltPolygons.end(); ++it) {
     kltpoly = *it;
     if (kltpoly->polygon->isVisible() && kltpoly->isTracked() && kltpoly->polygon->getNbPoint() > 2) {
-      kltpoly->init(tracker, m_mask);
+      kltpoly->init(trackerKlt, m_mask);
     }
   }
 
@@ -273,7 +273,7 @@ void vpMbKltTracker::reinit(const vpImage<unsigned char> &I)
     kltPolyCylinder = *it;
 
     if (kltPolyCylinder->isTracked())
-      kltPolyCylinder->init(tracker, m_cMo);
+      kltPolyCylinder->init(trackerKlt, m_cMo);
   }
 }
 
@@ -320,16 +320,16 @@ void vpMbKltTracker::resetTracker()
   firstInitialisation = true;
   computeCovariance = false;
 
-  tracker.setTrackerId(1);
-  tracker.setUseHarris(1);
+  trackerKlt.setTrackerId(1);
+  // trackerKlt.setUseHarris(1);
 
-  tracker.setMaxFeatures(10000);
-  tracker.setWindowSize(5);
-  tracker.setQuality(0.01);
-  tracker.setMinDistance(5);
-  tracker.setHarrisFreeParameter(0.01);
-  tracker.setBlockSize(3);
-  tracker.setPyramidLevels(3);
+  // trackerKlt.setMaxFeatures(10000);
+  // trackerKlt.setWindowSize(5);
+  // trackerKlt.setQuality(0.01);
+  // trackerKlt.setMinDistance(5);
+  // trackerKlt.setHarrisFreeParameter(0.01);
+  // trackerKlt.setBlockSize(3);
+  // trackerKlt.setPyramidLevels(3);
 
   angleAppears = vpMath::rad(89);
   angleDisappears = vpMath::rad(89);
@@ -365,10 +365,10 @@ void vpMbKltTracker::resetTracker()
 std::vector<vpImagePoint> vpMbKltTracker::getKltImagePoints() const
 {
   std::vector<vpImagePoint> kltPoints;
-  for (unsigned int i = 0; i < static_cast<unsigned int>(tracker.getNbFeatures()); i++) {
+  for (unsigned int i = 0; i < static_cast<unsigned int>(trackerKlt.getNbFeatures()); i++) {
     long id;
     float x_tmp, y_tmp;
-    tracker.getFeature(static_cast<int>(i), id, x_tmp, y_tmp);
+    trackerKlt.getFeature(static_cast<int>(i), id, x_tmp, y_tmp);
     kltPoints.push_back(vpImagePoint(y_tmp, x_tmp));
   }
 
@@ -386,10 +386,10 @@ std::vector<vpImagePoint> vpMbKltTracker::getKltImagePoints() const
 std::map<int, vpImagePoint> vpMbKltTracker::getKltImagePointsWithId() const
 {
   std::map<int, vpImagePoint> kltPoints;
-  for (unsigned int i = 0; i < static_cast<unsigned int>(tracker.getNbFeatures()); i++) {
+  for (unsigned int i = 0; i < static_cast<unsigned int>(trackerKlt.getNbFeatures()); i++) {
     long id;
     float x_tmp, y_tmp;
-    tracker.getFeature(static_cast<int>(i), id, x_tmp, y_tmp);
+    trackerKlt.getFeature(static_cast<int>(i), id, x_tmp, y_tmp);
 #ifdef TARGET_OS_IPHONE
     kltPoints[static_cast<int>(id)] = vpImagePoint(y_tmp, x_tmp);
 #else
@@ -407,13 +407,13 @@ std::map<int, vpImagePoint> vpMbKltTracker::getKltImagePointsWithId() const
 */
 void vpMbKltTracker::setKltOpencv(const vpKltOpencv &t)
 {
-  tracker.setMaxFeatures(t.getMaxFeatures());
-  tracker.setWindowSize(t.getWindowSize());
-  tracker.setQuality(t.getQuality());
-  tracker.setMinDistance(t.getMinDistance());
-  tracker.setHarrisFreeParameter(t.getHarrisFreeParameter());
-  tracker.setBlockSize(t.getBlockSize());
-  tracker.setPyramidLevels(t.getPyramidLevels());
+  // trackerKlt.setMaxFeatures(t.getMaxFeatures());
+  // trackerKlt.setWindowSize(t.getWindowSize());
+  // trackerKlt.setQuality(t.getQuality());
+  // trackerKlt.setMinDistance(t.getMinDistance());
+  // trackerKlt.setHarrisFreeParameter(t.getHarrisFreeParameter());
+  // trackerKlt.setBlockSize(t.getBlockSize());
+  // trackerKlt.setPyramidLevels(t.getPyramidLevels());
 }
 
 /*!
@@ -557,7 +557,7 @@ void vpMbKltTracker::setPose(const vpImage<unsigned char> *const I, const vpImag
       vpImageConvert::convert(m_I, cur);
     }
 
-    tracker.setInitialGuess(init_pts, guess_pts, init_ids);
+    // trackerKlt.setInitialGuess(init_pts, guess_pts, init_ids);
 
     bool reInitialisation = false;
     if (!useOgre) {
@@ -599,7 +599,7 @@ void vpMbKltTracker::setPose(const vpImage<unsigned char> *const I, const vpImag
       kltpoly = *it;
       if (kltpoly->polygon->isVisible() && kltpoly->polygon->getNbPoint() > 2) {
         kltpoly->polygon->computePolygonClipped(m_cam);
-        kltpoly->init(tracker, m_mask);
+        kltpoly->init(trackerKlt, m_mask);
       }
     }
 
@@ -677,7 +677,7 @@ void vpMbKltTracker::initFaceFromLines(vpMbtPolygon &polygon)
 void vpMbKltTracker::preTracking(const vpImage<unsigned char> &I)
 {
   vpImageConvert::convert(I, cur);
-  tracker.track(cur);
+  trackerKlt.track(cur);
 
   m_nbInfos = 0;
   m_nbFaceUsed = 0;
@@ -685,7 +685,7 @@ void vpMbKltTracker::preTracking(const vpImage<unsigned char> &I)
   for (std::list<vpMbtDistanceKltPoints *>::const_iterator it = kltPolygons.begin(); it != kltPolygons.end(); ++it) {
     vpMbtDistanceKltPoints *kltpoly = *it;
     if (kltpoly->polygon->isVisible() && kltpoly->isTracked() && kltpoly->polygon->getNbPoint() > 2) {
-      kltpoly->computeNbDetectedCurrent(tracker, m_mask);
+      kltpoly->computeNbDetectedCurrent(trackerKlt, m_mask);
       //       faces[i]->ransac();
       if (kltpoly->hasEnoughPoints()) {
         m_nbInfos += kltpoly->getCurrentNumberPoints();
@@ -699,7 +699,7 @@ void vpMbKltTracker::preTracking(const vpImage<unsigned char> &I)
     vpMbtDistanceKltCylinder *kltPolyCylinder = *it;
 
     if (kltPolyCylinder->isTracked()) {
-      kltPolyCylinder->computeNbDetectedCurrent(tracker);
+      kltPolyCylinder->computeNbDetectedCurrent(trackerKlt);
       if (kltPolyCylinder->hasEnoughPoints()) {
         m_nbInfos += kltPolyCylinder->getCurrentNumberPoints();
         m_nbFaceUsed++;
@@ -1041,13 +1041,13 @@ void vpMbKltTracker::loadConfigFile(const std::string &configFile, bool verbose)
   xmlp.getCameraParameters(camera);
   setCameraParameters(camera);
 
-  tracker.setMaxFeatures(static_cast<int>(xmlp.getKltMaxFeatures()));
-  tracker.setWindowSize(static_cast<int>(xmlp.getKltWindowSize()));
-  tracker.setQuality(xmlp.getKltQuality());
-  tracker.setMinDistance(xmlp.getKltMinDistance());
-  tracker.setHarrisFreeParameter(xmlp.getKltHarrisParam());
-  tracker.setBlockSize(static_cast<int>(xmlp.getKltBlockSize()));
-  tracker.setPyramidLevels(static_cast<int>(xmlp.getKltPyramidLevels()));
+  // trackerKlt.setMaxFeatures(static_cast<int>(xmlp.getKltMaxFeatures()));
+  // trackerKlt.setWindowSize(static_cast<int>(xmlp.getKltWindowSize()));
+  // trackerKlt.setQuality(xmlp.getKltQuality());
+  // trackerKlt.setMinDistance(xmlp.getKltMinDistance());
+  // trackerKlt.setHarrisFreeParameter(xmlp.getKltHarrisParam());
+  // trackerKlt.setBlockSize(static_cast<int>(xmlp.getKltBlockSize()));
+  // trackerKlt.setPyramidLevels(static_cast<int>(xmlp.getKltPyramidLevels()));
   maskBorder = xmlp.getKltMaskBorder();
   angleAppears = vpMath::rad(xmlp.getAngleAppear());
   angleDisappears = vpMath::rad(xmlp.getAngleDisappear());

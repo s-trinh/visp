@@ -237,7 +237,7 @@ protected:
   //! the initial position.
   vpHomogeneousMatrix ctTc0;
   //! Points tracker.
-  vpKltOpencv tracker;
+  vpSiftOpencv tracker;
   //!
   std::list<vpMbtDistanceKltPoints *> kltPolygons;
   //!
@@ -297,7 +297,7 @@ public:
    *
    * \return klt tracker.
    */
-  inline vpKltOpencv getKltOpencv() const { return tracker; }
+  inline vpSiftOpencv getSiftOpencv() const { return tracker; }
 
   /*!
    * Get the erosion of the mask used on the Model faces.
@@ -350,7 +350,7 @@ public:
     faces.getMbScanLineRenderer().setMaskBorder(maskBorder);
   }
 
-  virtual void setKltOpencv(const vpKltOpencv &t);
+  virtual void setSiftOpencv(const vpSiftOpencv &t);
 
   /*!
    * Set the threshold for the acceptation of a point.

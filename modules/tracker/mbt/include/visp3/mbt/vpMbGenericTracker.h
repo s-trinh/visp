@@ -925,7 +925,7 @@ inline void to_json(nlohmann::json &j, const vpMbGenericTracker::TrackerWrapper 
   //KLT tracker settings
 #if defined(VISP_HAVE_MODULE_KLT) && defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO)
   if (t.m_trackerType & vpMbGenericTracker::KLT_TRACKER) {
-    nlohmann::json klt = t.tracker;
+    nlohmann::json klt = t.trackerKlt;
     klt["maskBorder"] = t.maskBorder;
     j["klt"] = klt;
   }
@@ -1028,7 +1028,7 @@ inline void from_json(const nlohmann::json &j, vpMbGenericTracker::TrackerWrappe
 #if defined(VISP_HAVE_MODULE_KLT) && defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO)
   if (t.m_trackerType & vpMbGenericTracker::KLT_TRACKER) {
     const nlohmann::json klt = j.at("klt");
-    t.tracker = klt;
+    t.trackerKlt = klt;
     t.setMaskBorder(klt.value("maskBorder", t.maskBorder));
     t.faces.getMbScanLineRenderer().setMaskBorder(t.maskBorder);
   }

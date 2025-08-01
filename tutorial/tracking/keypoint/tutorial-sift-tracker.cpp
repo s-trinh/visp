@@ -79,6 +79,7 @@ int main(int argc, const char *argv[])
     //! [Acquire]
     I_prev = I;
     vpImage<unsigned char> I_match(I.getRows(), 2*I.getCols());
+    I_match.insert(I, vpImagePoint(0, 0));
 
     //! [Convert to OpenCV image]
     cv::Mat cvI;
@@ -117,7 +118,7 @@ int main(int argc, const char *argv[])
       reader.acquire(Iacq);
       Iacq.subsample(opt_subsample, opt_subsample, I);
 
-      I_match.insert(I_prev, vpImagePoint(0, 0));
+      // I_match.insert(I_prev, vpImagePoint(0, 0));
       I_match.insert(I, vpImagePoint(0, I_prev.getCols()));
 
       vpDisplay::display(I);

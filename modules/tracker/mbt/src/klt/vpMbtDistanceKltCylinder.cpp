@@ -98,7 +98,89 @@ void vpMbtDistanceKltCylinder::buildFrom(const vpPoint &p1, const vpPoint &p2, c
   \param _tracker : ViSP OpenCV KLT Tracker.
   \param cMo : Pose of the object in the camera frame at initialization.
 */
-void vpMbtDistanceKltCylinder::init(const vpKltOpencv &_tracker, const vpHomogeneousMatrix &cMo)
+// void vpMbtDistanceKltCylinder::init(const vpKltOpencv &_tracker, const vpHomogeneousMatrix &cMo)
+// {
+//   c0Mo = cMo;
+//   cylinder.changeFrame(cMo);
+
+//   // extract ids of the points in the face
+//   nbPointsInit = 0;
+//   nbPointsCur = 0;
+//   initPoints = std::map<int, vpImagePoint>();
+//   initPoints3D = std::map<int, vpPoint>();
+//   curPoints = std::map<int, vpImagePoint>();
+//   curPointsInd = std::map<int, int>();
+
+//   for (unsigned int i = 0; i < static_cast<unsigned int>(_tracker.getNbFeatures()); i++) {
+//     long id;
+//     float x_tmp, y_tmp;
+//     _tracker.getFeature(static_cast<int>(i), id, x_tmp, y_tmp);
+
+//     bool add = false;
+
+//     if (useScanLine) {
+//       if (static_cast<unsigned int>(y_tmp) < hiddenface->getMbScanLineRenderer().getPrimitiveIDs().getHeight() &&
+//           static_cast<unsigned int>(x_tmp) < hiddenface->getMbScanLineRenderer().getPrimitiveIDs().getWidth()) {
+//         for (unsigned int kc = 0; kc < listIndicesCylinderBBox.size(); kc++)
+//           if (hiddenface->getMbScanLineRenderer().getPrimitiveIDs()[static_cast<unsigned int>(y_tmp)][static_cast<unsigned int>(x_tmp)] ==
+//               listIndicesCylinderBBox[kc]) {
+//             add = true;
+//             break;
+//           }
+//       }
+//     }
+//     else {
+//       std::vector<vpImagePoint> roi;
+//       for (unsigned int kc = 0; kc < listIndicesCylinderBBox.size(); kc++) {
+//         hiddenface->getPolygon()[static_cast<size_t>(listIndicesCylinderBBox[kc])]->getRoiClipped(cam, roi);
+//         if (vpPolygon::isInside(roi, y_tmp, x_tmp)) {
+//           add = true;
+//           break;
+//         }
+//         roi.clear();
+//       }
+//     }
+
+//     if (add) {
+
+//       double xm = 0, ym = 0;
+//       vpPixelMeterConversion::convertPoint(cam, x_tmp, y_tmp, xm, ym);
+//       double Z = computeZ(xm, ym);
+//       if (!vpMath::isNaN(Z)) {
+// #ifdef TARGET_OS_IPHONE
+//         initPoints[static_cast<int>(id)] = vpImagePoint(y_tmp, x_tmp);
+//         curPoints[static_cast<int>(id)] = vpImagePoint(y_tmp, x_tmp);
+//         curPointsInd[static_cast<int>(id)] = static_cast<int>(i);
+// #else
+//         initPoints[id] = vpImagePoint(y_tmp, x_tmp);
+//         curPoints[id] = vpImagePoint(y_tmp, x_tmp);
+//         curPointsInd[id] = static_cast<int>(i);
+// #endif
+//         nbPointsInit++;
+//         nbPointsCur++;
+
+//         vpPoint p;
+//         p.setWorldCoordinates(xm * Z, ym * Z, Z);
+// #ifdef TARGET_OS_IPHONE
+//         initPoints3D[static_cast<int>(id)] = p;
+// #else
+//         initPoints3D[id] = p;
+// #endif
+//         // std::cout << "Computed Z for : " << xm << "," << ym << " : " <<
+//         // computeZ(xm,ym) << std::endl;
+//       }
+//     }
+//   }
+
+//   if (nbPointsCur >= minNbPoint)
+//     enoughPoints = true;
+//   else
+//     enoughPoints = false;
+
+//   // std::cout << "Nb detected points in cylinder : " << nbPointsCur <<
+//   // std::endl;
+// }
+void vpMbtDistanceKltCylinder::init(const vpSiftOpencv &_tracker, const vpHomogeneousMatrix &cMo)
 {
   c0Mo = cMo;
   cylinder.changeFrame(cMo);
@@ -189,7 +271,36 @@ void vpMbtDistanceKltCylinder::init(const vpKltOpencv &_tracker, const vpHomogen
   \return the number of points that are tracked in this face and in this
   instanciation of the tracker
 */
-unsigned int vpMbtDistanceKltCylinder::computeNbDetectedCurrent(const vpKltOpencv &_tracker)
+// unsigned int vpMbtDistanceKltCylinder::computeNbDetectedCurrent(const vpKltOpencv &_tracker)
+// {
+//   long id;
+//   float x, y;
+//   nbPointsCur = 0;
+//   curPoints = std::map<int, vpImagePoint>();
+//   curPointsInd = std::map<int, int>();
+
+//   for (unsigned int i = 0; i < static_cast<unsigned int>(_tracker.getNbFeatures()); i++) {
+//     _tracker.getFeature(static_cast<int>(i), id, x, y);
+//     if (isTrackedFeature(static_cast<int>(id))) {
+// #ifdef TARGET_OS_IPHONE
+//       curPoints[static_cast<int>(id)] = vpImagePoint(static_cast<double>(y), static_cast<double>(x));
+//       curPointsInd[static_cast<int>(id)] = static_cast<int>(i);
+// #else
+//       curPoints[id] = vpImagePoint(static_cast<double>(y), static_cast<double>(x));
+//       curPointsInd[id] = static_cast<int>(i);
+// #endif
+//       nbPointsCur++;
+//     }
+//   }
+
+//   if (nbPointsCur >= minNbPoint)
+//     enoughPoints = true;
+//   else
+//     enoughPoints = false;
+
+//   return nbPointsCur;
+// }
+unsigned int vpMbtDistanceKltCylinder::computeNbDetectedCurrent(const vpSiftOpencv &_tracker)
 {
   long id;
   float x, y;
