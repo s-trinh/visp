@@ -88,7 +88,8 @@ public:
   /*!
    * Default constructor.
    */
-  vpSiftOpencv(bool useAKAZE = true, const MatchingFilterType &type = RatioTest);
+  // vpSiftOpencv(bool useAKAZE = true, const MatchingFilterType &type = CrossCheck);
+  vpSiftOpencv(bool useAKAZE = false, const MatchingFilterType &type = RatioTest);
   /*!
    * Copy constructor.
    */

@@ -56,7 +56,7 @@ vpSiftOpencv::vpSiftOpencv(bool useAKAZE, const MatchingFilterType &type)
   m_siftDetector(),
   m_keyPointsRef(), m_keyPointsCur(),
   m_descriptorsRef(), m_descriptorsCur(),
-  m_descriptorsMatcher(), m_knnMatches(), m_ratioThreshold(0.8), m_matches01(), m_matches10(),
+  m_descriptorsMatcher(), m_knnMatches(), m_ratioThreshold(0.65), m_matches01(), m_matches10(),
   m_filterType(type), m_AKAZE(useAKAZE), m_history(0)
 {
   cv::NormTypes normType = cv::NORM_L2;
@@ -88,7 +88,7 @@ vpSiftOpencv::vpSiftOpencv(const vpSiftOpencv &copy)
   m_siftDetector(),
   m_keyPointsRef(), m_keyPointsCur(),
   m_descriptorsRef(), m_descriptorsCur(),
-  m_descriptorsMatcher(), m_knnMatches(), m_ratioThreshold(0.8), m_matches01(), m_matches10(),
+  m_descriptorsMatcher(), m_knnMatches(), m_ratioThreshold(0.65), m_matches01(), m_matches10(),
   m_filterType(MatchingFilterType::CrossCheck), m_AKAZE(false), m_history(0)
 {
   *this = copy;
@@ -147,11 +147,14 @@ void vpSiftOpencv::initTracking(const cv::Mat &I, const cv::Mat &mask)
     m_points_id.push_back(m_next_points_id++);
   }
 
-  std::cout << "[initTracking] m_points[1]=" << m_points[1].size() << " ; m_points_id=" << m_points_id.size() << std::endl;
+  const bool debug_print = false;
+  if (debug_print) {
+    std::cout << "[initTracking] m_points[1]=" << m_points[1].size() << " ; m_points_id=" << m_points_id.size() << std::endl;
 
-  // Debug
-  cv::cvtColor(I, m_leftMat, cv::COLOR_GRAY2BGR);
-  m_displayMat = cv::Mat3b(I.rows, 2*I.cols);
+    // Debug
+    cv::cvtColor(I, m_leftMat, cv::COLOR_GRAY2BGR);
+    m_displayMat = cv::Mat3b(I.rows, 2*I.cols);
+  }
 
 
 
@@ -216,12 +219,14 @@ void trimMat(const cv::Mat &matRef, const std::vector<int> &status, cv::Mat &mat
 
 void vpSiftOpencv::track(const cv::Mat &I)
 {
+  const bool debug_print = false;
+
   if (m_points[1].size() == 0) {
     throw vpTrackingException(vpTrackingException::fatalError, "Not enough key points to track.");
   }
 
   bool reinit = false; // m_history > 10;
-  if (!m_keyPointsCur.empty() && reinit || true) {
+  if ((!m_keyPointsCur.empty() && reinit) || true) { // TODO:
     cv::swap(m_descriptorsRef, m_descriptorsCur);
     cv::swap(m_keyPointsRef, m_keyPointsCur);
     // m_points_id.clear();
@@ -232,9 +237,11 @@ void vpSiftOpencv::track(const cv::Mat &I)
 
   m_matches01.clear();
   m_matches10.clear();
-  std::cout << "[track] m_keyPointsCur=" << m_keyPointsCur.size() << " ; m_keyPointsRef=" << m_keyPointsRef.size() << std::endl;
-  std::cout << "[track] m_descriptorsCur=" << m_descriptorsCur.rows << "x" << m_descriptorsCur.cols << " ; type=" << m_descriptorsCur.type() << " ; CV_8U=" << CV_8U << std::endl;
-  std::cout << "[track] m_descriptorsRef=" << m_descriptorsRef.rows << "x" << m_descriptorsRef.cols << " ; type=" << m_descriptorsRef.type() << " ; CV_32F=" << CV_32F << std::endl;
+  if (debug_print) {
+    std::cout << "[track] m_keyPointsCur=" << m_keyPointsCur.size() << " ; m_keyPointsRef=" << m_keyPointsRef.size() << std::endl;
+    std::cout << "[track] m_descriptorsCur=" << m_descriptorsCur.rows << "x" << m_descriptorsCur.cols << " ; type=" << m_descriptorsCur.type() << " ; CV_8U=" << CV_8U << std::endl;
+    std::cout << "[track] m_descriptorsRef=" << m_descriptorsRef.rows << "x" << m_descriptorsRef.cols << " ; type=" << m_descriptorsRef.type() << " ; CV_32F=" << CV_32F << std::endl;
+  }
   if (m_filterType == RatioTest) {
     m_knnMatches.clear();
     m_descriptorsMatcher->clear();
@@ -254,7 +261,9 @@ void vpSiftOpencv::track(const cv::Mat &I)
   else {
     m_descriptorsMatcher->match(m_descriptorsCur, m_descriptorsRef, m_matches10);
   }
-  std::cout << "[track] m_matches01=" << m_matches01.size() << " ; m_matches10=" << m_matches10.size() << std::endl;
+  if (debug_print) {
+    std::cout << "[track] m_matches01=" << m_matches01.size() << " ; m_matches10=" << m_matches10.size() << std::endl;
+  }
 
   // Remove query points that are matches to the same train points
   if (m_filterType != CrossCheck && m_matches01.size() > 1) {
@@ -302,7 +311,7 @@ void vpSiftOpencv::track(const cv::Mat &I)
     m_points[0].push_back(m_keyPointsRef[match.trainIdx].pt);
     m_points[1].push_back(m_keyPointsCur[match.queryIdx].pt);
 
-    if (!points_id.empty() && reinit) {
+    if ((!points_id.empty() && reinit) || true) { // TODO:
       m_points_id[match.queryIdx] = points_id[match.trainIdx];
     }
     else {
@@ -335,7 +344,9 @@ void vpSiftOpencv::track(const cv::Mat &I)
       m_points_id.erase(m_points_id.begin() + i);
     }
   }
-  std::cout << "[track] After filter, m_keyPointsCur=" << m_keyPointsCur.size() << std::endl;
+  if (debug_print) {
+    std::cout << "[track] After filter, m_keyPointsCur=" << m_keyPointsCur.size() << std::endl;
+  }
 
   // cv::Mat descriptorsRef(nb_correct1, m_descriptorsRef.cols, m_descriptorsRef.type());
   // for (int i = 0, idx = 0; i < m_descriptorsRef.rows; i++) {
@@ -348,7 +359,9 @@ void vpSiftOpencv::track(const cv::Mat &I)
   // m_descriptorsRef = descriptorsRef.clone();
 
   cv::Mat descriptorsCur(nb_correct1, m_descriptorsCur.cols, m_descriptorsCur.type());
-  std::cout << "[track] Before filter, nb_correct1=" << nb_correct1 << " ; descriptorsCur=" << descriptorsCur.rows << "x" << descriptorsCur.cols << std::endl;
+  if (debug_print) {
+    std::cout << "[track] Before filter, nb_correct1=" << nb_correct1 << " ; descriptorsCur=" << descriptorsCur.rows << "x" << descriptorsCur.cols << std::endl;
+  }
   for (int i = 0, idx = 0; i < m_descriptorsCur.rows; i++) {
     if (status1[static_cast<size_t>(i)] == 1) {
       cv::Mat dest = descriptorsCur(cv::Range(idx, idx+1), cv::Range::all());
@@ -356,32 +369,40 @@ void vpSiftOpencv::track(const cv::Mat &I)
       idx++;
     }
   }
-  std::cout << "[track] After filter, nb_correct1=" << nb_correct1 << " ; descriptorsCur=" << descriptorsCur.rows << "x" << descriptorsCur.cols << std::endl;
-  // std::cout << "m_descriptorsCur[0,0]=" << m_descriptorsCur.at<float>(0, 0) << " ; m_descriptorsCur[1,0]=" << m_descriptorsCur.at<float>(1, 0) << std::endl;
-  // std::cout << "descriptorsCur[0,0]=" << descriptorsCur.at<float>(0, 0) << " ; descriptorsCur[1,0]=" << descriptorsCur.at<float>(1, 0) << std::endl;
-  // std::cout << "status1[0]=" << int(status1[0]) << " ; status1[1]=" << int(status1[1]) << std::endl;
+  if (debug_print) {
+    std::cout << "[track] After filter, nb_correct1=" << nb_correct1 << " ; descriptorsCur=" << descriptorsCur.rows << "x" << descriptorsCur.cols << std::endl;
+    // std::cout << "m_descriptorsCur[0,0]=" << m_descriptorsCur.at<float>(0, 0) << " ; m_descriptorsCur[1,0]=" << m_descriptorsCur.at<float>(1, 0) << std::endl;
+    // std::cout << "descriptorsCur[0,0]=" << descriptorsCur.at<float>(0, 0) << " ; descriptorsCur[1,0]=" << descriptorsCur.at<float>(1, 0) << std::endl;
+    // std::cout << "status1[0]=" << int(status1[0]) << " ; status1[1]=" << int(status1[1]) << std::endl;
+  }
   m_descriptorsCur = descriptorsCur.clone();
-  std::cout << "[track] After filter, m_descriptorsCur=" << m_descriptorsCur.rows << "x" << m_descriptorsCur.cols << std::endl;
+  if (debug_print) {
+    std::cout << "[track] After filter, m_descriptorsCur=" << m_descriptorsCur.rows << "x" << m_descriptorsCur.cols << std::endl;
+  }
 
   m_history++;
   if (reinit) {
     m_history = 0;
   }
 
-  // Debug
-  cv::Mat I_color;
-  cv::cvtColor(I, I_color, cv::COLOR_GRAY2BGR);
+  if (debug_print) {
+    // Debug
+    cv::Mat I_color;
+    cv::cvtColor(I, I_color, cv::COLOR_GRAY2BGR);
 
-  m_leftMat.copyTo(m_displayMat(cv::Rect(0, 0, m_leftMat.cols, m_leftMat.rows)));
-  I_color.copyTo(m_displayMat(cv::Rect(m_leftMat.cols, 0, I_color.cols, I_color.rows)));
-  std::cout << "[track] m_points[0]=" << m_points[0].size() << " ; m_points[1]=" << m_points[1].size() << " ; m_points_id=" << m_points_id.size() << std::endl;
+    m_leftMat.copyTo(m_displayMat(cv::Rect(0, 0, m_leftMat.cols, m_leftMat.rows)));
+    I_color.copyTo(m_displayMat(cv::Rect(m_leftMat.cols, 0, I_color.cols, I_color.rows)));
+    std::cout << "[track] m_points[0]=" << m_points[0].size() << " ; m_points[1]=" << m_points[1].size() << " ; m_points_id=" << m_points_id.size() << std::endl;
 
-  for (size_t i = 0; i < m_points[0].size(); i++) {
-    cv::line(m_displayMat, m_points[0][i], cv::Point(m_points[1][i].x + I_color.cols, m_points[1][i].y), cv::Scalar(0, 255, 0));
+    for (size_t i = 0; i < m_points[0].size(); i++) {
+      cv::line(m_displayMat, m_points[0][i], cv::Point(m_points[1][i].x + I_color.cols, m_points[1][i].y), cv::Scalar(0, 255, 0));
+    }
+
+    cv::imshow("DEBUG", m_displayMat);
+    cv::waitKey(30);
+
+    m_leftMat = I_color;
   }
-
-  cv::imshow("DEBUG", m_displayMat);
-  cv::waitKey(30);
 
 
 

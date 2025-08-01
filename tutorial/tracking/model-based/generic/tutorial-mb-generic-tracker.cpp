@@ -148,11 +148,12 @@ int main(int argc, char **argv)
     }
 #endif
 
-    //! [Set camera parameters]
-    cam.initPersProjWithoutDistortion(839, 839, 325, 243);
-    //! [Set camera parameters]
-    tracker.setCameraParameters(cam);
-    //! [Set parameters]
+    // //! [Set camera parameters]
+    // cam.initPersProjWithoutDistortion(839, 839, 325, 243);
+    // //! [Set camera parameters]
+    // tracker.setCameraParameters(cam);
+    // //! [Set parameters]
+    tracker.loadConfigFile(objectname + ".xml");
 
     //! [Load cao]
     tracker.loadModel(objectname + ".cao");
@@ -169,7 +170,10 @@ int main(int argc, char **argv)
       g.acquire(I);
       vpDisplay::display(I);
       //! [Track]
+      double start_time = vpTime::measureTimeMs();
       tracker.track(I);
+      double end_time = vpTime::measureTimeMs();
+      std::cout << "[LOOP] elapsed time: " << (end_time-start_time) << " ms" << std::endl;
       //! [Track]
       //! [Get pose]
       tracker.getPose(cMo);
