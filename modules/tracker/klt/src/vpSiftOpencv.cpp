@@ -66,6 +66,7 @@ vpSiftOpencv::vpSiftOpencv(bool useAKAZE, const MatchingFilterType &type)
     normType = cv::NORM_HAMMING;
     m_siftDetector = cv::AKAZE::create();
     // m_siftDetector = cv::ORB::create();
+
     // const int nfeatures = 100;
     // m_siftDetector = cv::ORB::create(nfeatures);
   }
@@ -237,66 +238,88 @@ void vpSiftOpencv::track(const cv::Mat &I)
   if (m_filterType == RatioTest) {
     m_knnMatches.clear();
     m_descriptorsMatcher->clear();
-    m_descriptorsMatcher->add(std::vector<cv::Mat>(1, m_descriptorsRef));
-    m_descriptorsMatcher->knnMatch(m_descriptorsCur, m_knnMatches, 2);
 
-    for (size_t idx = 0; idx < m_knnMatches.size(); idx++) {
-      if (m_knnMatches[idx].size() >= 2) {
-        float ratio = m_knnMatches[idx][0].distance / m_knnMatches[idx][1].distance;
+    if (false) {
+      m_descriptorsMatcher->add(std::vector<cv::Mat>(1, m_descriptorsRef));
+      m_descriptorsMatcher->knnMatch(m_descriptorsCur, m_knnMatches, 2);
 
-        if (ratio < m_ratioThreshold) {
-          m_matches10.push_back(cv::DMatch(m_knnMatches[idx][0].queryIdx, m_knnMatches[idx][0].trainIdx, m_knnMatches[idx][0].distance));
+      for (size_t idx = 0; idx < m_knnMatches.size(); idx++) {
+        if (m_knnMatches[idx].size() >= 2) {
+          float ratio = m_knnMatches[idx][0].distance / m_knnMatches[idx][1].distance;
+
+          if (ratio < m_ratioThreshold) {
+            m_matches10.push_back(cv::DMatch(m_knnMatches[idx][0].queryIdx, m_knnMatches[idx][0].trainIdx, m_knnMatches[idx][0].distance));
+          }
+        }
+      }
+    }
+    else {
+      // Try match train to query
+      m_descriptorsMatcher->add(std::vector<cv::Mat>(1, m_descriptorsCur));
+      m_descriptorsMatcher->knnMatch(m_descriptorsRef, m_knnMatches, 2);
+
+      for (size_t idx = 0; idx < m_knnMatches.size(); idx++) {
+        if (m_knnMatches[idx].size() >= 2) {
+          float ratio = m_knnMatches[idx][0].distance / m_knnMatches[idx][1].distance;
+
+          if (ratio < m_ratioThreshold) {
+            m_matches10.push_back(cv::DMatch(m_knnMatches[idx][0].trainIdx, m_knnMatches[idx][0].queryIdx, m_knnMatches[idx][0].distance));
+          }
         }
       }
     }
   }
   else {
-    m_descriptorsMatcher->match(m_descriptorsCur, m_descriptorsRef, m_matches10);
+    if (false) {
+      m_descriptorsMatcher->match(m_descriptorsCur, m_descriptorsRef, m_matches10);
+    }
+    else {
+      // Try match train to query
+      m_descriptorsMatcher->match(m_descriptorsRef, m_descriptorsCur, m_matches01);
+      m_matches10.reserve(m_matches01.size());
 
-    // // Try match train to query
-    // m_descriptorsMatcher->match(m_descriptorsRef, m_descriptorsCur, m_matches01);
-    // m_matches10.reserve(m_matches01.size());
-
-    // for (size_t i = 0; i < m_matches01.size(); i++) {
-    //   const cv::DMatch &m01 = m_matches01[i];
-    //   m_matches10.push_back(cv::DMatch(m01.trainIdx, m01.queryIdx, m01.distance));
-    // }
+      for (size_t i = 0; i < m_matches01.size(); i++) {
+        const cv::DMatch &m01 = m_matches01[i];
+        m_matches10.push_back(cv::DMatch(m01.trainIdx, m01.queryIdx, m01.distance));
+      }
+    }
   }
   if (debug_print) {
+    std::cout << "[track] m_filterType=" << m_filterType << std::endl;
     std::cout << "[track] m_matches01=" << m_matches01.size() << " ; m_matches10=" << m_matches10.size() << " ; m_points_id=" << m_points_id.size() << std::endl;
   }
 
   // Remove query points that are matches to the same train points
   if (m_filterType != CrossCheck && m_matches10.size() > 1) {
-    std::vector<int> vec_idx;
+    // std::vector<int> vec_idx;
 
-    for (int idx1 = static_cast<int>(m_matches10.size())-1; idx1 >= 0; idx1--) {
-      bool same_train = false;
-      int train_idx = m_matches10[idx1].trainIdx;
+    // for (int idx1 = static_cast<int>(m_matches10.size())-1; idx1 >= 0; idx1--) {
+    //   bool same_train = false;
+    //   int train_idx = m_matches10[idx1].trainIdx;
 
-      for (int idx2 = 0; idx2 < idx1 && !same_train; idx2++) {
-        if (m_matches10[idx2].trainIdx == train_idx) {
-          same_train = true;
-        }
-      }
+    //   for (int idx2 = 0; idx2 < idx1 && !same_train; idx2++) {
+    //     if (m_matches10[idx2].trainIdx == train_idx) {
+    //       same_train = true;
+    //     }
+    //   }
 
-      if (same_train) {
-        // m_points_id.erase(m_points_id.begin() + idx1);
-        m_matches10.erase(m_matches10.begin() + idx1);
-      }
-      else {
-        vec_idx.push_back(m_matches10[idx1].queryIdx);
-      }
-    }
+    //   if (same_train) {
+    //     // m_points_id.erase(m_points_id.begin() + idx1);
+    //     m_matches10.erase(m_matches10.begin() + idx1);
+    //   }
+    //   else {
+    //     vec_idx.push_back(m_matches10[idx1].queryIdx);
+    //   }
+    // }
 
-    if (debug_print) {
-      std::cout << "[track] m_matches01=" << m_matches01.size() << " ; m_matches10=" << m_matches10.size() << " ; vec_idx=" << vec_idx.size() << std::endl;
-    }
+    // if (debug_print) {
+    //   std::cout << "[track] m_matches01=" << m_matches01.size() << " ; m_matches10=" << m_matches10.size() << " ; vec_idx=" << vec_idx.size() << std::endl;
+    // }
 
-    cv::Mat descriptorsCur_trim;
-    trimMat(m_descriptorsCur, vec_idx, descriptorsCur_trim);
-    // m_descriptorsCur = descriptorsCur_trim.clone();
-    m_descriptorsCur = descriptorsCur_trim;
+    // cv::Mat descriptorsCur_trim;
+    // trimMat(m_descriptorsCur, vec_idx, descriptorsCur_trim);
+    // // m_descriptorsCur = descriptorsCur_trim.clone();
+    // m_descriptorsCur = descriptorsCur_trim;
   }
   if (debug_print) {
     std::cout << "[track] m_matches01=" << m_matches01.size() << " ; m_matches10=" << m_matches10.size() << " ; m_points_id=" << m_points_id.size() << std::endl;
@@ -308,83 +331,95 @@ void vpSiftOpencv::track(const cv::Mat &I)
   if (!m_points_id.empty()) {
     points_id = m_points_id;
   }
-  m_points_id = std::vector<long>(m_keyPointsCur.size(), -1);
+  // m_points_id = std::vector<long>(m_keyPointsCur.size(), -1);
+  m_points_id.clear();
 
   std::vector<uchar> status0(m_keyPointsRef.size(), 0);
   std::vector<uchar> status1(m_keyPointsCur.size(), 0);
   int nb_correct1 = 0;
 
+  cv::Mat descriptorsCur(m_matches10.size(), m_descriptorsCur.cols, m_descriptorsCur.type());
+  std::vector<cv::KeyPoint> keyPointsCur;
+  keyPointsCur.reserve(m_matches10.size());
+
   for (size_t i = 0; i < m_matches10.size(); i++) {
     const cv::DMatch &match = m_matches10[i];
     m_points[0].push_back(m_keyPointsRef[match.trainIdx].pt);
     m_points[1].push_back(m_keyPointsCur[match.queryIdx].pt);
+    m_points_id.push_back(points_id[match.trainIdx]);
 
-    if ((!points_id.empty() && reinit) || true) { // TODO:
-      m_points_id[match.queryIdx] = points_id[match.trainIdx];
-    }
-    else {
-      m_points_id[match.queryIdx] = match.trainIdx;
-    }
+    cv::Mat dest = descriptorsCur(cv::Range(i, i+1), cv::Range::all());
+    m_descriptorsCur(cv::Range(match.queryIdx, match.queryIdx+1), cv::Range::all()).copyTo(dest);
+    keyPointsCur.push_back(m_keyPointsCur[match.queryIdx]);
+
+    // if ((!points_id.empty() && reinit) || true) { // TODO:
+    //   m_points_id[match.queryIdx] = points_id[match.trainIdx];
+    // }
+    // else {
+    //   m_points_id[match.queryIdx] = match.trainIdx;
+    // }
     status0[match.trainIdx] = 1;
     status1[match.queryIdx] = 1;
     nb_correct1++;
   }
+  m_descriptorsCur = descriptorsCur;
+  m_keyPointsCur = keyPointsCur;
+
+  // // // Remove points that are lost
+  // // for (int i = static_cast<int>(status.size()) - 1; i >= 0; i--) {
+  // //   if (status[static_cast<size_t>(i)] == 0) { // point is lost
+  // //     m_points[0].erase(m_points[0].begin() + i);
+  // //     m_points[1].erase(m_points[1].begin() + i);
+  // //     m_points_id.erase(m_points_id.begin() + i);
+  // //   }
+  // // }
 
   // // Remove points that are lost
-  // for (int i = static_cast<int>(status.size()) - 1; i >= 0; i--) {
-  //   if (status[static_cast<size_t>(i)] == 0) { // point is lost
-  //     m_points[0].erase(m_points[0].begin() + i);
-  //     m_points[1].erase(m_points[1].begin() + i);
-  //     m_points_id.erase(m_points_id.begin() + i);
-  //   }
-  // }
-
-  // Remove points that are lost
-  // for (int i = static_cast<int>(status0.size()) - 1; i >= 0; i--) {
-  //   if (status0[static_cast<size_t>(i)] == 0) {
-  //     m_keyPointsRef.erase(m_keyPointsRef.begin() + i);
+  // // for (int i = static_cast<int>(status0.size()) - 1; i >= 0; i--) {
+  // //   if (status0[static_cast<size_t>(i)] == 0) {
+  // //     m_keyPointsRef.erase(m_keyPointsRef.begin() + i);
+  // //     // m_points_id.erase(m_points_id.begin() + i);
+  // //   }
+  // // }
+  // for (int i = static_cast<int>(status1.size()) - 1; i >= 0; i--) {
+  //   if (status1[static_cast<size_t>(i)] == 0) {
+  //     m_keyPointsCur.erase(m_keyPointsCur.begin() + i);
   //     // m_points_id.erase(m_points_id.begin() + i);
   //   }
   // }
-  for (int i = static_cast<int>(status1.size()) - 1; i >= 0; i--) {
-    if (status1[static_cast<size_t>(i)] == 0) {
-      m_keyPointsCur.erase(m_keyPointsCur.begin() + i);
-      m_points_id.erase(m_points_id.begin() + i);
-    }
-  }
   if (debug_print) {
     std::cout << "[track] After filter, m_keyPointsCur=" << m_keyPointsCur.size() << std::endl;
   }
 
-  // cv::Mat descriptorsRef(nb_correct1, m_descriptorsRef.cols, m_descriptorsRef.type());
-  // for (int i = 0, idx = 0; i < m_descriptorsRef.rows; i++) {
+  // // cv::Mat descriptorsRef(nb_correct1, m_descriptorsRef.cols, m_descriptorsRef.type());
+  // // for (int i = 0, idx = 0; i < m_descriptorsRef.rows; i++) {
+  // //   if (status1[static_cast<size_t>(i)] == 1) {
+  // //     cv::Mat dest = descriptorsRef(cv::Range(idx, idx+1), cv::Range::all());
+  // //     m_descriptorsRef(cv::Range(i, i+1), cv::Range::all()).copyTo(dest);
+  // //     idx++;
+  // //   }
+  // // }
+  // // m_descriptorsRef = descriptorsRef.clone();
+
+  // cv::Mat descriptorsCur(nb_correct1, m_descriptorsCur.cols, m_descriptorsCur.type());
+  // if (debug_print) {
+  //   std::cout << "[track] Before filter, nb_correct1=" << nb_correct1 << " ; descriptorsCur=" << descriptorsCur.rows << "x" << descriptorsCur.cols << std::endl;
+  // }
+  // for (int i = 0, idx = 0; i < m_descriptorsCur.rows; i++) {
   //   if (status1[static_cast<size_t>(i)] == 1) {
-  //     cv::Mat dest = descriptorsRef(cv::Range(idx, idx+1), cv::Range::all());
-  //     m_descriptorsRef(cv::Range(i, i+1), cv::Range::all()).copyTo(dest);
+  //     cv::Mat dest = descriptorsCur(cv::Range(idx, idx+1), cv::Range::all());
+  //     m_descriptorsCur(cv::Range(i, i+1), cv::Range::all()).copyTo(dest);
   //     idx++;
   //   }
   // }
-  // m_descriptorsRef = descriptorsRef.clone();
-
-  cv::Mat descriptorsCur(nb_correct1, m_descriptorsCur.cols, m_descriptorsCur.type());
-  if (debug_print) {
-    std::cout << "[track] Before filter, nb_correct1=" << nb_correct1 << " ; descriptorsCur=" << descriptorsCur.rows << "x" << descriptorsCur.cols << std::endl;
-  }
-  for (int i = 0, idx = 0; i < m_descriptorsCur.rows; i++) {
-    if (status1[static_cast<size_t>(i)] == 1) {
-      cv::Mat dest = descriptorsCur(cv::Range(idx, idx+1), cv::Range::all());
-      m_descriptorsCur(cv::Range(i, i+1), cv::Range::all()).copyTo(dest);
-      idx++;
-    }
-  }
-  if (debug_print) {
-    std::cout << "[track] After filter, nb_correct1=" << nb_correct1 << " ; descriptorsCur=" << descriptorsCur.rows << "x" << descriptorsCur.cols << std::endl;
-    // std::cout << "m_descriptorsCur[0,0]=" << m_descriptorsCur.at<float>(0, 0) << " ; m_descriptorsCur[1,0]=" << m_descriptorsCur.at<float>(1, 0) << std::endl;
-    // std::cout << "descriptorsCur[0,0]=" << descriptorsCur.at<float>(0, 0) << " ; descriptorsCur[1,0]=" << descriptorsCur.at<float>(1, 0) << std::endl;
-    // std::cout << "status1[0]=" << int(status1[0]) << " ; status1[1]=" << int(status1[1]) << std::endl;
-  }
-  // m_descriptorsCur = descriptorsCur.clone();
-  m_descriptorsCur = descriptorsCur;
+  // if (debug_print) {
+  //   std::cout << "[track] After filter, nb_correct1=" << nb_correct1 << " ; descriptorsCur=" << descriptorsCur.rows << "x" << descriptorsCur.cols << std::endl;
+  //   // std::cout << "m_descriptorsCur[0,0]=" << m_descriptorsCur.at<float>(0, 0) << " ; m_descriptorsCur[1,0]=" << m_descriptorsCur.at<float>(1, 0) << std::endl;
+  //   // std::cout << "descriptorsCur[0,0]=" << descriptorsCur.at<float>(0, 0) << " ; descriptorsCur[1,0]=" << descriptorsCur.at<float>(1, 0) << std::endl;
+  //   // std::cout << "status1[0]=" << int(status1[0]) << " ; status1[1]=" << int(status1[1]) << std::endl;
+  // }
+  // // m_descriptorsCur = descriptorsCur.clone();
+  // m_descriptorsCur = descriptorsCur;
   if (debug_print) {
     std::cout << "[track] After filter, m_descriptorsCur=" << m_descriptorsCur.rows << "x" << m_descriptorsCur.cols << std::endl;
   }

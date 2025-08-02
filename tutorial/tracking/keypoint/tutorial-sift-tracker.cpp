@@ -25,8 +25,9 @@ int main(int argc, const char *argv[])
     unsigned int opt_subsample = 1;
     bool click = false;
     int filterType = 0;
-    float ratioThresh = 0.8;
+    float ratioThresh = 0.65;
     bool useAKAZE = false;
+    bool track_on_prev = false;
 
     for (int i = 1; i < argc; i++) {
       if (std::string(argv[i]) == "--videoname" && i+1 < argc) {
@@ -47,12 +48,16 @@ int main(int argc, const char *argv[])
       else if (std::string(argv[i]) == "--AKAZE") {
         useAKAZE = true;
       }
+      else if (std::string(argv[i]) == "--track-on-prev") {
+        track_on_prev = true;
+      }
       else if (std::string(argv[i]) == "--help" || std::string(argv[i]) == "-h") {
         std::cout << "Usage: " << argv[0]
           << " [--videoname <video name>] [--subsample <scale factor>] [--click]"
           << " [--filter (0: None, 1: CrossCheck, 2: RatioTest)]"
           << " [--ratioThresh <0.8>]"
           << " [--AKAZE]"
+          << " [--track-on-prev]"
           << " [--help] [-h]" << std::endl;
         return EXIT_SUCCESS;
       }
@@ -66,6 +71,7 @@ int main(int argc, const char *argv[])
       std::cout << "Ratio test threshold: " << ratioThresh << std::endl;
     }
     std::cout << "Use AKAZE? " << useAKAZE << std::endl;
+    std::cout << "Track on previous image? " << track_on_prev << std::endl;
 
     //! [Create reader]
     vpVideoReader reader;
@@ -118,12 +124,17 @@ int main(int argc, const char *argv[])
       reader.acquire(Iacq);
       Iacq.subsample(opt_subsample, opt_subsample, I);
 
-      // I_match.insert(I_prev, vpImagePoint(0, 0));
+      if (track_on_prev) {
+        I_match.insert(I_prev, vpImagePoint(0, 0));
+      }
       I_match.insert(I, vpImagePoint(0, I_prev.getCols()));
 
       vpDisplay::display(I);
       vpDisplay::display(I_match);
 
+      if (track_on_prev) {
+        tracker.initTracking(cvI);
+      }
       vpImageConvert::convert(I, cvI);
 
       tracker.track(cvI);
