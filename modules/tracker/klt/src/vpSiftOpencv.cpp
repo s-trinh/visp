@@ -49,6 +49,8 @@
 #include <visp3/core/vpTrackingException.h>
 #include <visp3/klt/vpSiftOpencv.h>
 
+static const bool debug_print = true;
+
 BEGIN_VISP_NAMESPACE
 vpSiftOpencv::vpSiftOpencv(bool useAKAZE, const MatchingFilterType &type)
   : m_gray(), m_points_id(),
@@ -63,6 +65,9 @@ vpSiftOpencv::vpSiftOpencv(bool useAKAZE, const MatchingFilterType &type)
   if (m_AKAZE) {
     normType = cv::NORM_HAMMING;
     m_siftDetector = cv::AKAZE::create();
+    // m_siftDetector = cv::ORB::create();
+    // const int nfeatures = 100;
+    // m_siftDetector = cv::ORB::create(nfeatures);
   }
   else {
     m_siftDetector = cv::SiftFeatureDetector::create();
@@ -147,7 +152,6 @@ void vpSiftOpencv::initTracking(const cv::Mat &I, const cv::Mat &mask)
     m_points_id.push_back(m_next_points_id++);
   }
 
-  const bool debug_print = false;
   if (debug_print) {
     std::cout << "[initTracking] m_points[1]=" << m_points[1].size() << " ; m_points_id=" << m_points_id.size() << std::endl;
 
@@ -195,23 +199,13 @@ void mat2vec(const cv::Mat &mat, std::vector<std::vector<type>> &vec_of_vec)
   }
 }
 
-void trimMat(const cv::Mat &matRef, const std::vector<int> &status, cv::Mat &mat)
+void trimMat(const cv::Mat &matRef, const std::vector<int> &vec_idx, cv::Mat &mat)
 {
-  int nb_correct = 0;
-  for (size_t i = 0; i < status.size(); i++) {
-    if (status[i] != 0) {
-      nb_correct++;
-    }
-  }
+  mat = cv::Mat(vec_idx.size(), matRef.cols, matRef.type());
 
-  mat = cv::Mat(nb_correct, matRef.cols, matRef.type());
-
-  for (int i = 0, idx = 0; i < matRef.rows; i++) {
-    if (status[static_cast<size_t>(i)] != 0) {
-      cv::Mat dest = mat(cv::Range(idx, idx+1), cv::Range::all());
-      matRef(cv::Range(i, i+1), cv::Range::all()).copyTo(dest);
-      idx++;
-    }
+  for (size_t i = 0; i < vec_idx.size(); i++) {
+    cv::Mat dest = mat(cv::Range(i, i+1), cv::Range::all());
+    matRef(cv::Range(vec_idx[i], vec_idx[i]+1), cv::Range::all()).copyTo(dest);
   }
 }
 
@@ -219,8 +213,6 @@ void trimMat(const cv::Mat &matRef, const std::vector<int> &status, cv::Mat &mat
 
 void vpSiftOpencv::track(const cv::Mat &I)
 {
-  const bool debug_print = false;
-
   if (m_points[1].size() == 0) {
     throw vpTrackingException(vpTrackingException::fatalError, "Not enough key points to track.");
   }
@@ -260,38 +252,54 @@ void vpSiftOpencv::track(const cv::Mat &I)
   }
   else {
     m_descriptorsMatcher->match(m_descriptorsCur, m_descriptorsRef, m_matches10);
+
+    // // Try match train to query
+    // m_descriptorsMatcher->match(m_descriptorsRef, m_descriptorsCur, m_matches01);
+    // m_matches10.reserve(m_matches01.size());
+
+    // for (size_t i = 0; i < m_matches01.size(); i++) {
+    //   const cv::DMatch &m01 = m_matches01[i];
+    //   m_matches10.push_back(cv::DMatch(m01.trainIdx, m01.queryIdx, m01.distance));
+    // }
   }
   if (debug_print) {
-    std::cout << "[track] m_matches01=" << m_matches01.size() << " ; m_matches10=" << m_matches10.size() << std::endl;
+    std::cout << "[track] m_matches01=" << m_matches01.size() << " ; m_matches10=" << m_matches10.size() << " ; m_points_id=" << m_points_id.size() << std::endl;
   }
 
   // Remove query points that are matches to the same train points
-  if (m_filterType != CrossCheck && m_matches01.size() > 1) {
-    std::vector<int> status;
+  if (m_filterType != CrossCheck && m_matches10.size() > 1) {
+    std::vector<int> vec_idx;
 
-    for (int idx1 = static_cast<int>(m_matches01.size())-1; idx1 >= 0; idx1--) {
+    for (int idx1 = static_cast<int>(m_matches10.size())-1; idx1 >= 0; idx1--) {
       bool same_train = false;
-      int train_idx = m_matches01[idx1].trainIdx;
+      int train_idx = m_matches10[idx1].trainIdx;
 
       for (int idx2 = 0; idx2 < idx1 && !same_train; idx2++) {
-        if (m_matches01[idx2].trainIdx == train_idx) {
+        if (m_matches10[idx2].trainIdx == train_idx) {
           same_train = true;
         }
       }
 
       if (same_train) {
-        status.push_back(0);
-        m_points_id.erase(m_points_id.begin() + idx1);
-        m_matches01.erase(m_matches01.begin() + idx1);
+        // m_points_id.erase(m_points_id.begin() + idx1);
+        m_matches10.erase(m_matches10.begin() + idx1);
       }
       else {
-        status.push_back(1);
+        vec_idx.push_back(m_matches10[idx1].queryIdx);
       }
     }
 
+    if (debug_print) {
+      std::cout << "[track] m_matches01=" << m_matches01.size() << " ; m_matches10=" << m_matches10.size() << " ; vec_idx=" << vec_idx.size() << std::endl;
+    }
+
     cv::Mat descriptorsCur_trim;
-    trimMat(m_descriptorsCur, status, descriptorsCur_trim);
-    m_descriptorsCur = descriptorsCur_trim.clone();
+    trimMat(m_descriptorsCur, vec_idx, descriptorsCur_trim);
+    // m_descriptorsCur = descriptorsCur_trim.clone();
+    m_descriptorsCur = descriptorsCur_trim;
+  }
+  if (debug_print) {
+    std::cout << "[track] m_matches01=" << m_matches01.size() << " ; m_matches10=" << m_matches10.size() << " ; m_points_id=" << m_points_id.size() << std::endl;
   }
 
   m_points[0].clear();
@@ -375,7 +383,8 @@ void vpSiftOpencv::track(const cv::Mat &I)
     // std::cout << "descriptorsCur[0,0]=" << descriptorsCur.at<float>(0, 0) << " ; descriptorsCur[1,0]=" << descriptorsCur.at<float>(1, 0) << std::endl;
     // std::cout << "status1[0]=" << int(status1[0]) << " ; status1[1]=" << int(status1[1]) << std::endl;
   }
-  m_descriptorsCur = descriptorsCur.clone();
+  // m_descriptorsCur = descriptorsCur.clone();
+  m_descriptorsCur = descriptorsCur;
   if (debug_print) {
     std::cout << "[track] After filter, m_descriptorsCur=" << m_descriptorsCur.rows << "x" << m_descriptorsCur.cols << std::endl;
   }
