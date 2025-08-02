@@ -43,13 +43,19 @@
 
 #if defined(VISP_HAVE_MODULE_KLT) && defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO)
 
+#define USE_SIFT 0
+
 #include <visp3/core/vpExponentialMap.h>
 #include <visp3/core/vpMeterPixelConversion.h>
 #include <visp3/core/vpPixelMeterConversion.h>
 #include <visp3/core/vpSubColVector.h>
 #include <visp3/core/vpSubMatrix.h>
-#include <visp3/klt/vpKltOpencv.h>
+#if USE_SIFT
 #include <visp3/klt/vpSiftOpencv.h>
+#include <visp3/klt/vpKltOpencv.h>
+#else
+#include <visp3/klt/vpKltOpencv.h>
+#endif
 #include <visp3/mbt/vpMbTracker.h>
 #include <visp3/mbt/vpMbtDistanceCircle.h>
 #include <visp3/mbt/vpMbtDistanceKltCylinder.h>
@@ -238,8 +244,11 @@ protected:
   //! the initial position.
   vpHomogeneousMatrix ctTc0;
   //! Points tracker.
-  // vpKltOpencv trackerKlt;
+#if USE_SIFT
   vpSiftOpencv trackerKlt;
+#else
+  vpKltOpencv trackerKlt;
+#endif
   //!
   std::list<vpMbtDistanceKltPoints *> kltPolygons;
   //!
@@ -301,8 +310,11 @@ public:
    */
   inline vpKltOpencv getKltOpencv() const
   {
-    // return trackerKlt;
+#if USE_SIFT
     return vpKltOpencv();
+#else
+    return trackerKlt;
+#endif
   }
 
   /*!

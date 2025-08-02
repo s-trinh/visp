@@ -40,6 +40,8 @@
 
 #if defined(VISP_HAVE_MODULE_KLT) && defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO)
 
+#define USE_SIFT 0
+
 #include <map>
 
 #include <visp3/core/vpCircle.h>
@@ -48,8 +50,11 @@
 #include <visp3/core/vpGEMM.h>
 #include <visp3/core/vpPlane.h>
 #include <visp3/core/vpPolygon3D.h>
-#include <visp3/klt/vpKltOpencv.h>
+#if USE_SIFT
 #include <visp3/klt/vpSiftOpencv.h>
+#else
+#include <visp3/klt/vpKltOpencv.h>
+#endif
 #include <visp3/mbt/vpMbHiddenFaces.h>
 #include <visp3/vision/vpHomography.h>
 
@@ -141,8 +146,11 @@ public:
 
   void buildFrom(const vpPoint &p1, const vpPoint &p2, const double &r);
 
-  // unsigned int computeNbDetectedCurrent(const vpKltOpencv &_tracker);
+#if USE_SIFT
   unsigned int computeNbDetectedCurrent(const vpSiftOpencv &_tracker);
+#else
+  unsigned int computeNbDetectedCurrent(const vpKltOpencv &_tracker);
+#endif
   void computeInteractionMatrixAndResidu(const vpHomogeneousMatrix &cMc0, vpColVector &_R, vpMatrix &_J);
 
   void display(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam,
@@ -200,8 +208,11 @@ public:
   */
   inline bool isTracked() const { return isTrackedKltCylinder; }
 
-  // void init(const vpKltOpencv &_tracker, const vpHomogeneousMatrix &cMo);
+#if USE_SIFT
   void init(const vpSiftOpencv &_tracker, const vpHomogeneousMatrix &cMo);
+#else
+  void init(const vpKltOpencv &_tracker, const vpHomogeneousMatrix &cMo);
+#endif
 
   void removeOutliers(const vpColVector &weight, const double &threshold_outlier);
 

@@ -50,6 +50,7 @@
 #include <visp3/klt/vpSiftOpencv.h>
 
 static const bool debug_print = false;
+static const bool debug_display = false;
 
 BEGIN_VISP_NAMESPACE
 vpSiftOpencv::vpSiftOpencv(bool useAKAZE, const MatchingFilterType &type)
@@ -155,7 +156,9 @@ void vpSiftOpencv::initTracking(const cv::Mat &I, const cv::Mat &mask)
 
   if (debug_print) {
     std::cout << "[initTracking] m_points[1]=" << m_points[1].size() << " ; m_points_id=" << m_points_id.size() << std::endl;
+  }
 
+  if (debug_display) {
     // Debug
     cv::cvtColor(I, m_leftMat, cv::COLOR_GRAY2BGR);
     m_displayMat = cv::Mat3b(I.rows, 2*I.cols);
@@ -338,21 +341,30 @@ void vpSiftOpencv::track(const cv::Mat &I)
     std::cout << "[track] After filter, m_descriptorsCur=" << m_descriptorsCur.rows << "x" << m_descriptorsCur.cols << std::endl;
   }
 
-  if (debug_print) {
+  if (debug_display) {
     // Debug
     cv::Mat I_color;
     cv::cvtColor(I, I_color, cv::COLOR_GRAY2BGR);
 
     m_leftMat.copyTo(m_displayMat(cv::Rect(0, 0, m_leftMat.cols, m_leftMat.rows)));
     I_color.copyTo(m_displayMat(cv::Rect(m_leftMat.cols, 0, I_color.cols, I_color.rows)));
-    std::cout << "[track] m_points[0]=" << m_points[0].size() << " ; m_points[1]=" << m_points[1].size() << " ; m_points_id=" << m_points_id.size() << std::endl;
+    if (debug_print) {
+      std::cout << "[track] m_points[0]=" << m_points[0].size() << " ; m_points[1]=" << m_points[1].size() << " ; m_points_id=" << m_points_id.size() << std::endl;
+    }
 
     for (size_t i = 0; i < m_points[0].size(); i++) {
       cv::line(m_displayMat, m_points[0][i], cv::Point(m_points[1][i].x + I_color.cols, m_points[1][i].y), cv::Scalar(0, 255, 0));
+
+      cv::drawMarker(m_displayMat, m_points[0][i], cv::Scalar(0, 0, 255), cv::MARKER_CROSS, 8);
+      cv::drawMarker(m_displayMat, cv::Point(m_points[1][i].x + I_color.cols, m_points[1][i].y), cv::Scalar(0, 0, 255), cv::MARKER_CROSS, 8);
+
+      std::ostringstream id;
+      id << m_points_id[i];
+      cv::putText(m_displayMat, id.str(), cv::Point(m_points[0][i].x + 5, m_points[0][i].y), 0, 0.4, cv::Scalar(0, 0, 255));
     }
 
     cv::imshow("DEBUG", m_displayMat);
-    cv::waitKey(30);
+    cv::waitKey(1);
 
     m_leftMat = I_color;
   }
@@ -529,6 +541,30 @@ void vpSiftOpencv::suppressFeature(const int &index)
 
   m_points[1].erase(m_points[1].begin() + index);
   m_points_id.erase(m_points_id.begin() + index);
+}
+
+void vpSiftOpencv::suppressFeatures(const cv::Mat &mask)
+{
+  std::vector<int> correct_idx;
+  for (size_t i = 0; i < m_keyPointsCur.size(); i++) {
+    if (mask.at<uchar>(m_keyPointsCur[i].pt) != 0) {
+      correct_idx.push_back(i);
+    }
+  }
+
+  cv::Mat descriptorsCur;
+  trimMat(m_descriptorsCur, correct_idx, descriptorsCur);
+  m_descriptorsCur = descriptorsCur;
+
+  for (int i = static_cast<int>(m_keyPointsCur.size()) - 1; i >= 0; i--) {
+    if (mask.at<uchar>(m_keyPointsCur[i].pt) == 0) {
+      m_points[0].erase(m_points[0].begin() + i);
+      m_points[1].erase(m_points[1].begin() + i);
+      m_points_id.erase(m_points_id.begin() + i);
+
+      m_keyPointsCur.erase(m_keyPointsCur.begin() + i);
+    }
+  }
 }
 END_VISP_NAMESPACE
 #else

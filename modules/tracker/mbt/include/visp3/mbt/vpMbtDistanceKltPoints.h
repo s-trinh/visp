@@ -40,14 +40,19 @@
 
 #if defined(VISP_HAVE_MODULE_KLT) && defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO)
 
+#define USE_SIFT 0
+
 #include <map>
 
 #include <visp3/core/vpDisplay.h>
 #include <visp3/core/vpGEMM.h>
 #include <visp3/core/vpPlane.h>
 #include <visp3/core/vpPolygon3D.h>
-#include <visp3/klt/vpKltOpencv.h>
+#if USE_SIFT
 #include <visp3/klt/vpSiftOpencv.h>
+#else
+#include <visp3/klt/vpKltOpencv.h>
+#endif
 #include <visp3/mbt/vpMbHiddenFaces.h>
 #include <visp3/vision/vpHomography.h>
 
@@ -140,8 +145,11 @@ public:
   vpMbtDistanceKltPoints();
   virtual ~vpMbtDistanceKltPoints();
 
-  // unsigned int computeNbDetectedCurrent(const vpKltOpencv &_tracker, const vpImage<bool> *mask = nullptr);
+#if USE_SIFT
   unsigned int computeNbDetectedCurrent(const vpSiftOpencv &_tracker, const vpImage<bool> *mask = nullptr);
+#else
+  unsigned int computeNbDetectedCurrent(const vpKltOpencv &_tracker, const vpImage<bool> *mask = nullptr);
+#endif
   void computeHomography(const vpHomogeneousMatrix &_cTc0, vpHomography &cHc0);
   void computeInteractionMatrixAndResidu(vpColVector &_R, vpMatrix &_J);
 
@@ -193,8 +201,11 @@ public:
 
   inline bool hasEnoughPoints() const { return enoughPoints; }
 
-  // void init(const vpKltOpencv &_tracker, const vpImage<bool> *mask = nullptr);
+#if USE_SIFT
   void init(const vpSiftOpencv &_tracker, const vpImage<bool> *mask = nullptr);
+#else
+  void init(const vpKltOpencv &_tracker, const vpImage<bool> *mask = nullptr);
+#endif
 
   /*!
    Return if the klt points are used for tracking.

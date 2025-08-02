@@ -256,7 +256,7 @@ void vpMbKltTracker::reinit(const vpImage<unsigned char> &I)
   }
 
   trackerKlt.initTracking(cur, mask);
-  //  tracker.track(cur); // AY: Not sure to be usefull but makes sure that
+  // trackerKlt.track(cur); // AY: Not sure to be usefull but makes sure that
   //  the points are valid for tracking and avoid too fast reinitialisations.
   //  vpCTRACE << "init klt. detected " << tracker.getNbFeatures() << "
   //  points" << std::endl;
@@ -718,6 +718,29 @@ bool vpMbKltTracker::postTracking(const vpImage<unsigned char> &I, vpColVector &
   // more speed performance.
   bool reInitialisation = false;
 
+  // TODO:
+  // mask
+  cv::Mat mask(static_cast<int>(I.getRows()), static_cast<int>(I.getCols()), CV_8UC1, cv::Scalar(0));
+
+  // vpMbtDistanceKltPoints *kltpoly;
+  // vpMbtDistanceKltCylinder *kltPolyCylinder;
+  // if (useScanLine) {
+  //   vpImageConvert::convert(faces.getMbScanLineRenderer().getMask(), mask);
+  // }
+  // else {
+  //   unsigned char val = 255 /* - i*15*/;
+  //   for (std::list<vpMbtDistanceKltPoints *>::const_iterator it = kltPolygons.begin(); it != kltPolygons.end(); ++it) {
+  //     kltpoly = *it;
+  //     if (kltpoly->polygon->isVisible() && kltpoly->isTracked() && kltpoly->polygon->getNbPoint() > 2) {
+  //       // need to changeFrame when reinit() is called by postTracking
+  //       // other solution is
+  //       kltpoly->polygon->changeFrame(m_cMo);
+  //       kltpoly->polygon->computePolygonClipped(m_cam); // Might not be necessary when scanline is activated
+  //       kltpoly->updateMask(mask, val, maskBorder);
+  //     }
+  //   }
+  // }
+
   unsigned int initialNumber = 0;
   unsigned int currentNumber = 0;
   unsigned int shift = 0;
@@ -725,6 +748,10 @@ bool vpMbKltTracker::postTracking(const vpImage<unsigned char> &I, vpColVector &
   for (std::list<vpMbtDistanceKltPoints *>::const_iterator it = kltPolygons.begin(); it != kltPolygons.end(); ++it) {
     vpMbtDistanceKltPoints *kltpoly = *it;
     if (kltpoly->polygon->isVisible() && kltpoly->isTracked() && kltpoly->polygon->getNbPoint() > 2) {
+      kltpoly->polygon->changeFrame(m_cMo);
+      kltpoly->polygon->computePolygonClipped(m_cam); // Might not be necessary when scanline is activated
+      kltpoly->updateMask(mask, 255, maskBorder);
+
       initialNumber += kltpoly->getInitialNumberPoint();
       if (kltpoly->hasEnoughPoints()) {
         vpSubColVector sub_w(w, shift, 2 * kltpoly->getCurrentNumberPoints());
@@ -775,6 +802,13 @@ bool vpMbKltTracker::postTracking(const vpImage<unsigned char> &I, vpColVector &
     }
   }
   //   }
+
+#if USE_SIFT
+  // TODO:
+  trackerKlt.suppressFeatures(mask);
+  // cv::imshow("MASK", mask);
+  // cv::waitKey(30);
+#endif
 
   if (reInitialisation)
     return true;

@@ -263,6 +263,8 @@ public:
    */
   void suppressFeature(const int &index);
 
+  void suppressFeatures(const cv::Mat &mask);
+
   float getRatioThreshold() const
   {
     return m_ratioThreshold;
