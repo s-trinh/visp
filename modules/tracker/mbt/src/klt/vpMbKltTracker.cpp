@@ -706,6 +706,9 @@ void vpMbKltTracker::preTracking(const vpImage<unsigned char> &I)
       }
     }
   }
+
+  // // TODO:
+  // std::cout << "[vpMbKltTracker::preTracking] m_nbInfos=" << m_nbInfos << std::endl;
 }
 
 /*!
@@ -744,6 +747,8 @@ bool vpMbKltTracker::postTracking(const vpImage<unsigned char> &I, vpColVector &
   unsigned int initialNumber = 0;
   unsigned int currentNumber = 0;
   unsigned int shift = 0;
+  // TODO:
+  std::vector<int> remove_idx;
   //  for (unsigned int i = 0; i < faces.size(); i += 1){
   for (std::list<vpMbtDistanceKltPoints *>::const_iterator it = kltPolygons.begin(); it != kltPolygons.end(); ++it) {
     vpMbtDistanceKltPoints *kltpoly = *it;
@@ -757,6 +762,8 @@ bool vpMbKltTracker::postTracking(const vpImage<unsigned char> &I, vpColVector &
         vpSubColVector sub_w(w, shift, 2 * kltpoly->getCurrentNumberPoints());
         shift += 2 * kltpoly->getCurrentNumberPoints();
         kltpoly->removeOutliers(sub_w, threshold_outlier);
+        // // TODO:
+        // kltpoly->removeOutliers(sub_w, threshold_outlier, remove_idx);
 
         currentNumber += kltpoly->getCurrentNumberPoints();
       }
@@ -766,6 +773,16 @@ bool vpMbKltTracker::postTracking(const vpImage<unsigned char> &I, vpColVector &
       //       }
     }
   }
+
+  // TODO:
+  // std::sort(remove_idx.begin(), remove_idx.end());
+  // std::cout << std::endl;
+  // std::cout << "Remove, remove_idx nb=" << remove_idx.size() << std::endl;
+  // for (int i = static_cast<int>(remove_idx.size())-1; i >= 0; i--) {
+  //   // std::cout << "Remove: " << remove_idx[i] << std::endl;
+  //   // trackerKlt.suppressFeature(remove_idx[i]);
+  // }
+  // // std::cout << "After suppressFeatures: " << trackerKlt.getNbFeatures() << std::endl;
 
   for (std::list<vpMbtDistanceKltCylinder *>::const_iterator it = kltCylinders.begin(); it != kltCylinders.end();
        ++it) {

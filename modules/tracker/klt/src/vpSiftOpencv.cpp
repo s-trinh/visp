@@ -50,7 +50,7 @@
 #include <visp3/klt/vpSiftOpencv.h>
 
 static const bool debug_print = false;
-static const bool debug_display = false;
+static const bool debug_display = true;
 
 BEGIN_VISP_NAMESPACE
 vpSiftOpencv::vpSiftOpencv(bool useAKAZE, const MatchingFilterType &type)
@@ -213,6 +213,30 @@ void trimMat(const cv::Mat &matRef, const std::vector<int> &vec_idx, cv::Mat &ma
   }
 }
 
+void trimMatInv(const cv::Mat &matRef, const std::vector<int> &vec_idx, cv::Mat &mat)
+{
+  std::vector<int> vec_idx_correct;
+  vec_idx_correct.reserve(matRef.rows - static_cast<int>(vec_idx.size()));
+
+  for (int i = 0; i < matRef.rows; i++) {
+    if (static_cast<int>(i) != vec_idx[i]) {
+      vec_idx_correct.push_back(i);
+    }
+  }
+
+  trimMat(matRef, vec_idx_correct, mat);
+
+
+  // mat = cv::Mat(matRef.rows - vec_idx.size(), matRef.cols, matRef.type());
+
+  // for (size_t i = 0; i < vec_idx.size(); i++) {
+  //   if (static_cast<int>(i) != vec_idx[i]) {
+  //     cv::Mat dest = mat(cv::Range(i, i+1), cv::Range::all());
+  //     matRef(cv::Range(vec_idx[i], vec_idx[i]+1), cv::Range::all()).copyTo(dest);
+  //   }
+  // }
+}
+
 
 
 void vpSiftOpencv::track(const cv::Mat &I)
@@ -308,9 +332,6 @@ void vpSiftOpencv::track(const cv::Mat &I)
   m_points[0].clear();
   m_points[1].clear();
   std::vector<long> points_id = m_points_id;
-  if (!m_points_id.empty()) {
-    points_id = m_points_id;
-  }
   // m_points_id = std::vector<long>(m_keyPointsCur.size(), -1);
   m_points_id.clear();
 
@@ -513,6 +534,9 @@ void vpSiftOpencv::display(const vpImage<vpRGBa> &I, const std::vector<cv::Point
 
 void vpSiftOpencv::addFeature(const float &x, const float &y)
 {
+  // TODO:
+  throw std::runtime_error("DISABLE vpSiftOpencv::addFeature");
+
   cv::Point2f f(x, y);
   m_points[1].push_back(f);
   m_points_id.push_back(m_next_points_id++);
@@ -536,11 +560,20 @@ void vpSiftOpencv::addFeature(const cv::Point2f &f)
 void vpSiftOpencv::suppressFeature(const int &index)
 {
   if (static_cast<size_t>(index) >= m_points[1].size()) {
-    throw(vpException(vpException::badValue, "Feature [%d] doesn't exist", index));
+    throw(vpException(vpException::badValue, "Feature [%d] doesn't exist ; m_points_id.size=%d", index, static_cast<int>(m_points_id.size())));
   }
+
+  // std::cout << "m_keyPointsCur=" << m_keyPointsCur.size() << " ; m_descriptorsCur=" << m_descriptorsCur.rows << std::endl;
 
   m_points[1].erase(m_points[1].begin() + index);
   m_points_id.erase(m_points_id.begin() + index);
+  m_keyPointsCur.erase(m_keyPointsCur.begin() + index);
+
+  cv::Mat descriptorsCur;
+  std::vector<int> correct_idx;
+  correct_idx.push_back(index);
+  trimMatInv(m_descriptorsCur, correct_idx, descriptorsCur);
+  m_descriptorsCur = descriptorsCur;
 }
 
 void vpSiftOpencv::suppressFeatures(const cv::Mat &mask)

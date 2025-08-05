@@ -40,7 +40,7 @@
 
 #if defined(VISP_HAVE_MODULE_KLT) && defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO)
 
-#define USE_SIFT 0
+#define USE_SIFT 1
 
 #include <map>
 

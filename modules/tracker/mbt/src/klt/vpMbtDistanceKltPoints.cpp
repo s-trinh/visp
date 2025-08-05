@@ -600,6 +600,44 @@ void vpMbtDistanceKltPoints::removeOutliers(const vpColVector &_w, const double 
   }
 }
 
+// TODO:
+void vpMbtDistanceKltPoints::removeOutliers(const vpColVector &_w, const double &threshold_outlier, std::vector<int> &remove_idx)
+{
+  std::map<int, vpImagePoint> tmp;
+  std::map<int, int> tmp2;
+  unsigned int nbSupp = 0;
+  unsigned int k = 0;
+
+  nbPointsCur = 0;
+  std::map<int, vpImagePoint>::const_iterator iter = curPoints.begin();
+  for (; iter != curPoints.end(); ++iter) {
+    if (_w[k] > threshold_outlier && _w[k + 1] > threshold_outlier) {
+      //     if(_w[k] > threshold_outlier || _w[k+1] > threshold_outlier){
+      tmp[iter->first] = vpImagePoint(iter->second.get_i(), iter->second.get_j());
+      tmp2[iter->first] = curPointsInd[iter->first];
+      nbPointsCur++;
+    }
+    else {
+      nbSupp++;
+      initPoints.erase(iter->first);
+      remove_idx.push_back(curPointsInd[iter->first]);
+    }
+
+    k += 2;
+  }
+
+  std::cout << "nbSupp=" << nbSupp << " ; remove_idx=" << remove_idx.size() << std::endl;
+
+  if (nbSupp != 0) {
+    curPoints = tmp;
+    curPointsInd = tmp2;
+    if (nbPointsCur >= minNbPoint)
+      enoughPoints = true;
+    else
+      enoughPoints = false;
+  }
+}
+
 /*!
   Display the primitives tracked for the face.
 

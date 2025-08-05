@@ -40,7 +40,7 @@
 
 #if defined(VISP_HAVE_MODULE_KLT) && defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO)
 
-#define USE_SIFT 0
+#define USE_SIFT 1
 
 #include <map>
 
@@ -215,6 +215,9 @@ public:
   inline bool isTracked() const { return isTrackedKltPoints; }
 
   void removeOutliers(const vpColVector &weight, const double &threshold_outlier);
+
+  // TODO:
+  void removeOutliers(const vpColVector &weight, const double &threshold_outlier, std::vector<int> &remove_idx);
 
   /*!
     Set the camera parameters
