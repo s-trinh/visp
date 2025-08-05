@@ -439,7 +439,13 @@ int main(int argc, char **argv)
 
           run_auto_init = false;
         }
+        double t_start = vpTime::measureTimeMs();
         tracker.track(I);
+        double t_end = vpTime::measureTimeMs();
+
+        std::ostringstream oss;
+        oss << "Computation time " << (t_end - t_start) << " ms";
+        vpDisplay::displayText(I, 50, 20, oss.str(), vpColor::red);
       }
       catch (const vpException &e) {
         std::cout << "Tracker exception: " << e.getStringMessage() << std::endl;
@@ -546,6 +552,9 @@ int main(int argc, char **argv)
         }
         else if (button == vpMouseButton::button1 && opt_auto_init && !opt_learn) {
           run_auto_init = true;
+        }
+        else if (button == vpMouseButton::button2) {
+          tracking_failed = true;
         }
       }
 

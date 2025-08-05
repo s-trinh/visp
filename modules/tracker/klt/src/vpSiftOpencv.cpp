@@ -45,12 +45,17 @@
 
 #include <string>
 
+#include <opencv2/video/tracking.hpp>
+
 #include <visp3/core/vpDisplay.h>
 #include <visp3/core/vpTrackingException.h>
 #include <visp3/klt/vpSiftOpencv.h>
 
+#define USE_GFTT 0
+
 static const bool debug_print = false;
 static const bool debug_display = true;
+static const bool use_SIFT_KLT = true;
 
 BEGIN_VISP_NAMESPACE
 vpSiftOpencv::vpSiftOpencv(bool useAKAZE, const MatchingFilterType &type)
@@ -66,6 +71,7 @@ vpSiftOpencv::vpSiftOpencv(bool useAKAZE, const MatchingFilterType &type)
   if (m_AKAZE) {
     normType = cv::NORM_HAMMING;
     m_siftDetector = cv::AKAZE::create();
+    // m_siftDetector = cv::BRISK::create();
     // m_siftDetector = cv::ORB::create();
 
     // const int nfeatures = 100;
@@ -145,11 +151,40 @@ void vpSiftOpencv::initTracking(const cv::Mat &I, const cv::Mat &mask)
   m_points_id.clear();
 
   m_keyPointsCur.clear();
+#if 1 // !USE_GFTT
+  // m_siftDetector->detectAndCompute(I, cv::noArray(), m_keyPointsCur, m_descriptorsCur);
   m_siftDetector->detectAndCompute(m_gray, mask, m_keyPointsCur, m_descriptorsCur);
 
   for (size_t i = 0; i < m_keyPointsCur.size(); i++) {
     m_points[1].push_back(m_keyPointsCur[i].pt);
   }
+#else // This does not work, need some attributes and need to use GFTT
+  int maxCount = 10000;
+  double qualityLevel = 0.01;
+  double minDistance = 15;
+  int blockSize = 3;
+  double harris_k = 0.04;
+
+  cv::goodFeaturesToTrack(m_gray, m_points[1], maxCount, qualityLevel, minDistance, mask, blockSize, false,
+                          harris_k);
+
+  if (m_points[1].size() > 0) {
+    std::cout << "[goodFeaturesToTrack] m_points[1]=" << m_points[1].size() << std::endl;
+
+    int winSize = 11;
+    cv::TermCriteria termcrit = cv::TermCriteria(cv::TermCriteria::COUNT | cv::TermCriteria::EPS, 20, 0.03);
+
+    cv::cornerSubPix(m_gray, m_points[1], cv::Size(winSize, winSize), cv::Size(-1, -1), termcrit);
+
+    m_keyPointsCur.reserve(m_points[1].size());
+    for (size_t i = 0; i < m_points[1].size(); i++) {
+      m_keyPointsCur.push_back(cv::KeyPoint(cv::Point2f(m_points[1][i].x, m_points[1][i].y), 4.800000191));
+    }
+
+    m_siftDetector->compute(m_gray, m_keyPointsCur, m_descriptorsCur);
+  }
+#endif
+
   for (size_t i = 0; i < m_points[1].size(); i++) {
     m_points_id.push_back(m_next_points_id++);
   }
@@ -251,7 +286,36 @@ void vpSiftOpencv::track(const cv::Mat &I)
   }
 
   m_keyPointsCur.clear();
+#if 1 // !USE_GFTT
   m_siftDetector->detectAndCompute(I, cv::noArray(), m_keyPointsCur, m_descriptorsCur);
+  // std::cout << "GFTT size=" << m_keyPointsCur[0].size << " ; class_id=" << m_keyPointsCur[0].class_id << " ; response=" << m_keyPointsCur[0].response << std::endl;
+#else // This does not work, need some attributes and need to use GFTT
+  int maxCount = 10000;
+  double qualityLevel = 0.01;
+  double minDistance = 15;
+  int blockSize = 3;
+  double harris_k = 0.04;
+
+  m_points[1].clear();
+  cv::goodFeaturesToTrack(I, m_points[1], maxCount, qualityLevel, minDistance, cv::noArray(), blockSize, false,
+                          harris_k);
+
+  if (m_points[1].size() > 0) {
+    // std::cout << "[goodFeaturesToTrack] m_points[1]=" << m_points[1].size() << std::endl;
+
+    int winSize = 11;
+    cv::TermCriteria termcrit = cv::TermCriteria(cv::TermCriteria::COUNT | cv::TermCriteria::EPS, 20, 0.03);
+
+    cv::cornerSubPix(m_gray, m_points[1], cv::Size(winSize, winSize), cv::Size(-1, -1), termcrit);
+
+    m_keyPointsCur.reserve(m_points[1].size());
+    for (size_t i = 0; i < m_points[1].size(); i++) {
+      m_keyPointsCur.push_back(cv::KeyPoint(cv::Point2f(m_points[1][i].x, m_points[1][i].y), 4.800000191));
+    }
+
+    m_siftDetector->compute(I, m_keyPointsCur, m_descriptorsCur);
+  }
+#endif
 
   m_matches01.clear();
   m_matches10.clear();
@@ -286,6 +350,52 @@ void vpSiftOpencv::track(const cv::Mat &I)
     for (size_t i = 0; i < m_matches01.size(); i++) {
       const cv::DMatch &m01 = m_matches01[i];
       m_matches10.push_back(cv::DMatch(m01.trainIdx, m01.queryIdx, m01.distance));
+    }
+
+    if (use_SIFT_KLT) {
+      bool initial_guess = true;
+      if (m_prevGray.empty()) {
+        initial_guess = false;
+      }
+
+      cv::swap(m_prevGray, m_gray);
+      I.copyTo(m_gray);
+      if (m_prevGray.empty()) {
+        m_gray.copyTo(m_prevGray);
+      }
+
+      if (initial_guess) {
+        int flags = cv::OPTFLOW_USE_INITIAL_FLOW;
+        int pyrMaxLevel = 3;
+        cv::TermCriteria termcrit = cv::TermCriteria(cv::TermCriteria::COUNT | cv::TermCriteria::EPS, 20, 0.03);
+        int winSize = 11;
+        double minEigThreshold = 1e-4;
+        std::vector<float> err;
+
+        // std::swap(m_points[1], m_points[0]);
+        m_points[0].clear();
+        m_points[1].clear();
+        for (size_t i = 0; i < m_matches10.size(); i++) {
+          const cv::DMatch &match = m_matches10[i];
+          m_points[0].push_back(m_keyPointsRef[match.trainIdx].pt);
+          m_points[1].push_back(m_keyPointsCur[match.queryIdx].pt);
+        }
+
+        std::vector<uchar> status;
+        cv::calcOpticalFlowPyrLK(m_prevGray, m_gray, m_points[0], m_points[1], status, err, cv::Size(winSize, winSize),
+                                 pyrMaxLevel, termcrit, flags, minEigThreshold);
+        // std::cout << "[calcOpticalFlowPyrLK] m_matches10=" << m_matches10.size() << " ; status=" << status.size() << std::endl;
+
+        // Remove points that are lost
+        for (int i = static_cast<int>(status.size()) - 1; i >= 0; i--) {
+          if (status[static_cast<size_t>(i)] == 0) { // point is lost
+            m_matches10.erase(m_matches10.begin() + i);
+          }
+          else {
+            m_keyPointsCur[m_matches10[i].queryIdx].pt = m_points[1][i];
+          }
+        }
+      }
     }
   }
   if (debug_print) {

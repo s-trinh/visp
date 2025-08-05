@@ -282,6 +282,7 @@ public:
 
 protected:
   cv::Mat m_gray; //!< Gray image
+  cv::Mat m_prevGray; //!< Gray image
   std::vector<cv::Point2f> m_points[2]; //!< Previous [0] and current [1] keypoint location
   std::vector<long> m_points_id;        //!< Keypoint id
   long m_next_points_id; //!< Id for the newt keypoint

@@ -118,14 +118,16 @@ vpMbKltTracker::vpMbKltTracker()
   m_weightedError_klt(), m_robust_klt(), m_featuresToBeDisplayedKlt()
 {
   trackerKlt.setTrackerId(1);
-  // trackerKlt.setUseHarris(1);
-  // trackerKlt.setMaxFeatures(10000);
-  // trackerKlt.setWindowSize(5);
-  // trackerKlt.setQuality(0.01);
-  // trackerKlt.setMinDistance(5);
-  // trackerKlt.setHarrisFreeParameter(0.01);
-  // trackerKlt.setBlockSize(3);
-  // trackerKlt.setPyramidLevels(3);
+#if !USE_SIFT
+  trackerKlt.setUseHarris(1);
+  trackerKlt.setMaxFeatures(10000);
+  trackerKlt.setWindowSize(5);
+  trackerKlt.setQuality(0.01);
+  trackerKlt.setMinDistance(5);
+  trackerKlt.setHarrisFreeParameter(0.01);
+  trackerKlt.setBlockSize(3);
+  trackerKlt.setPyramidLevels(3);
+#endif
 
 #ifdef VISP_HAVE_OGRE
   faces.getOgreContext()->setWindowName("MBT Klt");
@@ -321,15 +323,17 @@ void vpMbKltTracker::resetTracker()
   computeCovariance = false;
 
   trackerKlt.setTrackerId(1);
-  // trackerKlt.setUseHarris(1);
+#if !USE_SIFT
+  trackerKlt.setUseHarris(1);
 
-  // trackerKlt.setMaxFeatures(10000);
-  // trackerKlt.setWindowSize(5);
-  // trackerKlt.setQuality(0.01);
-  // trackerKlt.setMinDistance(5);
-  // trackerKlt.setHarrisFreeParameter(0.01);
-  // trackerKlt.setBlockSize(3);
-  // trackerKlt.setPyramidLevels(3);
+  trackerKlt.setMaxFeatures(10000);
+  trackerKlt.setWindowSize(5);
+  trackerKlt.setQuality(0.01);
+  trackerKlt.setMinDistance(5);
+  trackerKlt.setHarrisFreeParameter(0.01);
+  trackerKlt.setBlockSize(3);
+  trackerKlt.setPyramidLevels(3);
+#endif
 
   angleAppears = vpMath::rad(89);
   angleDisappears = vpMath::rad(89);
@@ -407,13 +411,15 @@ std::map<int, vpImagePoint> vpMbKltTracker::getKltImagePointsWithId() const
 */
 void vpMbKltTracker::setKltOpencv(const vpKltOpencv &t)
 {
-  // trackerKlt.setMaxFeatures(t.getMaxFeatures());
-  // trackerKlt.setWindowSize(t.getWindowSize());
-  // trackerKlt.setQuality(t.getQuality());
-  // trackerKlt.setMinDistance(t.getMinDistance());
-  // trackerKlt.setHarrisFreeParameter(t.getHarrisFreeParameter());
-  // trackerKlt.setBlockSize(t.getBlockSize());
-  // trackerKlt.setPyramidLevels(t.getPyramidLevels());
+#if !USE_SIFT
+  trackerKlt.setMaxFeatures(t.getMaxFeatures());
+  trackerKlt.setWindowSize(t.getWindowSize());
+  trackerKlt.setQuality(t.getQuality());
+  trackerKlt.setMinDistance(t.getMinDistance());
+  trackerKlt.setHarrisFreeParameter(t.getHarrisFreeParameter());
+  trackerKlt.setBlockSize(t.getBlockSize());
+  trackerKlt.setPyramidLevels(t.getPyramidLevels());
+#endif
 }
 
 /*!
@@ -722,8 +728,10 @@ bool vpMbKltTracker::postTracking(const vpImage<unsigned char> &I, vpColVector &
   bool reInitialisation = false;
 
   // TODO:
+#if USE_SIFT
   // mask
   cv::Mat mask(static_cast<int>(I.getRows()), static_cast<int>(I.getCols()), CV_8UC1, cv::Scalar(0));
+#endif
 
   // vpMbtDistanceKltPoints *kltpoly;
   // vpMbtDistanceKltCylinder *kltPolyCylinder;
@@ -753,9 +761,11 @@ bool vpMbKltTracker::postTracking(const vpImage<unsigned char> &I, vpColVector &
   for (std::list<vpMbtDistanceKltPoints *>::const_iterator it = kltPolygons.begin(); it != kltPolygons.end(); ++it) {
     vpMbtDistanceKltPoints *kltpoly = *it;
     if (kltpoly->polygon->isVisible() && kltpoly->isTracked() && kltpoly->polygon->getNbPoint() > 2) {
+#if USE_SIFT
       kltpoly->polygon->changeFrame(m_cMo);
       kltpoly->polygon->computePolygonClipped(m_cam); // Might not be necessary when scanline is activated
       kltpoly->updateMask(mask, 255, maskBorder);
+#endif
 
       initialNumber += kltpoly->getInitialNumberPoint();
       if (kltpoly->hasEnoughPoints()) {
@@ -1092,13 +1102,15 @@ void vpMbKltTracker::loadConfigFile(const std::string &configFile, bool verbose)
   xmlp.getCameraParameters(camera);
   setCameraParameters(camera);
 
-  // trackerKlt.setMaxFeatures(static_cast<int>(xmlp.getKltMaxFeatures()));
-  // trackerKlt.setWindowSize(static_cast<int>(xmlp.getKltWindowSize()));
-  // trackerKlt.setQuality(xmlp.getKltQuality());
-  // trackerKlt.setMinDistance(xmlp.getKltMinDistance());
-  // trackerKlt.setHarrisFreeParameter(xmlp.getKltHarrisParam());
-  // trackerKlt.setBlockSize(static_cast<int>(xmlp.getKltBlockSize()));
-  // trackerKlt.setPyramidLevels(static_cast<int>(xmlp.getKltPyramidLevels()));
+#if !USE_SIFT
+  trackerKlt.setMaxFeatures(static_cast<int>(xmlp.getKltMaxFeatures()));
+  trackerKlt.setWindowSize(static_cast<int>(xmlp.getKltWindowSize()));
+  trackerKlt.setQuality(xmlp.getKltQuality());
+  trackerKlt.setMinDistance(xmlp.getKltMinDistance());
+  trackerKlt.setHarrisFreeParameter(xmlp.getKltHarrisParam());
+  trackerKlt.setBlockSize(static_cast<int>(xmlp.getKltBlockSize()));
+  trackerKlt.setPyramidLevels(static_cast<int>(xmlp.getKltPyramidLevels()));
+#endif
   maskBorder = xmlp.getKltMaskBorder();
   angleAppears = vpMath::rad(xmlp.getAngleAppear());
   angleDisappears = vpMath::rad(xmlp.getAngleDisappear());
