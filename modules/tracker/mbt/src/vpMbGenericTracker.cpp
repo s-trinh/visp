@@ -304,6 +304,9 @@ void vpMbGenericTracker::computeVVS(std::map<std::string, const vpImage<unsigned
   vpColVector error_prev;
 
   double mu = m_initialMu;
+  // // TODO:
+  // std::cout << "m_lambda: " << m_lambda << std::endl;
+  // m_lambda = 0.1;
   vpHomogeneousMatrix cMo_prev;
 
   bool isoJoIdentity = m_isoJoIdentity; // Backup since it can be modified if L is not full rank
@@ -5287,6 +5290,16 @@ void vpMbGenericTracker::setUseKltTracking(const std::string &name, const bool &
     tracker->setUseKltTracking(name, useKltTracking);
   }
 }
+
+// TODO:
+void vpMbGenericTracker::getMatchingImage(vpImage<vpRGBa> &I_matching)
+{
+  for (std::map<std::string, TrackerWrapper *>::const_iterator it = m_mapOfTrackers.begin();
+    it != m_mapOfTrackers.end(); ++it) {
+    TrackerWrapper *tracker = it->second;
+    tracker->getMatchingImage(I_matching);
+  }
+}
 #endif
 
 void vpMbGenericTracker::testTracking()
@@ -5507,8 +5520,6 @@ void vpMbGenericTracker::track(std::map<std::string, const vpImage<unsigned char
       tracker->m_featuresToBeDisplayedEdge = tracker->getFeaturesForDisplayEdge();
     }
 
-    tracker->postTracking(mapOfImages[it->first], mapOfPointClouds[it->first]);
-
     if (displayFeatures) {
 #if defined(VISP_HAVE_MODULE_KLT) && defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO)
       if (tracker->m_trackerType & KLT_TRACKER) {
@@ -5520,6 +5531,8 @@ void vpMbGenericTracker::track(std::map<std::string, const vpImage<unsigned char
         tracker->m_featuresToBeDisplayedDepthNormal = tracker->getFeaturesForDisplayDepthNormal();
       }
     }
+
+    tracker->postTracking(mapOfImages[it->first], mapOfPointClouds[it->first]);
   }
 
   computeProjectionError();
@@ -5674,8 +5687,6 @@ void vpMbGenericTracker::track(std::map<std::string, const vpImage<unsigned char
       tracker->m_featuresToBeDisplayedEdge = tracker->getFeaturesForDisplayEdge();
     }
 
-    tracker->postTracking(mapOfImages[it->first], mapOfPointCloudWidths[it->first], mapOfPointCloudHeights[it->first]);
-
     if (displayFeatures) {
 #if defined(VISP_HAVE_MODULE_KLT) && defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO)
       if (tracker->m_trackerType & KLT_TRACKER) {
@@ -5687,6 +5698,8 @@ void vpMbGenericTracker::track(std::map<std::string, const vpImage<unsigned char
         tracker->m_featuresToBeDisplayedDepthNormal = tracker->getFeaturesForDisplayDepthNormal();
       }
     }
+
+    tracker->postTracking(mapOfImages[it->first], mapOfPointCloudWidths[it->first], mapOfPointCloudHeights[it->first]);
   }
 
   computeProjectionError();
@@ -6322,6 +6335,8 @@ void vpMbGenericTracker::TrackerWrapper::computeVVSWeights()
 
     start_index += m_w_klt.getRows();
   }
+  // // TODO:
+  // std::cout << "m_w:\n" << m_w << std::endl;
 #endif
 
   if (m_trackerType & DEPTH_NORMAL_TRACKER) {

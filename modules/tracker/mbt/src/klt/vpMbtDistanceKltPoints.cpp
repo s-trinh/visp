@@ -237,10 +237,15 @@ unsigned int vpMbtDistanceKltPoints::computeNbDetectedCurrent(const vpSiftOpencv
 
   nbPointsCur = static_cast<unsigned int>(curPoints.size());
 
-  if (nbPointsCur >= minNbPoint)
+  if (nbPointsCur >= minNbPoint) {
     enoughPoints = true;
-  else
+  }
+  else {
     enoughPoints = false;
+    nbPointsCur = 0;
+    curPoints = std::map<int, vpImagePoint>();
+    curPointsInd = std::map<int, int>();
+  }
 
   return nbPointsCur;
 }
@@ -575,12 +580,39 @@ void vpMbtDistanceKltPoints::removeOutliers(const vpColVector &_w, const double 
 
   nbPointsCur = 0;
   std::map<int, vpImagePoint>::const_iterator iter = curPoints.begin();
-  for (; iter != curPoints.end(); ++iter) {
+  for (; iter != curPoints.end() && k < _w.getRows();) {
     if (_w[k] > threshold_outlier && _w[k + 1] > threshold_outlier) {
       //     if(_w[k] > threshold_outlier || _w[k+1] > threshold_outlier){
+
+#if 0 // TODO: "Error: not enough features" with cube sequence and max_dist == 3
+      std::map<int, vpImagePoint>::const_iterator iter2 = iter;
+      bool too_close = false;
+      iter2++;
+      for (; iter2 != curPoints.end() && !too_close; iter2++) {
+        const vpImagePoint &im1 = iter->second;
+        const vpImagePoint &im2 = iter2->second;
+        const double max_dist_neighbor = 3.0;
+        too_close = (vpImagePoint::distance(im1, im2) < max_dist_neighbor);
+      }
+
+      if (too_close) {
+        nbSupp++;
+        initPoints.erase(iter->first);
+      }
+      else {
+        tmp[iter->first] = vpImagePoint(iter->second.get_i(), iter->second.get_j());
+        tmp2[iter->first] = curPointsInd[iter->first];
+        nbPointsCur++;
+
+        ++iter;
+      }
+#else
       tmp[iter->first] = vpImagePoint(iter->second.get_i(), iter->second.get_j());
       tmp2[iter->first] = curPointsInd[iter->first];
       nbPointsCur++;
+
+      ++iter;
+#endif
     }
     else {
       nbSupp++;
@@ -610,12 +642,14 @@ void vpMbtDistanceKltPoints::removeOutliers(const vpColVector &_w, const double 
 
   nbPointsCur = 0;
   std::map<int, vpImagePoint>::const_iterator iter = curPoints.begin();
-  for (; iter != curPoints.end(); ++iter) {
+  for (; iter != curPoints.end(); ) {
     if (_w[k] > threshold_outlier && _w[k + 1] > threshold_outlier) {
       //     if(_w[k] > threshold_outlier || _w[k+1] > threshold_outlier){
       tmp[iter->first] = vpImagePoint(iter->second.get_i(), iter->second.get_j());
       tmp2[iter->first] = curPointsInd[iter->first];
       nbPointsCur++;
+
+      ++iter;
     }
     else {
       nbSupp++;

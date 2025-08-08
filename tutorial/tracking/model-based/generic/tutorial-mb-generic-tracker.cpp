@@ -165,6 +165,9 @@ int main(int argc, char **argv)
     tracker.initClick(I, objectname + ".init", true);
     //! [Init]
 
+    vpImage<vpRGBa> I_matching(I.getRows(), 2*I.getCols());
+    vpDisplayX displayMatching(I_matching, 10, 10, "I_matching");
+
     while (!g.end()) {
       std::cout << "\n" << g.getFrameIndex() << ")" << std::endl;
       g.acquire(I);
@@ -181,9 +184,29 @@ int main(int argc, char **argv)
       //! [Display]
       tracker.getCameraParameters(cam);
       tracker.display(I, cMo, cam, vpColor::red, 2);
+
+
+      tracker.getMatchingImage(I_matching);
+      vpDisplay::display(I_matching);
+      vpCameraParameters cam_matching;
+      cam_matching.initPersProjWithoutDistortion(cam.get_px(), cam.get_py(), cam.get_u0()+I.getWidth(), cam.get_v0());
+      // tracker.display(I_matching, cMo, cam_matching, vpColor::red, 2);
+      vpDisplay::flush(I_matching);
+      {
+        std::ostringstream oss;
+        oss << "/tmp/I_matching_%04d.png";
+        char buffer[256];
+        sprintf(buffer, oss.str().c_str(), g.getFrameIndex());
+        std::string output_filename = buffer;
+        vpImageIo::write(I_matching, output_filename);
+      }
+
       //! [Display]
       vpDisplay::displayFrame(I, cMo, cam, 0.025, vpColor::none, 3);
-      vpDisplay::displayText(I, 10, 10, "A click to exit...", vpColor::red);
+      std::ostringstream oss;
+      oss << "Frame " << g.getFrameIndex();
+      // vpDisplay::displayText(I, 10, 10, "A click to exit...", vpColor::red);
+      vpDisplay::displayText(I, 10, 10, oss.str(), vpColor::red);
       vpDisplay::flush(I);
 
       if (vpDisplay::getClick(I, true)) {

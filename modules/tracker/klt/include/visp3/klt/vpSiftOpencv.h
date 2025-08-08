@@ -301,6 +301,8 @@ protected:
   int m_history;
 
   cv::Mat m_leftMat;
+  // TODO:
+public:
   cv::Mat m_displayMat;
 };
 

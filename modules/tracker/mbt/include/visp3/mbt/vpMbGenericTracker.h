@@ -575,6 +575,8 @@ public:
   virtual void setUseEdgeTracking(const std::string &name, const bool &useEdgeTracking);
 #if defined(VISP_HAVE_MODULE_KLT) && defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO)
   virtual void setUseKltTracking(const std::string &name, const bool &useKltTracking);
+  // TODO:
+  virtual void getMatchingImage(vpImage<vpRGBa> &I_matching);
 #endif
 
   virtual void testTracking() VP_OVERRIDE;

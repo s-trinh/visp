@@ -429,6 +429,14 @@ public:
   virtual void track(const vpImage<unsigned char> &I) VP_OVERRIDE;
   virtual void track(const vpImage<vpRGBa> &I_color) VP_OVERRIDE;
 
+  // TODO:
+  inline void getMatchingImage(vpImage<vpRGBa> &I_matching)
+  {
+#if USE_SIFT
+    vpImageConvert::convert(trackerKlt.m_displayMat, I_matching);
+#endif
+  }
+
   /*!
     @name Deprecated functions
   */

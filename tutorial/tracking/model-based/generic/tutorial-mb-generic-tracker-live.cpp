@@ -45,6 +45,23 @@
 
 int main(int argc, char **argv)
 {
+  if (false) {
+    std::vector<int> vec = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    for (std::vector<int>::iterator iter = vec.begin(); iter != vec.end(); ) {
+      if (*iter == 3) {
+        vec.erase(iter);
+      }
+      else {
+        std::cout << "vec=" << *iter << std::endl;
+        iter++;
+      }
+    }
+
+    return 0;
+  }
+
+
+
 #ifdef ENABLE_VISP_NAMESPACE
   using namespace VISP_NAMESPACE_NAME;
 #endif
@@ -401,6 +418,10 @@ int main(int argc, char **argv)
     bool quit = false;
     bool tracking_failed = false;
 
+    // TODO:
+    vpImage<vpRGBa> I_matching(I.getRows(), 2*I.getCols());
+    vpDisplayX displayMatching(I_matching, 10, 10, "I_matching");
+
     while (!quit) {
       double t_begin = vpTime::measureTimeMs();
 #if defined(VISP_HAVE_V4L2) || defined(VISP_HAVE_DC1394) || defined(VISP_HAVE_CMU1394) || defined(VISP_HAVE_FLYCAPTURE) || defined(VISP_HAVE_REALSENSE2)
@@ -502,6 +523,14 @@ int main(int argc, char **argv)
           ss << "Features: edges " << tracker.getNbFeaturesEdge() << ", klt " << tracker.getNbFeaturesKlt();
           vpDisplay::displayText(I, 120, 20, ss.str(), vpColor::red);
         }
+
+        // TODO:
+        tracker.getMatchingImage(I_matching);
+        vpDisplay::display(I_matching);
+        vpCameraParameters cam_matching;
+        cam_matching.initPersProjWithoutDistortion(cam.get_px(), cam.get_py(), cam.get_u0()+I.getWidth(), cam.get_v0());
+        // tracker.display(I_matching, cMo, cam_matching, vpColor::red, 2);
+        vpDisplay::flush(I_matching);
       }
 
       if (learn_position) {

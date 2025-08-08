@@ -812,7 +812,8 @@ bool vpMbKltTracker::postTracking(const vpImage<unsigned char> &I, vpColVector &
 
   //   if(!reInitialisation){
   double value = percentGood * static_cast<double>(initialNumber);
-  if (static_cast<double>(currentNumber) < value) {
+  // TODO:
+  if (static_cast<double>(currentNumber) < value || currentNumber < 12) {
     //     std::cout << "Too many point disappear : " << initialNumber << "/"
     //     << currentNumber << std::endl;
     reInitialisation = true;
@@ -836,6 +837,9 @@ bool vpMbKltTracker::postTracking(const vpImage<unsigned char> &I, vpColVector &
   // cv::imshow("MASK", mask);
   // cv::waitKey(30);
 #endif
+
+  // // TODO:
+  // std::cout << "[vpMbKltTracker::postTracking] reInitialisation=" << reInitialisation << std::endl;
 
   if (reInitialisation)
     return true;

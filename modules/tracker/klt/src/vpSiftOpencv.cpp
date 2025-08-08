@@ -151,9 +151,37 @@ void vpSiftOpencv::initTracking(const cv::Mat &I, const cv::Mat &mask)
   m_points_id.clear();
 
   m_keyPointsCur.clear();
+  // TODO: not needed?
+  m_keyPointsRef.clear();
+  m_descriptorsRef = cv::Mat();
+
 #if 1 // !USE_GFTT
   // m_siftDetector->detectAndCompute(I, cv::noArray(), m_keyPointsCur, m_descriptorsCur);
+
+#if 0 // TODO: does not seem useful
+  m_siftDetector->detect(m_gray, m_keyPointsCur, mask);
+
+  for (std::vector<cv::KeyPoint>::iterator iter = m_keyPointsCur.begin(); iter != m_keyPointsCur.end(); ) {
+    cv::Point2f pt1 = iter->pt;
+    bool too_close = false;
+
+    for (std::vector<cv::KeyPoint>::iterator iter2 = iter + 1; iter2 != m_keyPointsCur.end() && !too_close; iter2++) {
+      cv::Point2f pt2 = iter2->pt;
+      if (cv::norm(pt1 - pt2) < 10) {
+        m_keyPointsCur.erase(iter);
+        too_close = true;
+      }
+    }
+
+    if (!too_close) {
+      iter++;
+    }
+  }
+
+  m_siftDetector->compute(m_gray, m_keyPointsCur, m_descriptorsCur);
+#else
   m_siftDetector->detectAndCompute(m_gray, mask, m_keyPointsCur, m_descriptorsCur);
+#endif
 
   for (size_t i = 0; i < m_keyPointsCur.size(); i++) {
     m_points[1].push_back(m_keyPointsCur[i].pt);
@@ -196,7 +224,9 @@ void vpSiftOpencv::initTracking(const cv::Mat &I, const cv::Mat &mask)
   if (debug_display) {
     // Debug
     cv::cvtColor(I, m_leftMat, cv::COLOR_GRAY2BGR);
-    m_displayMat = cv::Mat3b(I.rows, 2*I.cols);
+    if (m_displayMat.rows != I.rows || m_displayMat.cols != 2*I.cols) {
+      m_displayMat = cv::Mat3b(I.rows, 2*I.cols);
+    }
   }
 
 
@@ -352,7 +382,8 @@ void vpSiftOpencv::track(const cv::Mat &I)
       m_matches10.push_back(cv::DMatch(m01.trainIdx, m01.queryIdx, m01.distance));
     }
 
-    if (use_SIFT_KLT) {
+    const bool force_enable_disable = false;
+    if (use_SIFT_KLT && force_enable_disable) {
       bool initial_guess = true;
       if (m_prevGray.empty()) {
         initial_guess = false;
@@ -494,8 +525,8 @@ void vpSiftOpencv::track(const cv::Mat &I)
       cv::putText(m_displayMat, id.str(), cv::Point(m_points[0][i].x + 5, m_points[0][i].y), 0, 0.4, cv::Scalar(0, 0, 255));
     }
 
-    cv::imshow("DEBUG", m_displayMat);
-    cv::waitKey(1);
+    // cv::imshow("DEBUG", m_displayMat);
+    // cv::waitKey(1);
 
     m_leftMat = I_color;
   }
