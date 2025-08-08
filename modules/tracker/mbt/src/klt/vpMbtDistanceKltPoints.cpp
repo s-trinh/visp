@@ -580,7 +580,7 @@ void vpMbtDistanceKltPoints::removeOutliers(const vpColVector &_w, const double 
 
   nbPointsCur = 0;
   std::map<int, vpImagePoint>::const_iterator iter = curPoints.begin();
-  for (; iter != curPoints.end() && k < _w.getRows();) {
+  for (; iter != curPoints.end() && k+1 < _w.getRows(); ++iter) {
     if (_w[k] > threshold_outlier && _w[k + 1] > threshold_outlier) {
       //     if(_w[k] > threshold_outlier || _w[k+1] > threshold_outlier){
 
@@ -603,15 +603,11 @@ void vpMbtDistanceKltPoints::removeOutliers(const vpColVector &_w, const double 
         tmp[iter->first] = vpImagePoint(iter->second.get_i(), iter->second.get_j());
         tmp2[iter->first] = curPointsInd[iter->first];
         nbPointsCur++;
-
-        ++iter;
       }
 #else
       tmp[iter->first] = vpImagePoint(iter->second.get_i(), iter->second.get_j());
       tmp2[iter->first] = curPointsInd[iter->first];
       nbPointsCur++;
-
-      ++iter;
 #endif
     }
     else {
@@ -642,14 +638,12 @@ void vpMbtDistanceKltPoints::removeOutliers(const vpColVector &_w, const double 
 
   nbPointsCur = 0;
   std::map<int, vpImagePoint>::const_iterator iter = curPoints.begin();
-  for (; iter != curPoints.end(); ) {
+  for (; iter != curPoints.end(); ++iter) {
     if (_w[k] > threshold_outlier && _w[k + 1] > threshold_outlier) {
       //     if(_w[k] > threshold_outlier || _w[k+1] > threshold_outlier){
       tmp[iter->first] = vpImagePoint(iter->second.get_i(), iter->second.get_j());
       tmp2[iter->first] = curPointsInd[iter->first];
       nbPointsCur++;
-
-      ++iter;
     }
     else {
       nbSupp++;
