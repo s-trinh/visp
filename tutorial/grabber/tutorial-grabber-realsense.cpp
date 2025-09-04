@@ -267,10 +267,13 @@ int main(int argc, const char *argv[])
 
     int nb_images = 0;
     bool quit = false;
+    int iter = 0;
     while (!quit) {
       double t = vpTime::measureTimeMs();
       g.acquire(I);
       I2 = I;
+
+      // std::cout << "\n\n" << iter++ << ")" << std::endl;
 
       vpDisplay::display(I);
       vpDisplay::display(I2);
@@ -288,15 +291,15 @@ int main(int argc, const char *argv[])
         toImagePoints(tagsCorners[idx], tagCorner);
 
         double start = vpTime::measureTimeMs();
-        bool detect_1 = solvePnP(objPoints, tagCorner, camMatrix, distCoeffs, rvec, tvec, false, cv::SOLVEPNP_P3P);
-        // solvePnP(objPoints, tagCorner, camMatrix, cv::noArray(), rvec, tvec, false, cv::SOLVEPNP_P3P);
+        // bool detect_1 = solvePnP(objPoints, tagCorner, camMatrix, distCoeffs, rvec, tvec, false, cv::SOLVEPNP_P3P);
+        bool detect_1 = solvePnP(objPoints, tagCorner, camMatrix, cv::noArray(), rvec, tvec, false, cv::SOLVEPNP_P3P);
         double end = vpTime::measureTimeMs();
 
         vpHomogeneousMatrix cMo;
         if (detect_1) {
           cMo.buildFrom(vpTranslationVector(tvec(0), tvec(1), tvec(2)), vpThetaUVector(rvec(0), rvec(1), rvec(2)));
           vpDisplay::displayFrame(I, cMo, cam, 0.04*1.5, vpColor::none, 3);
-          // std::cout << "\nP3P:\n" << cMo << std::endl;
+          // std::cout << "\nUSAC P3P, estimated cMo:\n" << cMo << std::endl;
         }
 
         times1.push_back((end - start));
@@ -307,8 +310,8 @@ int main(int argc, const char *argv[])
 
         // 2
         start = vpTime::measureTimeMs();
-        bool detect_2 = solvePnP(objPoints, tagCorner, camMatrix, distCoeffs, rvec, tvec, false, cv::SOLVEPNP_AP3P);
-        // solvePnP(objPoints, tagCorner, camMatrix, cv::noArray(), rvec, tvec, false, cv::SOLVEPNP_AP3P);
+        // bool detect_2 = solvePnP(objPoints, tagCorner, camMatrix, distCoeffs, rvec, tvec, false, cv::SOLVEPNP_AP3P);
+        bool detect_2 = solvePnP(objPoints, tagCorner, camMatrix, cv::noArray(), rvec, tvec, false, cv::SOLVEPNP_AP3P);
         end = vpTime::measureTimeMs();
 
         if (detect_2) {
