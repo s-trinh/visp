@@ -33,7 +33,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     private Camera.CameraInfo mCameraInfo;
     private int mDisplayOrientation;
     private long lastTime;
-    private int w,h;
+    private int w, h;
     private VpCameraParameters cameraParameters;
     private double tagSize;
 
@@ -162,8 +162,13 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             // do the image processing
             // Its working even without grey scale conversion
             VpDetectorAprilTag detectorAprilTag = new VpDetectorAprilTag();
+            detectorAprilTag.setAprilTagFamily(23); // TAG_ARUCO_MIP_36h12
             List<VpHomogeneousMatrix> matrices = detectorAprilTag.detect(imageUChar,tagSize,cameraParameters);
+            int[] tags_id = detectorAprilTag.getTagsId();
             Log.d("CameraPreview.java",matrices.size() + " tags detected");
+            for (int tag_id : tags_id) {
+                Log.d("CameraPreview.java", "tag_id=" + tag_id);
+            }
 
             updateResult(data, matrices.size() + " 36h11 tags detected within " + (System.currentTimeMillis() - lastTime) +" ms");
 

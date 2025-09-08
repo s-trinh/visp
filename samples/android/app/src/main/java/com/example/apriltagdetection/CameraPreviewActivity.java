@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import android.os.Bundle;
 
@@ -18,6 +19,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.util.Log;
 
 import com.google.android.material.snackbar.Snackbar;
 
@@ -39,7 +41,7 @@ public class CameraPreviewActivity extends MainActivity  {
     /**
      * Id of the camera to access. 0 is the first camera.
      */
-    private static final int CAMERA_ID = 0;
+    private static int CAMERA_ID = 0;
 
     private Camera mCamera;
     // public static ImageView resultImageView;
@@ -50,9 +52,17 @@ public class CameraPreviewActivity extends MainActivity  {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+
+        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+
+        // ChatGPT
+        // Value? --> https://stackoverflow.com/a/36653669 ?
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 100);
+        }
+
         // Open an instance of the first camera and retrieve its info.
         mCamera = getCameraInstance(CAMERA_ID);
-        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
         Camera.getCameraInfo(CAMERA_ID, cameraInfo);
 
         if (mCamera == null) {
@@ -109,6 +119,24 @@ public class CameraPreviewActivity extends MainActivity  {
 
     /** A safe way to get an instance of the Camera object. */
     private Camera getCameraInstance(int cameraId) {
+
+
+        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+        for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
+            Camera.getCameraInfo(i, cameraInfo);
+
+            String facing = (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) ? "Front" : "Back";
+            Log.d("CameraInfo", "Camera " + i + ": Facing = " + facing);
+            Log.d("CameraInfo", "Camera " + i + ": Orientation = " + cameraInfo.orientation);
+            if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                CAMERA_ID = i;
+                Toast.makeText(this, "!!!!!!!!!!!!!.", Toast.LENGTH_SHORT).show();
+                break;
+            }
+        }
+
+
+
         Camera c = null;
         try {
             c = Camera.open(cameraId); // attempt to get a Camera instance
@@ -127,3 +155,151 @@ public class CameraPreviewActivity extends MainActivity  {
         }
     }
 }
+
+
+
+
+
+
+
+//package com.example.apriltagdetection;
+//
+//import android.app.Activity;
+//import android.graphics.SurfaceTexture;
+//import android.hardware.camera2.*;
+//import android.os.Bundle;
+//import android.util.Log;
+//import android.view.Surface;
+//import android.view.SurfaceTexture;
+//import android.view.TextureView;
+//import android.widget.Toast;
+//
+//import java.util.Arrays;
+//
+//public class CameraPreviewActivity extends Activity {
+//
+//    private static final String TAG = "CameraPreviewActivity";
+//    private TextureView textureView;
+//    private CameraDevice cameraDevice;
+//    private CameraCaptureSession cameraCaptureSession;
+//    private CameraManager cameraManager;
+//    private String cameraId;
+//    private Surface previewSurface;
+//
+//    @Override
+//    protected void onCreate(Bundle savedInstanceState) {
+//        super.onCreate(savedInstanceState);
+//        setContentView(R.layout.activity_camera_preview);
+//
+//        textureView = findViewById(R.id.textureView);
+//
+//        // Initialize the TextureView surface texture listener
+//        textureView.setSurfaceTextureListener(surfaceTextureListener);
+//
+//        // Initialize the CameraManager
+//        cameraManager = (CameraManager) getSystemService(CAMERA_SERVICE);
+//
+//        try {
+//            // Get the camera ID (default camera)
+//            cameraId = cameraManager.getCameraIdList()[0]; // For rear camera
+//        } catch (CameraAccessException e) {
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    private TextureView.SurfaceTextureListener surfaceTextureListener = new TextureView.SurfaceTextureListener() {
+//        @Override
+//        public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+//            previewSurface = new Surface(surface);
+//            try {
+//                openCamera();
+//            } catch (CameraAccessException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//
+//        @Override
+//        public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {}
+//
+//        @Override
+//        public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+//            return false;
+//        }
+//
+//        @Override
+//        public void onSurfaceTextureUpdated(SurfaceTexture surface) {}
+//    };
+//
+//    private void openCamera() throws CameraAccessException {
+//        // Request the camera to be opened
+//        cameraManager.openCamera(cameraId, stateCallback, null);
+//    }
+//
+//    private CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
+//        @Override
+//        public void onOpened(CameraDevice camera) {
+//            // Successfully opened camera
+//            cameraDevice = camera;
+//            try {
+//                createCameraPreview();
+//            } catch (CameraAccessException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//
+//        @Override
+//        public void onDisconnected(CameraDevice camera) {
+//            // Camera was disconnected
+//            cameraDevice.close();
+//        }
+//
+//        @Override
+//        public void onError(CameraDevice camera, int error) {
+//            // Error opening camera
+//            cameraDevice.close();
+//            cameraDevice = null;
+//        }
+//    };
+//
+//    private void createCameraPreview() throws CameraAccessException {
+//        // Prepare capture request for the preview
+//        CameraCaptureRequest.Builder captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+//        captureRequestBuilder.addTarget(previewSurface);
+//
+//        // Create capture session for the preview
+//        cameraDevice.createCaptureSession(
+//                Arrays.asList(previewSurface),
+//                new CameraCaptureSession.StateCallback() {
+//                    @Override
+//                    public void onConfigured(CameraCaptureSession session) {
+//                        // If the camera is successfully configured, start the preview
+//                        if (cameraDevice == null) return;
+//
+//                        cameraCaptureSession = session;
+//
+//                        try {
+//                            // Start the preview
+//                            cameraCaptureSession.setRepeatingRequest(captureRequestBuilder.build(), null, null);
+//                        } catch (CameraAccessException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void onConfigureFailed(CameraCaptureSession session) {
+//                        // Failed to configure the camera
+//                        Toast.makeText(CameraPreviewActivity.this, "Camera configuration failed", Toast.LENGTH_SHORT).show();
+//                    }
+//                },
+//                null
+//        );
+//    }
+//
+//    @Override
+//    protected void onPause() {
+//        super.onPause();
+//        if (cameraDevice != null) {
+//            cameraDevice.close();
+//        }
+//    }
+//}
