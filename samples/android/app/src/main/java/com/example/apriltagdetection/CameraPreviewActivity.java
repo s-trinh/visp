@@ -52,9 +52,6 @@ public class CameraPreviewActivity extends MainActivity  {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-
-        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
-
         // ChatGPT
         // Value? --> https://stackoverflow.com/a/36653669 ?
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
@@ -62,6 +59,7 @@ public class CameraPreviewActivity extends MainActivity  {
         }
 
         // Open an instance of the first camera and retrieve its info.
+        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
         mCamera = getCameraInstance(CAMERA_ID);
         Camera.getCameraInfo(CAMERA_ID, cameraInfo);
 
@@ -91,18 +89,18 @@ public class CameraPreviewActivity extends MainActivity  {
     }
 
     public static void updateResult(byte[] Src, String s){
-        // byte [] Bits = new byte[Src.length*4]; //That's where the RGBA array goes.
-        // int i;
-        // for(i=0;i<Src.length;i++){
-        //    Bits[i*4] = Bits[i*4+1] = Bits[i*4+2] = Src[i]; //Invert the source bits
-        //    Bits[i*4+3] = -1;//0xff, that's the alpha.
-        // }
-
-        // //Now put these nice RGBA pixels into a Bitmap object
-        // Bitmap bm = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-        // bm.copyPixelsFromBuffer(ByteBuffer.wrap(Bits));
-
-        // resultImageView.setImageBitmap(bm);
+//        byte [] Bits = new byte[Src.length*4]; //That's where the RGBA array goes.
+//        int i;
+//        for(i=0;i<Src.length;i++){
+//            Bits[i*4] = Bits[i*4+1] = Bits[i*4+2] = Src[i]; //Invert the source bits
+//            Bits[i*4+3] = -1;//0xff, that's the alpha.
+//        }
+//
+//        //Now put these nice RGBA pixels into a Bitmap object
+//        Bitmap bm = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+//        bm.copyPixelsFromBuffer(ByteBuffer.wrap(Bits));
+//
+//        resultImageView.setImageBitmap(bm);
         resultInfo.setText(s);
     }
 
@@ -119,24 +117,6 @@ public class CameraPreviewActivity extends MainActivity  {
 
     /** A safe way to get an instance of the Camera object. */
     private Camera getCameraInstance(int cameraId) {
-
-
-        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
-        for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
-            Camera.getCameraInfo(i, cameraInfo);
-
-            String facing = (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) ? "Front" : "Back";
-            Log.d("CameraInfo", "Camera " + i + ": Facing = " + facing);
-            Log.d("CameraInfo", "Camera " + i + ": Orientation = " + cameraInfo.orientation);
-            if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-                CAMERA_ID = i;
-                Toast.makeText(this, "!!!!!!!!!!!!!.", Toast.LENGTH_SHORT).show();
-                break;
-            }
-        }
-
-
-
         Camera c = null;
         try {
             c = Camera.open(cameraId); // attempt to get a Camera instance

@@ -13,6 +13,7 @@ import org.visp.core.VpImageUChar;
 import org.visp.detection.VpDetectorAprilTag;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.example.apriltagdetection.CameraPreviewActivity.updateResult;
@@ -170,7 +171,9 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
                 Log.d("CameraPreview.java", "tag_id=" + tag_id);
             }
 
-            updateResult(data, matrices.size() + " 36h11 tags detected within " + (System.currentTimeMillis() - lastTime) +" ms");
+            Log.d("CameraPreview.java", "tags_id=" + Arrays.toString(tags_id));
+            updateResult(data, matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
+                    + (System.currentTimeMillis() - lastTime) +" ms");
 
             lastTime = System.currentTimeMillis();
         }
