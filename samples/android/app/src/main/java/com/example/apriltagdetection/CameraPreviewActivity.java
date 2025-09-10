@@ -4,7 +4,13 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.ImageFormat;
+import android.graphics.YuvImage;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -23,6 +29,7 @@ import android.util.Log;
 
 import com.google.android.material.snackbar.Snackbar;
 
+import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 
 /**
@@ -41,10 +48,10 @@ public class CameraPreviewActivity extends MainActivity  {
     /**
      * Id of the camera to access. 0 is the first camera.
      */
-    private static int CAMERA_ID = 0;
+    private static final int CAMERA_ID = 0;
 
     private Camera mCamera;
-    // public static ImageView resultImageView;
+    public static ImageView resultImageView;
     static int w,h;
     static TextView resultInfo;
 
@@ -71,7 +78,7 @@ public class CameraPreviewActivity extends MainActivity  {
             setContentView(R.layout.activity_camera_preview);
 
             resultInfo = findViewById(R.id.resultTV);
-            // resultImageView = findViewById(R.id.resultImage);
+//            resultImageView = findViewById(R.id.imageView);
 
             // init the byte array
             w = mCamera.getParameters().getPreviewSize().width;
@@ -88,25 +95,120 @@ public class CameraPreviewActivity extends MainActivity  {
         }
     }
 
-    public static void updateResult(byte[] Src, String s){
+    public static void updateResult(byte[] Src, int w_, int h_, String s){
+        // NOK
+
 //        byte [] Bits = new byte[Src.length*4]; //That's where the RGBA array goes.
-//        int i;
-//        for(i=0;i<Src.length;i++){
+//
+//        for (int i = 0; i < Src.length; i++){
 //            Bits[i*4] = Bits[i*4+1] = Bits[i*4+2] = Src[i]; //Invert the source bits
 //            Bits[i*4+3] = -1;//0xff, that's the alpha.
 //        }
 //
 //        //Now put these nice RGBA pixels into a Bitmap object
-//        Bitmap bm = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-//        bm.copyPixelsFromBuffer(ByteBuffer.wrap(Bits));
+//        Bitmap bitmap = Bitmap.createBitmap(w_, h_, Bitmap.Config.ARGB_8888);
+//        bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(Bits));
 //
-//        resultImageView.setImageBitmap(bm);
+//        Bitmap modifiedBitmap = drawRedLineOnBitmap(bitmap, 10);
+//        resultImageView.setImageBitmap(modifiedBitmap);
+//
+//
+////        Bitmap bitmap = getImageBitmap(resultImageView);
+////        if (bitmap != null) {
+////            // You can now use the bitmap (e.g., save it, modify it, etc.)
+////            Bitmap modifiedBitmap = drawRedLineOnBitmap(bitmap, 10);
+////
+////            resultImageView.setImageBitmap(modifiedBitmap);
+////        }
+
+
+//        if (resultImageView == null) {
+//            Log.e("CameraPreviewActivity", "resultImageView is null");
+//        }
+//
+//        // Convert the byte[] preview frame to a Bitmap
+//        Bitmap bitmap = convertNV21ToBitmap(Src, w_, h_, ImageFormat.NV21);
+//        // Check if the bitmap is mutable
+//        if (!bitmap.isMutable()) {
+//            bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true); // Create a mutable copy of the bitmap
+//        }
+//
+//        if (bitmap != null) {
+//            Log.e("CameraPreviewActivity", "Modify the Bitmap");
+//            // Modify the Bitmap here (e.g., apply filters or transformations)
+//
+//            // Create a canvas to draw on the bitmap
+//            Canvas canvas = new Canvas(bitmap);
+//            canvas.drawColor(0);
+//
+//            // Set up the paint for drawing the red line
+//            Paint paint = new Paint();
+//            paint.setColor(Color.GREEN); // Red color
+//            int lineWidth = 10;
+//            paint.setStrokeWidth(lineWidth); // Set the width of the line
+//            paint.setAntiAlias(true); // Smooth out the edges of the line
+//
+//            // Draw a red line on the canvas (example: from (50, 50) to (500, 500))
+//            canvas.drawLine(50, 50, 100, 50, paint);
+//
+//            // Update the ImageView with the modified Bitmap
+//            resultImageView.setImageBitmap(bitmap);
+//        }
+
         resultInfo.setText(s);
     }
 
-//    public static void updateResult(String s){
-//        resultInfo.setText(s);
-//    }
+    // Function to get Bitmap from ImageView
+    private static Bitmap getImageBitmap(ImageView imageView) {
+        // Check if the drawable is an instance of BitmapDrawable
+        if (imageView.getDrawable() instanceof BitmapDrawable) {
+            BitmapDrawable drawable = (BitmapDrawable) imageView.getDrawable();
+            return drawable.getBitmap(); // Return the bitmap
+        }
+        return null; // Return null if the drawable is not a BitmapDrawable
+    }
+
+    // Function to draw a red line with a specific width on the image
+    private static Bitmap drawRedLineOnBitmap(Bitmap originalBitmap, int lineWidth) {
+        // Create a mutable copy of the original bitmap
+        Bitmap mutableBitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true);
+
+        // Create a canvas to draw on the bitmap
+        Canvas canvas = new Canvas(mutableBitmap);
+
+        // Set up the paint for drawing the red line
+        Paint paint = new Paint();
+        paint.setColor(Color.RED); // Red color
+        paint.setStrokeWidth(lineWidth); // Set the width of the line
+        paint.setAntiAlias(true); // Smooth out the edges of the line
+
+        // Draw a red line on the canvas (example: from (50, 50) to (500, 500))
+        canvas.drawLine(50, 50, 500, 500, paint);
+
+        // Return the modified bitmap
+        return mutableBitmap;
+    }
+
+    // Convert raw camera frame (NV21) to Bitmap
+    private static Bitmap convertNV21ToBitmap(byte[] data, int previewWidth, int previewHeight, int previewFormat) {
+//        Camera.Parameters parameters = camera.getParameters();
+//        int previewWidth = parameters.getPreviewSize().width;
+//        int previewHeight = parameters.getPreviewSize().height;
+
+        // Create a YuvImage from the NV21 byte array
+//        YuvImage yuvImage = new YuvImage(data, parameters.getPreviewFormat(), previewWidth, previewHeight, null);
+        YuvImage yuvImage = new YuvImage(data, previewFormat, previewWidth, previewHeight, null);
+
+        // Compress the YUV image to a JPEG output stream
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        yuvImage.compressToJpeg(new android.graphics.Rect(0, 0, previewWidth, previewHeight), 100, out);
+
+        // Get the byte array from the JPEG output stream
+        byte[] byteArray = out.toByteArray();
+
+        // Decode the byte array into a Bitmap
+        return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
+    }
 
     @Override
     public void onPause() {
@@ -135,151 +237,3 @@ public class CameraPreviewActivity extends MainActivity  {
         }
     }
 }
-
-
-
-
-
-
-
-//package com.example.apriltagdetection;
-//
-//import android.app.Activity;
-//import android.graphics.SurfaceTexture;
-//import android.hardware.camera2.*;
-//import android.os.Bundle;
-//import android.util.Log;
-//import android.view.Surface;
-//import android.view.SurfaceTexture;
-//import android.view.TextureView;
-//import android.widget.Toast;
-//
-//import java.util.Arrays;
-//
-//public class CameraPreviewActivity extends Activity {
-//
-//    private static final String TAG = "CameraPreviewActivity";
-//    private TextureView textureView;
-//    private CameraDevice cameraDevice;
-//    private CameraCaptureSession cameraCaptureSession;
-//    private CameraManager cameraManager;
-//    private String cameraId;
-//    private Surface previewSurface;
-//
-//    @Override
-//    protected void onCreate(Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_camera_preview);
-//
-//        textureView = findViewById(R.id.textureView);
-//
-//        // Initialize the TextureView surface texture listener
-//        textureView.setSurfaceTextureListener(surfaceTextureListener);
-//
-//        // Initialize the CameraManager
-//        cameraManager = (CameraManager) getSystemService(CAMERA_SERVICE);
-//
-//        try {
-//            // Get the camera ID (default camera)
-//            cameraId = cameraManager.getCameraIdList()[0]; // For rear camera
-//        } catch (CameraAccessException e) {
-//            e.printStackTrace();
-//        }
-//    }
-//
-//    private TextureView.SurfaceTextureListener surfaceTextureListener = new TextureView.SurfaceTextureListener() {
-//        @Override
-//        public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-//            previewSurface = new Surface(surface);
-//            try {
-//                openCamera();
-//            } catch (CameraAccessException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//
-//        @Override
-//        public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {}
-//
-//        @Override
-//        public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-//            return false;
-//        }
-//
-//        @Override
-//        public void onSurfaceTextureUpdated(SurfaceTexture surface) {}
-//    };
-//
-//    private void openCamera() throws CameraAccessException {
-//        // Request the camera to be opened
-//        cameraManager.openCamera(cameraId, stateCallback, null);
-//    }
-//
-//    private CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
-//        @Override
-//        public void onOpened(CameraDevice camera) {
-//            // Successfully opened camera
-//            cameraDevice = camera;
-//            try {
-//                createCameraPreview();
-//            } catch (CameraAccessException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//
-//        @Override
-//        public void onDisconnected(CameraDevice camera) {
-//            // Camera was disconnected
-//            cameraDevice.close();
-//        }
-//
-//        @Override
-//        public void onError(CameraDevice camera, int error) {
-//            // Error opening camera
-//            cameraDevice.close();
-//            cameraDevice = null;
-//        }
-//    };
-//
-//    private void createCameraPreview() throws CameraAccessException {
-//        // Prepare capture request for the preview
-//        CameraCaptureRequest.Builder captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-//        captureRequestBuilder.addTarget(previewSurface);
-//
-//        // Create capture session for the preview
-//        cameraDevice.createCaptureSession(
-//                Arrays.asList(previewSurface),
-//                new CameraCaptureSession.StateCallback() {
-//                    @Override
-//                    public void onConfigured(CameraCaptureSession session) {
-//                        // If the camera is successfully configured, start the preview
-//                        if (cameraDevice == null) return;
-//
-//                        cameraCaptureSession = session;
-//
-//                        try {
-//                            // Start the preview
-//                            cameraCaptureSession.setRepeatingRequest(captureRequestBuilder.build(), null, null);
-//                        } catch (CameraAccessException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//
-//                    @Override
-//                    public void onConfigureFailed(CameraCaptureSession session) {
-//                        // Failed to configure the camera
-//                        Toast.makeText(CameraPreviewActivity.this, "Camera configuration failed", Toast.LENGTH_SHORT).show();
-//                    }
-//                },
-//                null
-//        );
-//    }
-//
-//    @Override
-//    protected void onPause() {
-//        super.onPause();
-//        if (cameraDevice != null) {
-//            cameraDevice.close();
-//        }
-//    }
-//}
