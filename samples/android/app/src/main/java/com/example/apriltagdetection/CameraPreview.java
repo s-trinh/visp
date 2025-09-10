@@ -19,12 +19,15 @@ import android.widget.ImageView;
 
 import org.visp.core.VpCameraParameters;
 import org.visp.core.VpHomogeneousMatrix;
+import org.visp.core.VpPoint;
+import org.visp.core.VpImagePoint;
 import org.visp.core.VpImageUChar;
 import org.visp.detection.VpDetectorAprilTag;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -42,7 +45,6 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
     private static final String TAG = "CameraPreview";
     private SurfaceHolder mHolder;
-    private SurfaceView surfaceView;
     private Canvas canvas;
     private ImageView mImageView;
     private Camera mCamera;
@@ -70,17 +72,6 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         // underlying surface is created and destroyed.
         mHolder = getHolder();
         mHolder.addCallback(this);
-//        surfaceView.getHolder().addCallback( this );
-
-//        mImageView = findViewById(R.id.imageView);
-//        if (mImageView == null) {
-//            Log.e("CameraPreview", "ImageView is null");
-//        }
-
-////        /// NOK, return null
-////        // https://stackoverflow.com/questions/57742739/drawing-on-surfaceview
-//        surfaceView = (SurfaceView) findViewById( R.id.surfaceView );
-//        surfaceView.setZOrderOnTop(true);
 
         // init the ViSP tag detection system
         w = mCamera.getParameters().getPreviewSize().width;
@@ -97,12 +88,6 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             mCamera.setPreviewDisplay(holder);
             mCamera.startPreview();
             Log.d(TAG, "Camera preview started.");
-
-
-//        /// NOK, return null
-//        // https://stackoverflow.com/questions/57742739/drawing-on-surfaceview
-            surfaceView = (SurfaceView) findViewById( R.id.surfaceView );
-//            surfaceView.setZOrderOnTop(true);
         } catch (IOException e) {
             Log.d(TAG, "Error setting camera preview: " + e.getMessage());
         }
@@ -185,6 +170,17 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         return result;
     }
 
+    private VpImagePoint project(VpHomogeneousMatrix cMo, VpPoint obj) {
+        double tagSize = 0.05;
+        obj.changeFrame(cMo);
+        obj.projection();
+        double px = 600, py = 600, u0 = w/2.0, v0 = h/2.0;
+        double u = 600 * obj.get_x() + u0;
+        double v = 600 * obj.get_y() + v0;
+
+        return new VpImagePoint(v, u);
+    }
+
     // Getting 24 FPS, 640x480 size images
     public void onPreviewFrame(byte[] data, Camera camera) {
         if (System.currentTimeMillis() > 50 + lastTime) {
@@ -194,24 +190,53 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             // Its working even without grey scale conversion
             VpDetectorAprilTag detectorAprilTag = new VpDetectorAprilTag();
             detectorAprilTag.setAprilTagFamily(23); // TAG_ARUCO_MIP_36h12
-            List<VpHomogeneousMatrix> matrices = detectorAprilTag.detect(imageUChar,tagSize,cameraParameters);
+            List<VpHomogeneousMatrix> matrices = detectorAprilTag.detect(imageUChar, tagSize, cameraParameters);
+
             int[] tags_id = detectorAprilTag.getTagsId();
             Log.d("CameraPreview.java",matrices.size() + " tags detected");
-            for (int tag_id : tags_id) {
-                Log.d("CameraPreview.java", "tag_id=" + tag_id);
+            Log.d("CameraPreview.java", "tags_id=" + Arrays.toString(tags_id));
+
+            if (!matrices.isEmpty()) {
+                // TODO: this does not work unfortunately
+                // JNI DETECTED ERROR IN APPLICATION: attempt to return an instance of java.lang.Object[] from long[][] org.visp.detection.VpDetectorAprilTag.getTagsCorners(long)
+                // from long[][] org.visp.detection.VpDetectorAprilTag.getTagsCorners(long)
+//                List<List<VpImagePoint>> tagsCorners = detectorAprilTag.getTagsCorners();
+
+                List<List<VpImagePoint>> tagsCorners = new ArrayList<List<VpImagePoint>>(matrices.size());
+                int idx = 0;
+                List<VpImagePoint> corners = new ArrayList<VpImagePoint>();
+                Log.d("CameraPreview.java","image size: " + w + " x " + h);
+                for (VpHomogeneousMatrix cMo : matrices) {
+                    Log.d("CameraPreview.java","cMo:\n" + cMo.toString());
+
+                    double tagSize = 0.05;
+                    VpPoint obj0 = new VpPoint(-tagSize / 2.0, tagSize / 2.0, 0.0);
+                    corners.add(project(cMo, obj0));
+
+                    VpPoint obj1 = new VpPoint(tagSize / 2.0, tagSize / 2.0, 0.0);
+                    corners.add(project(cMo, obj1));
+
+                    VpPoint obj2 = new VpPoint(tagSize / 2.0, -tagSize / 2.0, 0.0);
+                    corners.add(project(cMo, obj2));
+
+                    VpPoint obj3 = new VpPoint(-tagSize / 2.0, -tagSize / 2.0, 0.0);
+                    corners.add(project(cMo, obj3));
+
+                    int strokeWidth = 3;
+                    updateResult(corners, strokeWidth, matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
+                        + (System.currentTimeMillis() - lastTime) +" ms");
+
+                    idx++;
+                }
             }
 
-            Log.d("CameraPreview.java", "tags_id=" + Arrays.toString(tags_id));
-            updateResult(data, w, h, matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
-                    + (System.currentTimeMillis() - lastTime) +" ms");
 
-            Log.e("CameraPreview", "camera.getPreviewFormat()=" + camera.getParameters().getPreviewFormat()); // 17 ; NV21
-//            if (mImageView == null) {
-//                mImageView = findViewById(R.id.imageView);
-//            }
-//            Log.e("CameraPreview", "(mImageView != null)? " + (mImageView != null));
+            // int startX, int stopX, int startY, int stopY, int color, int strokeWidth
+//            updateResult(startX, stopX, startY, stopY, color, strokeWidth, matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
+//                    + (System.currentTimeMillis() - lastTime) +" ms");
 
-            Log.e("CameraPreview", "(mHolder != null)? " + (mHolder != null));
+//            Log.e("CameraPreview", "camera.getPreviewFormat()=" + camera.getParameters().getPreviewFormat()); // 17 ; NV21
+//            Log.e("CameraPreview", "(mHolder != null)? " + (mHolder != null));
 
 //            if (mHolder.getSurface() != null) {
 //                Paint paint = new Paint();
@@ -251,62 +276,9 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             // http://supertos.free.fr/supertos.php?page=1068
             // https://www.dev2qa.com/android-surfaceview-drawing-example/
             // https://stackoverflow.com/questions/4965724/layered-surfaceviews-in-a-framelayout-in-android
-
-//            // Convert the byte[] preview frame to a Bitmap
-////            Bitmap bitmap = getBitmapFromPreviewFrame(data, camera);
-//
-//            Camera.Parameters parameters = camera.getParameters();
-//            int preview_format = parameters.getPreviewFormat();
-//
-//            // Convert the byte[] preview frame to a Bitmap
-//            Bitmap bitmap = convertNV21ToBitmap(data, camera);
-//            // Check if the bitmap is mutable
-//            if (!bitmap.isMutable()) {
-//                bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true); // Create a mutable copy of the bitmap
-//            }
-//
-//            Log.e("CameraPreview", "(bitmap != null)? " + (bitmap != null));
-//            if (bitmap != null) {
-//                // Modify the Bitmap here (e.g., apply filters or transformations)
-//
-//                // Create a canvas to draw on the bitmap
-//                Canvas canvas = new Canvas(bitmap);
-//
-//                // Set up the paint for drawing the red line
-//                Paint paint = new Paint();
-//                paint.setColor(Color.RED); // Red color
-//                int lineWidth = 10;
-//                paint.setStrokeWidth(lineWidth); // Set the width of the line
-//                paint.setAntiAlias(true); // Smooth out the edges of the line
-//
-//                // Draw a red line on the canvas (example: from (50, 50) to (500, 500))
-//                canvas.drawLine(50, 50, 500, 500, paint);
-//
-//                // Update the ImageView with the modified Bitmap
-//                mImageView.setImageBitmap(bitmap);
-//            }
+            // https://stackoverflow.com/questions/57742739/drawing-on-surfaceview
 
             lastTime = System.currentTimeMillis();
         }
-    }
-
-    // Convert raw camera frame (NV21) to Bitmap
-    private Bitmap convertNV21ToBitmap(byte[] data, Camera camera) {
-        Camera.Parameters parameters = camera.getParameters();
-        int previewWidth = parameters.getPreviewSize().width;
-        int previewHeight = parameters.getPreviewSize().height;
-
-        // Create a YuvImage from the NV21 byte array
-        YuvImage yuvImage = new YuvImage(data, parameters.getPreviewFormat(), previewWidth, previewHeight, null);
-
-        // Compress the YUV image to a JPEG output stream
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        yuvImage.compressToJpeg(new android.graphics.Rect(0, 0, previewWidth, previewHeight), 100, out);
-
-        // Get the byte array from the JPEG output stream
-        byte[] byteArray = out.toByteArray();
-
-        // Decode the byte array into a Bitmap
-        return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
     }
 }
