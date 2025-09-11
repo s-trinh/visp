@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.example.apriltagdetection.CameraPreviewActivity.updateResult;
+import static com.example.apriltagdetection.CameraPreviewActivity.updateResults;
 
 /**
  * Camera preview that displays a {@link Camera}.
@@ -54,6 +54,20 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     private int w, h;
     private VpCameraParameters cameraParameters;
     private double tagSize;
+    private VpDetectorAprilTag detectorAprilTag;
+    private VpImageUChar imageUChar;
+    private static int[] methods = {
+        0, // TAG_36h11
+        3, // TAG_25h9
+        4, // TAG_25h7
+        5, // TAG_16h5
+        6, // TAG_CIRCLE21h7
+        14, // TAG_ARUCO_4x4_1000
+        18, // TAG_ARUCO_5x5_1000
+        22, // TAG_ARUCO_6x6_1000
+        23, // TAG_ARUCO_MIP_36h12
+    };
+    private int method;
 
     public CameraPreview(Context context, Camera camera, Camera.CameraInfo cameraInfo,
                          int displayOrientation) {
@@ -79,6 +93,10 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         cameraParameters = new VpCameraParameters();
         cameraParameters.initPersProjWithoutDistortion(615.1674805, 615.1675415, 312.1889954, 243.4373779);
         tagSize = 0.053;
+
+        detectorAprilTag = new VpDetectorAprilTag();
+        method = 0;
+        detectorAprilTag.setAprilTagFamily(methods[method]); // TAG_36h11
     }
 
     public void surfaceCreated(SurfaceHolder holder) {
@@ -183,13 +201,12 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
     // Getting 24 FPS, 640x480 size images
     public void onPreviewFrame(byte[] data, Camera camera) {
-        if (System.currentTimeMillis() > 50 + lastTime) {
-            VpImageUChar imageUChar = new VpImageUChar(data,h,w,true);
+//        if (System.currentTimeMillis() > 50 + lastTime)
+        {
+            imageUChar = new VpImageUChar(data,h,w,true);
 
             // do the image processing
             // Its working even without grey scale conversion
-            VpDetectorAprilTag detectorAprilTag = new VpDetectorAprilTag();
-            detectorAprilTag.setAprilTagFamily(23); // TAG_ARUCO_MIP_36h12
             List<VpHomogeneousMatrix> matrices = detectorAprilTag.detect(imageUChar, tagSize, cameraParameters);
 
             int[] tags_id = detectorAprilTag.getTagsId();
@@ -204,12 +221,16 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
                 List<List<VpImagePoint>> tagsCorners = new ArrayList<List<VpImagePoint>>(matrices.size());
                 int idx = 0;
-                List<VpImagePoint> corners = new ArrayList<VpImagePoint>();
                 Log.d("CameraPreview.java","image size: " + w + " x " + h);
                 for (VpHomogeneousMatrix cMo : matrices) {
+                    List<VpImagePoint> corners = new ArrayList<VpImagePoint>();
                     Log.d("CameraPreview.java","cMo:\n" + cMo.toString());
 
-                    double tagSize = 0.05;
+                    w = mCamera.getParameters().getPreviewSize().width;
+                    h = mCamera.getParameters().getPreviewSize().height;
+                    Log.d("CameraPreview.java","image size: " + w + " x " + h + " ; mDisplayOrientation=" + mDisplayOrientation);
+
+                    double tagSize = 0.08;
                     VpPoint obj0 = new VpPoint(-tagSize / 2.0, tagSize / 2.0, 0.0);
                     corners.add(project(cMo, obj0));
 
@@ -222,12 +243,19 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
                     VpPoint obj3 = new VpPoint(-tagSize / 2.0, -tagSize / 2.0, 0.0);
                     corners.add(project(cMo, obj3));
 
-                    int strokeWidth = 3;
-                    updateResult(corners, strokeWidth, matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
-                        + (System.currentTimeMillis() - lastTime) +" ms");
+                    tagsCorners.add(corners);
 
                     idx++;
                 }
+
+                int strokeWidth = 5;
+                updateResults(tagsCorners, strokeWidth, matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
+                        + (System.currentTimeMillis() - lastTime) +" ms");
+            } else {
+                List<List<VpImagePoint>> tagsCorners = new ArrayList<List<VpImagePoint>>();
+
+                updateResults(tagsCorners, 10, matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
+                        + (System.currentTimeMillis() - lastTime) +" ms");
             }
 
 
@@ -280,5 +308,10 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
             lastTime = System.currentTimeMillis();
         }
+    }
+
+    public void setAprilTagMethod(int selection) {
+        method = selection;
+        detectorAprilTag.setAprilTagFamily(methods[method]);
     }
 }

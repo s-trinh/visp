@@ -13,6 +13,10 @@ import android.hardware.Camera;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+import android.view.View;
 import android.widget.Toast;
 
 import android.util.Log;
@@ -46,6 +50,8 @@ public class CameraPreviewActivity extends MainActivity  {
     static int w,h;
     static TextView resultInfo;
     static LineSurfaceView lineSurface;
+    private Spinner spinner;
+    private CameraPreview mPreview;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +75,47 @@ public class CameraPreviewActivity extends MainActivity  {
         } else {
             setContentView(R.layout.activity_camera_preview);
 
+            spinner = findViewById(R.id.spinner);
+            // Create an array of data (items to display in the Spinner)
+            String[] items = {
+                    "TAG_36h11", "TAG_25h9", "TAG_25h7", "TAG_16h5", "TAG_CIRCLE21h7",
+                    "TAG_ARUCO_4x4_1000", "TAG_ARUCO_5x5_1000", "TAG_ARUCO_6x6_1000", "TAG_ARUCO_MIP_36h12"
+            };
+
+            // Create an ArrayAdapter to populate the Spinner with data
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, items);
+
+            // Specify the layout to be used when the dropdown is displayed
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+            // Set the adapter to the Spinner
+            spinner.setAdapter(adapter);
+
+            // Set default selection (e.g., select the second item: "Banana")
+            spinner.setSelection(0);
+
+            // Set the listener for item selection
+            spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                // Handle item selection
+                @Override
+                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                    // Get the selected item
+                    String selectedItem = parentView.getItemAtPosition(position).toString();
+
+                    // Show a toast with the selected item
+                    Toast.makeText(CameraPreviewActivity.this, "Selected: " + selectedItem, Toast.LENGTH_SHORT).show();
+
+                    mPreview.setAprilTagMethod(position);
+                }
+
+                // Handle no item selected
+                @Override
+                public void onNothingSelected(AdapterView<?> parentView) {
+                    // You can choose to do nothing here or show a default message
+                    Toast.makeText(CameraPreviewActivity.this, "No item selected", Toast.LENGTH_SHORT).show();
+                }
+            });
+
             resultInfo = findViewById(R.id.resultTV);
             lineSurface = findViewById(R.id.surfaceView);
             lineSurface.setZOrderOnTop(true);
@@ -83,31 +130,57 @@ public class CameraPreviewActivity extends MainActivity  {
                     .getRotation();
 
             // Create the Preview view and set it as the content of this Activity.
-            CameraPreview mPreview = new CameraPreview(this, mCamera, cameraInfo, displayRotation);
+            mPreview = new CameraPreview(this, mCamera, cameraInfo, displayRotation);
             FrameLayout preview = findViewById(R.id.camera_preview);
             preview.addView(mPreview);
         }
     }
 
-    public static void updateResult(List<VpImagePoint> corners, int strokeWidth, String s) {
+    public static void updateResults(List<List<VpImagePoint>> cornersList, int strokeWidth, String s) {
+        lineSurface.clear();
+
+        for (List<VpImagePoint> corners : cornersList) {
+            updateResult(corners, strokeWidth);
+        }
+
+        resultInfo.setText(s);
+    }
+
+    private static void updateResult(List<VpImagePoint> corners, int strokeWidth) {
         int RED = -65536;
         int GREEN = -16711936;
         int YELLOW = -256;
         int BLUE = -16776961;
 
-        lineSurface.clear();
 
 //        lineSurface.drawLine((int) corners.get(0).get_u(), corners.get(0).get_v(), corners.get(1).get_u(), corners.get(1).get_v(), RED, strokeWidth);
 //        lineSurface.drawLine((int) corners.get(0).get_u(), corners.get(0).get_v(), corners.get(3).get_u(), corners.get(3).get_v(), GREEN, strokeWidth);
 //        lineSurface.drawLine((int) corners.get(1).get_u(), corners.get(1).get_v(), corners.get(2).get_u(), corners.get(2).get_v(), YELLOW, strokeWidth);
 //        lineSurface.drawLine((int) corners.get(2).get_u(), corners.get(2).get_v(), corners.get(3).get_u(), corners.get(3).get_v(), BLUE, strokeWidth);
 
-        lineSurface.drawLine((int) corners.get(0).get_v(), corners.get(0).get_u(), corners.get(1).get_v(), corners.get(1).get_u(), RED, strokeWidth);
-        lineSurface.drawLine((int) corners.get(0).get_v(), corners.get(0).get_u(), corners.get(3).get_v(), corners.get(3).get_u(), GREEN, strokeWidth);
-        lineSurface.drawLine((int) corners.get(1).get_v(), corners.get(1).get_u(), corners.get(2).get_v(), corners.get(2).get_u(), YELLOW, strokeWidth);
-        lineSurface.drawLine((int) corners.get(2).get_v(), corners.get(2).get_u(), corners.get(3).get_v(), corners.get(3).get_u(), BLUE, strokeWidth);
 
-        resultInfo.setText(s);
+        int[] color_ = {RED, GREEN, YELLOW, BLUE};
+        int[] strokeWidth_ = {strokeWidth, strokeWidth, strokeWidth, strokeWidth};
+
+        if (!corners.isEmpty()) {
+            if (false)
+            {
+                double[] startX_ = {corners.get(0).get_u(), corners.get(0).get_u(), corners.get(1).get_u(), corners.get(2).get_u()};
+                double[] startY_ = {corners.get(0).get_v(), corners.get(0).get_v(), corners.get(1).get_v(), corners.get(2).get_v()};
+                double[] stopX_ = {corners.get(1).get_u(), corners.get(3).get_u(), corners.get(2).get_u(), corners.get(3).get_u()};
+                double[] stopY_ = {corners.get(1).get_v(), corners.get(3).get_v(), corners.get(2).get_v(), corners.get(3).get_v()};
+                lineSurface.drawLine(startX_, startY_, stopX_, stopY_, color_, strokeWidth_);
+            }
+
+            if (true)
+            {
+                double[] startX_ = {corners.get(0).get_v(), corners.get(0).get_v(), corners.get(1).get_v(), corners.get(2).get_v()};
+                double[] startY_ = {corners.get(0).get_u(), corners.get(0).get_u(), corners.get(1).get_u(), corners.get(2).get_u()};
+                double[] stopX_ = {corners.get(1).get_v(), corners.get(3).get_v(), corners.get(2).get_v(), corners.get(3).get_v()};
+                double[] stopY_ = {corners.get(1).get_u(), corners.get(3).get_u(), corners.get(2).get_u(), corners.get(3).get_u()};
+                lineSurface.drawLine(startX_, startY_, stopX_, stopY_, color_, strokeWidth_);
+            }
+        }
     }
 
     @Override

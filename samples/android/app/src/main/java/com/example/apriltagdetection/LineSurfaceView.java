@@ -29,6 +29,17 @@ public class LineSurfaceView extends SurfaceView implements SurfaceHolder.Callba
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         Log.d(TAG, "LineSurfaceView::surfaceCreated()");
+
+//        Canvas canvas = surfaceHolder.lockCanvas();
+//        Log.d(TAG, "LineSurfaceView::drawLine() ; (canvas != null)=" + (canvas != null));
+//        if (canvas != null) {
+//            Paint paint = new Paint();
+//            int YELLOW = -256;
+//            paint.setColor(YELLOW);
+//            paint.setStrokeWidth(20);
+//            canvas.drawLine((float) 10, (float) 50, (float) 100, (float) 500, paint);
+//            surfaceHolder.unlockCanvasAndPost(canvas);
+//        }
     }
 
     public void clear() {
@@ -54,6 +65,40 @@ public class LineSurfaceView extends SurfaceView implements SurfaceHolder.Callba
             paint.setColor(color);
             paint.setStrokeWidth(strokeWidth);
             canvas.drawLine((float) startX, (float) startY, (float) stopX, (float) stopY, paint);
+            surfaceHolder.unlockCanvasAndPost(canvas);
+        }
+    }
+
+    public void drawLine(double[] startX_, double[] startY_, double[] stopX_, double[] stopY_, int[] color_, int[] strokeWidth_) {
+        Log.d(TAG, "LineSurfaceView::drawLine()");
+        Canvas canvas = surfaceHolder.lockCanvas();
+        Log.d(TAG, "LineSurfaceView::drawLine() ; (canvas != null)=" + (canvas != null));
+        if (canvas != null) {
+//            canvas.drawColor(Color.WHITE);
+            for (int i = 0; i < startX_.length; i++) {
+                float cam_w = 1280;
+                float cam_h = 720;
+                int view_w = getWidth();
+                int view_h = getHeight();
+//                float scale_w = view_w / cam_w;
+//                float scale_h = view_h / cam_h;
+                float scale_w = 1;
+                float scale_h = 1;
+
+                double startX = startX_[i];
+                double stopX = stopX_[i];
+                double startY = startY_[i];
+                double stopY = stopY_[i];
+                Log.d(TAG, "startX=" + startX + " ; stopX=" + stopX + " ; startY=" + startY + " ; stopY=" + stopY + " ; view_w=" + view_w + " ; view_h=" + view_h);
+
+                int color = color_[i];
+                int strokeWidth = strokeWidth_[i];
+
+                Paint paint = new Paint();
+                paint.setColor(color);
+                paint.setStrokeWidth(strokeWidth);
+                canvas.drawLine((float) (scale_w*startX), (float) (scale_h*startY), (float) (scale_w*stopX), (float) (scale_h*stopY), paint);
+            }
             surfaceHolder.unlockCanvasAndPost(canvas);
         }
     }
