@@ -18,11 +18,26 @@
             android:layout_height="match_parent" />
     </FrameLayout>
 
-    <!-- Spinner (ComboBox) -->
-    <Spinner
-        android:id="@+id/spinner"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <!-- Autofocus Button -->
+        <Button
+            android:id="@+id/btnAutoFocus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Auto Focus" />
+
+        <!-- Spinner (ComboBox) -->
+        <Spinner
+            android:id="@+id/spinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/resultTV"

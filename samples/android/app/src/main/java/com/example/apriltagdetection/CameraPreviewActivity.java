@@ -10,6 +10,7 @@ import android.os.Bundle;
 
 import android.graphics.PixelFormat;
 import android.hardware.Camera;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -52,6 +53,7 @@ public class CameraPreviewActivity extends MainActivity  {
     static LineSurfaceView lineSurface;
     private Spinner spinner;
     private CameraPreview mPreview;
+    private Button btnAutoFocus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +76,25 @@ public class CameraPreviewActivity extends MainActivity  {
             setContentView(R.layout.camera_unavailable);
         } else {
             setContentView(R.layout.activity_camera_preview);
+
+            btnAutoFocus = findViewById(R.id.btnAutoFocus);
+            // Set up the autofocus button
+            btnAutoFocus.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (mCamera != null) {
+                        mCamera.autoFocus(new Camera.AutoFocusCallback() {
+                            @Override
+                            public void onAutoFocus(boolean success, Camera camera) {
+                                if (!success) {
+                                    Toast.makeText(CameraPreviewActivity.this, "Cannot perform camera autofocus",
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
+                    }
+                }
+            });
 
             spinner = findViewById(R.id.spinner);
             // Create an array of data (items to display in the Spinner)
