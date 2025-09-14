@@ -4,15 +4,27 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="example.vispapriltag.CameraPreviewActivity">
+    tools:context="com.example.apriltagdetection.CameraPreviewActivity">
 
     <FrameLayout
         android:id="@+id/camera_preview"
         android:layout_width="match_parent"
         android:layout_weight="0.1"
-        android:layout_height="fill_parent" />
-        
-   <TextView
+        android:layout_height="fill_parent">
+
+        <com.example.apriltagdetection.LineSurfaceView
+            android:id="@+id/surfaceView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
+
+    <!-- Spinner (ComboBox) -->
+    <Spinner
+        android:id="@+id/spinner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
         android:id="@+id/resultTV"
         android:layout_width="wrap_content"
         android:layout_weight="0.9"

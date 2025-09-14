@@ -97,7 +97,7 @@ public class LineSurfaceView extends SurfaceView implements SurfaceHolder.Callba
                 Paint paint = new Paint();
                 paint.setColor(color);
                 paint.setStrokeWidth(strokeWidth);
-                canvas.drawLine((float) (scale_w*startX), (float) (scale_h*startY), (float) (scale_w*stopX), (float) (scale_h*stopY), paint);
+                canvas.drawLine((float) (view_w - scale_w*startX), (float) (scale_h*startY), (float) (view_w - scale_w*stopX), (float) (scale_h*stopY), paint);
             }
             surfaceHolder.unlockCanvasAndPost(canvas);
         }

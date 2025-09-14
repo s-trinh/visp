@@ -217,40 +217,51 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
                 // TODO: this does not work unfortunately
                 // JNI DETECTED ERROR IN APPLICATION: attempt to return an instance of java.lang.Object[] from long[][] org.visp.detection.VpDetectorAprilTag.getTagsCorners(long)
                 // from long[][] org.visp.detection.VpDetectorAprilTag.getTagsCorners(long)
-//                List<List<VpImagePoint>> tagsCorners = detectorAprilTag.getTagsCorners();
-
-                List<List<VpImagePoint>> tagsCorners = new ArrayList<List<VpImagePoint>>(matrices.size());
-                int idx = 0;
-                Log.d("CameraPreview.java","image size: " + w + " x " + h);
-                for (VpHomogeneousMatrix cMo : matrices) {
-                    List<VpImagePoint> corners = new ArrayList<VpImagePoint>();
-                    Log.d("CameraPreview.java","cMo:\n" + cMo.toString());
-
-                    w = mCamera.getParameters().getPreviewSize().width;
-                    h = mCamera.getParameters().getPreviewSize().height;
-                    Log.d("CameraPreview.java","image size: " + w + " x " + h + " ; mDisplayOrientation=" + mDisplayOrientation);
-
-                    double tagSize = 0.08;
-                    VpPoint obj0 = new VpPoint(-tagSize / 2.0, tagSize / 2.0, 0.0);
-                    corners.add(project(cMo, obj0));
-
-                    VpPoint obj1 = new VpPoint(tagSize / 2.0, tagSize / 2.0, 0.0);
-                    corners.add(project(cMo, obj1));
-
-                    VpPoint obj2 = new VpPoint(tagSize / 2.0, -tagSize / 2.0, 0.0);
-                    corners.add(project(cMo, obj2));
-
-                    VpPoint obj3 = new VpPoint(-tagSize / 2.0, -tagSize / 2.0, 0.0);
-                    corners.add(project(cMo, obj3));
-
-                    tagsCorners.add(corners);
-
-                    idx++;
-                }
+                List<List<VpImagePoint>> tagsCorners_visp = detectorAprilTag.getTagsCorners();
+//                for (List<VpImagePoint> tagCorners : tagsCorners_visp) {
+//                    Log.d("CameraPreview.java","tagCorners=" + tagCorners.size());
+//                }
 
                 int strokeWidth = 5;
-                updateResults(tagsCorners, strokeWidth, matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
+                updateResults(tagsCorners_visp, strokeWidth, matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
                         + (System.currentTimeMillis() - lastTime) +" ms");
+
+
+
+
+
+//                List<List<VpImagePoint>> tagsCorners = new ArrayList<List<VpImagePoint>>(matrices.size());
+//                int idx = 0;
+//                Log.d("CameraPreview.java","image size: " + w + " x " + h);
+//                for (VpHomogeneousMatrix cMo : matrices) {
+//                    List<VpImagePoint> corners = new ArrayList<VpImagePoint>();
+//                    Log.d("CameraPreview.java","cMo:\n" + cMo.toString());
+//
+//                    w = mCamera.getParameters().getPreviewSize().width;
+//                    h = mCamera.getParameters().getPreviewSize().height;
+//                    Log.d("CameraPreview.java","image size: " + w + " x " + h + " ; mDisplayOrientation=" + mDisplayOrientation);
+//
+//                    double tagSize = 0.08;
+//                    VpPoint obj0 = new VpPoint(-tagSize / 2.0, tagSize / 2.0, 0.0);
+//                    corners.add(project(cMo, obj0));
+//
+//                    VpPoint obj1 = new VpPoint(tagSize / 2.0, tagSize / 2.0, 0.0);
+//                    corners.add(project(cMo, obj1));
+//
+//                    VpPoint obj2 = new VpPoint(tagSize / 2.0, -tagSize / 2.0, 0.0);
+//                    corners.add(project(cMo, obj2));
+//
+//                    VpPoint obj3 = new VpPoint(-tagSize / 2.0, -tagSize / 2.0, 0.0);
+//                    corners.add(project(cMo, obj3));
+//
+//                    tagsCorners.add(corners);
+//
+//                    idx++;
+//                }
+
+//                int strokeWidth = 5;
+//                updateResults(tagsCorners, strokeWidth, matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
+//                        + (System.currentTimeMillis() - lastTime) +" ms");
             } else {
                 List<List<VpImagePoint>> tagsCorners = new ArrayList<List<VpImagePoint>>();
 
