@@ -10,11 +10,11 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-public class LineSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
+import java.util.List;
 
+public class LineSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
     private static final String TAG = "LineSurfaceView";
-    private SurfaceHolder surfaceHolder;
-    private Paint paint;
+    private SurfaceHolder mSurfaceHolder;
 
     public LineSurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -22,84 +22,65 @@ public class LineSurfaceView extends SurfaceView implements SurfaceHolder.Callba
     }
 
     private void init() {
-        surfaceHolder = getHolder();
-        surfaceHolder.addCallback(this);
+        mSurfaceHolder = getHolder();
+        mSurfaceHolder.addCallback(this);
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         Log.d(TAG, "LineSurfaceView::surfaceCreated()");
-
-//        Canvas canvas = surfaceHolder.lockCanvas();
-//        Log.d(TAG, "LineSurfaceView::drawLine() ; (canvas != null)=" + (canvas != null));
-//        if (canvas != null) {
-//            Paint paint = new Paint();
-//            int YELLOW = -256;
-//            paint.setColor(YELLOW);
-//            paint.setStrokeWidth(20);
-//            canvas.drawLine((float) 10, (float) 50, (float) 100, (float) 500, paint);
-//            surfaceHolder.unlockCanvasAndPost(canvas);
-//        }
     }
 
     public void clear() {
         Log.d(TAG, "LineSurfaceView::clear()");
-        Canvas canvas = surfaceHolder.lockCanvas();
+        Canvas canvas = mSurfaceHolder.lockCanvas();
         Log.d(TAG, "LineSurfaceView::clear() ; (canvas != null)=" + (canvas != null));
         if (canvas != null) {
             // https://stackoverflow.com/a/9035709
             canvas.drawColor( 0, PorterDuff.Mode.CLEAR );
-            surfaceHolder.unlockCanvasAndPost(canvas);
+            mSurfaceHolder.unlockCanvasAndPost(canvas);
         }
     }
 
-    public void drawLine(double startX, double startY, double stopX, double stopY, int color, int strokeWidth) {
+    public void drawLines(List<double[]> list_startX, List<double[]> list_startY, List<double[]> list_stopX, List<double[]> list_stopY,
+                          int[] color_, int[] strokeWidth_, List<Double> centerX, List<Double> centerY, int[] ids_) {
         Log.d(TAG, "LineSurfaceView::drawLine()");
-        Canvas canvas = surfaceHolder.lockCanvas();
+        Canvas canvas = mSurfaceHolder.lockCanvas();
         Log.d(TAG, "LineSurfaceView::drawLine() ; (canvas != null)=" + (canvas != null));
+
         if (canvas != null) {
-//            canvas.drawColor(Color.WHITE);
-            Log.d(TAG, "startX=" + startX + " ; stopX=" + stopX + " ; startY=" + startY + " ; stopY=" + stopY);
+            int view_w = getWidth();
+//            int view_h = getHeight();
 
-            Paint paint = new Paint();
-            paint.setColor(color);
-            paint.setStrokeWidth(strokeWidth);
-            canvas.drawLine((float) startX, (float) startY, (float) stopX, (float) stopY, paint);
-            surfaceHolder.unlockCanvasAndPost(canvas);
-        }
-    }
+            for (int i = 0; i < list_startX.size(); i++) {
+                for (int j = 0; j < list_startX.get(i).length; j++) {
 
-    public void drawLine(double[] startX_, double[] startY_, double[] stopX_, double[] stopY_, int[] color_, int[] strokeWidth_) {
-        Log.d(TAG, "LineSurfaceView::drawLine()");
-        Canvas canvas = surfaceHolder.lockCanvas();
-        Log.d(TAG, "LineSurfaceView::drawLine() ; (canvas != null)=" + (canvas != null));
-        if (canvas != null) {
-//            canvas.drawColor(Color.WHITE);
-            for (int i = 0; i < startX_.length; i++) {
-                float cam_w = 1280;
-                float cam_h = 720;
-                int view_w = getWidth();
-                int view_h = getHeight();
-//                float scale_w = view_w / cam_w;
-//                float scale_h = view_h / cam_h;
-                float scale_w = 1;
-                float scale_h = 1;
+                    double startX = list_startX.get(i)[j];
+                    double stopX = list_stopX.get(i)[j];
+                    double startY = list_startY.get(i)[j];
+                    double stopY = list_stopY.get(i)[j];
 
-                double startX = startX_[i];
-                double stopX = stopX_[i];
-                double startY = startY_[i];
-                double stopY = stopY_[i];
-                Log.d(TAG, "startX=" + startX + " ; stopX=" + stopX + " ; startY=" + startY + " ; stopY=" + stopY + " ; view_w=" + view_w + " ; view_h=" + view_h);
+                    int color = color_[j];
+                    int strokeWidth = strokeWidth_[j];
 
-                int color = color_[i];
-                int strokeWidth = strokeWidth_[i];
+                    Paint paint = new Paint();
+                    paint.setColor(color);
+                    paint.setStrokeWidth(strokeWidth);
+                    // TODO: (view_w - startX)
+                    canvas.drawLine((float) (view_w - startX), (float) startY, (float) (view_w - stopX), (float) stopY, paint);
+                }
 
+                // Draw id
                 Paint paint = new Paint();
-                paint.setColor(color);
-                paint.setStrokeWidth(strokeWidth);
-                canvas.drawLine((float) (view_w - scale_w*startX), (float) (scale_h*startY), (float) (view_w - scale_w*stopX), (float) (scale_h*stopY), paint);
+                paint.setColor(Color.parseColor("aqua"));
+                paint.setStrokeWidth(8);
+                paint.setTextSize(40);
+                paint.setTextAlign(Paint.Align.CENTER);
+
+                canvas.drawText(String.valueOf(ids_[i]), view_w - centerX.get(i).floatValue(), centerY.get(i).floatValue(), paint);
             }
-            surfaceHolder.unlockCanvasAndPost(canvas);
+
+            mSurfaceHolder.unlockCanvasAndPost(canvas);
         }
     }
 

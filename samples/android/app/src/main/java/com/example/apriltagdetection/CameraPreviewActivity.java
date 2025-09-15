@@ -6,26 +6,23 @@ import android.content.pm.PackageManager;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.graphics.Color;
 import android.os.Bundle;
 
 import android.graphics.PixelFormat;
 import android.hardware.Camera;
-import android.widget.Button;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.Spinner;
-import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
-
-import android.util.Log;
-
+import android.view.View;
 
 import org.visp.core.VpImagePoint;
 
-import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -37,30 +34,28 @@ import java.util.List;
  * permissions API.
  * <p>
  * Implementation is based directly on the documentation at
- * http://developer.android.com/guide/topics/media/camera.html
+ * https://developer.android.com/media/camera/camera-deprecated/camera-api
  */
 public class CameraPreviewActivity extends MainActivity  {
-
     /**
      * Id of the camera to access. 0 is the first camera.
      */
     private static final int CAMERA_ID = 0;
 
     private Camera mCamera;
-    public ImageView resultImageView;
-    static int w,h;
-    static TextView resultInfo;
-    static LineSurfaceView lineSurface;
-    private Spinner spinner;
+    private int mW, mH;
+    static TextView mResultInfo;
+    static LineSurfaceView mLineSurface;
+    private Spinner mSpinner;
     private CameraPreview mPreview;
-    private Button btnAutoFocus;
+    private Button mBtnAutoFocus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         // ChatGPT
-        // Value? --> https://stackoverflow.com/a/36653669 ?
+        // Arbitrary value? --> https://stackoverflow.com/a/36653669 ?
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 100);
         }
@@ -77,9 +72,9 @@ public class CameraPreviewActivity extends MainActivity  {
         } else {
             setContentView(R.layout.activity_camera_preview);
 
-            btnAutoFocus = findViewById(R.id.btnAutoFocus);
+            mBtnAutoFocus = findViewById(R.id.btnAutoFocus);
             // Set up the autofocus button
-            btnAutoFocus.setOnClickListener(new View.OnClickListener() {
+            mBtnAutoFocus.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     if (mCamera != null) {
@@ -96,8 +91,7 @@ public class CameraPreviewActivity extends MainActivity  {
                 }
             });
 
-            spinner = findViewById(R.id.spinner);
-            // Create an array of data (items to display in the Spinner)
+            mSpinner = findViewById(R.id.spinner);
             String[] items = {
                     "TAG_36h11", "TAG_25h9", "TAG_25h7", "TAG_16h5", "TAG_CIRCLE21h7",
                     "TAG_ARUCO_4x4_1000", "TAG_ARUCO_5x5_1000", "TAG_ARUCO_6x6_1000", "TAG_ARUCO_MIP_36h12"
@@ -105,18 +99,12 @@ public class CameraPreviewActivity extends MainActivity  {
 
             // Create an ArrayAdapter to populate the Spinner with data
             ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, items);
-
-            // Specify the layout to be used when the dropdown is displayed
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-
-            // Set the adapter to the Spinner
-            spinner.setAdapter(adapter);
-
-            // Set default selection (e.g., select the second item: "Banana")
-            spinner.setSelection(0);
+            mSpinner.setAdapter(adapter);
+            mSpinner.setSelection(0);
 
             // Set the listener for item selection
-            spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 // Handle item selection
                 @Override
                 public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
@@ -132,23 +120,21 @@ public class CameraPreviewActivity extends MainActivity  {
                 // Handle no item selected
                 @Override
                 public void onNothingSelected(AdapterView<?> parentView) {
-                    // You can choose to do nothing here or show a default message
                     Toast.makeText(CameraPreviewActivity.this, "No item selected", Toast.LENGTH_SHORT).show();
                 }
             });
 
-            resultInfo = findViewById(R.id.resultTV);
-            lineSurface = findViewById(R.id.surfaceView);
-            lineSurface.setZOrderOnTop(true);
-            lineSurface.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+            mResultInfo = findViewById(R.id.resultTV);
+            mLineSurface = findViewById(R.id.surfaceView);
+            mLineSurface.setZOrderOnTop(true);
+            mLineSurface.getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
             // init the byte array
-            w = mCamera.getParameters().getPreviewSize().width;
-            h = mCamera.getParameters().getPreviewSize().height;
+            mW = mCamera.getParameters().getPreviewSize().width;
+            mH = mCamera.getParameters().getPreviewSize().height;
 
             // Get the rotation of the screen to adjust the preview image accordingly.
-            final int displayRotation = getWindowManager().getDefaultDisplay()
-                    .getRotation();
+            final int displayRotation = getWindowManager().getDefaultDisplay().getRotation();
 
             // Create the Preview view and set it as the content of this Activity.
             mPreview = new CameraPreview(this, mCamera, cameraInfo, displayRotation);
@@ -157,51 +143,42 @@ public class CameraPreviewActivity extends MainActivity  {
         }
     }
 
-    public static void updateResults(List<List<VpImagePoint>> cornersList, int strokeWidth, String s) {
-        lineSurface.clear();
-
-        for (List<VpImagePoint> corners : cornersList) {
-            updateResult(corners, strokeWidth);
-        }
-
-        resultInfo.setText(s);
-    }
-
-    private static void updateResult(List<VpImagePoint> corners, int strokeWidth) {
-        int RED = -65536;
-        int GREEN = -16711936;
-        int YELLOW = -256;
-        int BLUE = -16776961;
-
-
-//        lineSurface.drawLine((int) corners.get(0).get_u(), corners.get(0).get_v(), corners.get(1).get_u(), corners.get(1).get_v(), RED, strokeWidth);
-//        lineSurface.drawLine((int) corners.get(0).get_u(), corners.get(0).get_v(), corners.get(3).get_u(), corners.get(3).get_v(), GREEN, strokeWidth);
-//        lineSurface.drawLine((int) corners.get(1).get_u(), corners.get(1).get_v(), corners.get(2).get_u(), corners.get(2).get_v(), YELLOW, strokeWidth);
-//        lineSurface.drawLine((int) corners.get(2).get_u(), corners.get(2).get_v(), corners.get(3).get_u(), corners.get(3).get_v(), BLUE, strokeWidth);
-
+    public static void updateResults(List<List<VpImagePoint>> cornersList, int strokeWidth, int[] ids, String s) {
+        int RED = Color.RED; // -65536
+        int GREEN = Color.GREEN; // -16711936
+        int YELLOW = Color.YELLOW; // -256
+        int BLUE = Color.BLUE; // -16776961
 
         int[] color_ = {RED, GREEN, YELLOW, BLUE};
         int[] strokeWidth_ = {strokeWidth, strokeWidth, strokeWidth, strokeWidth};
 
-        if (!corners.isEmpty()) {
-            if (false)
-            {
-                double[] startX_ = {corners.get(0).get_u(), corners.get(0).get_u(), corners.get(1).get_u(), corners.get(2).get_u()};
-                double[] startY_ = {corners.get(0).get_v(), corners.get(0).get_v(), corners.get(1).get_v(), corners.get(2).get_v()};
-                double[] stopX_ = {corners.get(1).get_u(), corners.get(3).get_u(), corners.get(2).get_u(), corners.get(3).get_u()};
-                double[] stopY_ = {corners.get(1).get_v(), corners.get(3).get_v(), corners.get(2).get_v(), corners.get(3).get_v()};
-                lineSurface.drawLine(startX_, startY_, stopX_, stopY_, color_, strokeWidth_);
-            }
+        List<double[]> list_startX = new ArrayList<>(cornersList.size());
+        List<double[]> list_startY = new ArrayList<>(cornersList.size());
+        List<double[]> list_stopX = new ArrayList<>(cornersList.size());
+        List<double[]> list_stopY = new ArrayList<>(cornersList.size());
 
-            if (true)
-            {
-                double[] startX_ = {corners.get(0).get_v(), corners.get(0).get_v(), corners.get(1).get_v(), corners.get(2).get_v()};
-                double[] startY_ = {corners.get(0).get_u(), corners.get(0).get_u(), corners.get(1).get_u(), corners.get(2).get_u()};
-                double[] stopX_ = {corners.get(1).get_v(), corners.get(3).get_v(), corners.get(2).get_v(), corners.get(3).get_v()};
-                double[] stopY_ = {corners.get(1).get_u(), corners.get(3).get_u(), corners.get(2).get_u(), corners.get(3).get_u()};
-                lineSurface.drawLine(startX_, startY_, stopX_, stopY_, color_, strokeWidth_);
-            }
+        mLineSurface.clear();
+
+        List<Double> centerX = new ArrayList<>(cornersList.size());
+        List<Double> centerY = new ArrayList<>(cornersList.size());
+        for (List<VpImagePoint> corners : cornersList) {
+            double[] startX_ = {corners.get(0).get_v(), corners.get(0).get_v(), corners.get(1).get_v(), corners.get(2).get_v()};
+            double[] startY_ = {corners.get(0).get_u(), corners.get(0).get_u(), corners.get(1).get_u(), corners.get(2).get_u()};
+            double[] stopX_ = {corners.get(1).get_v(), corners.get(3).get_v(), corners.get(2).get_v(), corners.get(3).get_v()};
+            double[] stopY_ = {corners.get(1).get_u(), corners.get(3).get_u(), corners.get(2).get_u(), corners.get(3).get_u()};
+
+            list_startX.add(startX_);
+            list_startY.add(startY_);
+            list_stopX.add(stopX_);
+            list_stopY.add(stopY_);
+
+            centerX.add( (corners.get(0).get_v() + corners.get(1).get_v() + corners.get(2).get_v() + corners.get(3).get_v()) / 4 );
+            centerY.add( (corners.get(0).get_u() + corners.get(1).get_u() + corners.get(2).get_u() + corners.get(3).get_u()) / 4 );
         }
+
+        mLineSurface.drawLines(list_startX, list_startY, list_stopX, list_stopY, color_, strokeWidth_, centerX, centerY, ids);
+
+        mResultInfo.setText(s);
     }
 
     @Override

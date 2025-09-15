@@ -20,7 +20,6 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
     private static final int PERMISSION_REQUEST_CAMERA = 0;
     private View mLayout;
 
-
     // Used to load the 'native-lib' library on application startup.
     static {
         System.loadLibrary("visp_java3");

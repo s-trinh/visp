@@ -2,20 +2,11 @@ package com.example.apriltagdetection;
 
 import android.content.Context;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
-
 import android.hardware.Camera;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.widget.ImageView;
 
 import org.visp.core.VpCameraParameters;
 import org.visp.core.VpHomogeneousMatrix;
@@ -24,9 +15,7 @@ import org.visp.core.VpImagePoint;
 import org.visp.core.VpImageUChar;
 import org.visp.detection.VpDetectorAprilTag;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -42,21 +31,18 @@ import static com.example.apriltagdetection.CameraPreviewActivity.updateResults;
  * http://developer.android.com/guide/topics/media/camera.html
  */
 public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback, Camera.PreviewCallback {
-
     private static final String TAG = "CameraPreview";
     private SurfaceHolder mHolder;
-    private Canvas canvas;
-    private ImageView mImageView;
     private Camera mCamera;
     private Camera.CameraInfo mCameraInfo;
     private int mDisplayOrientation;
-    private long lastTime;
-    private int w, h;
-    private VpCameraParameters cameraParameters;
-    private double tagSize;
-    private VpDetectorAprilTag detectorAprilTag;
-    private VpImageUChar imageUChar;
-    private static int[] methods = {
+    private long mLastTime;
+    private int mW, mH;
+    private VpCameraParameters mCameraParameters;
+    private double mTagSize;
+    private VpDetectorAprilTag mDetectorAprilTag;
+    private VpImageUChar mImageUChar;
+    private static int[] mMethods = {
         0, // TAG_36h11
         3, // TAG_25h9
         4, // TAG_25h7
@@ -67,7 +53,18 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         22, // TAG_ARUCO_6x6_1000
         23, // TAG_ARUCO_MIP_36h12
     };
-    private int method;
+    private int mMethod;
+    private static float[] mDetectionMarginThresholds = {
+            -1, // TAG_36h11
+            -1, // TAG_25h9
+            -1, // TAG_25h7
+            100, // TAG_16h5
+            -1, // TAG_CIRCLE21h7
+            100, // TAG_ARUCO_4x4_1000
+            100, // TAG_ARUCO_5x5_1000
+            100, // TAG_ARUCO_6x6_1000
+            -1, // TAG_ARUCO_MIP_36h12
+    };
 
     public CameraPreview(Context context, Camera camera, Camera.CameraInfo cameraInfo,
                          int displayOrientation) {
@@ -88,21 +85,22 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         mHolder.addCallback(this);
 
         // init the ViSP tag detection system
-        w = mCamera.getParameters().getPreviewSize().width;
-        h = mCamera.getParameters().getPreviewSize().height;
-        cameraParameters = new VpCameraParameters();
-        cameraParameters.initPersProjWithoutDistortion(615.1674805, 615.1675415, 312.1889954, 243.4373779);
-        tagSize = 0.053;
+        mW = mCamera.getParameters().getPreviewSize().width;
+        mH = mCamera.getParameters().getPreviewSize().height;
+        mCameraParameters = new VpCameraParameters();
+        mCameraParameters.initPersProjWithoutDistortion(615.1674805, 615.1675415, 312.1889954, 243.4373779);
+        mTagSize = 0.053;
 
-        detectorAprilTag = new VpDetectorAprilTag();
-        method = 0;
-        detectorAprilTag.setAprilTagFamily(methods[method]); // TAG_36h11
+        mDetectorAprilTag = new VpDetectorAprilTag();
+        mMethod = 0;
+        mDetectorAprilTag.setAprilTagFamily(mMethods[mMethod]); // TAG_36h11
+        mDetectorAprilTag.setAprilTagDecisionMarginThreshold(mDetectionMarginThresholds[mMethod]);
     }
 
     public void surfaceCreated(SurfaceHolder holder) {
         // The Surface has been created, now tell the camera where to draw the preview.
         try {
-            lastTime = System.currentTimeMillis();
+            mLastTime = System.currentTimeMillis();
             mCamera.setPreviewDisplay(holder);
             mCamera.startPreview();
             Log.d(TAG, "Camera preview started.");
@@ -131,14 +129,14 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             Log.d(TAG, "Preview stopped.");
         } catch (Exception e) {
             // ignore: tried to stop a non-existent preview
-            Log.d(TAG, "Error starting camera preview: " + e.getMessage());
+            Log.e(TAG, "Error starting camera preview: " + e.getMessage());
         }
 
         // Now make changes
         int orientation = calculatePreviewOrientation(mCameraInfo, mDisplayOrientation);
         mCamera.setDisplayOrientation(orientation);
 
-        lastTime = System.currentTimeMillis();
+        mLastTime = System.currentTimeMillis();
 
         try {
             mCamera.setPreviewCallback(this);
@@ -147,7 +145,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
             Log.d(TAG, "Camera preview started.");
         } catch (Exception e) {
-            Log.d(TAG, "Error starting camera preview: " + e.getMessage());
+            Log.e(TAG, "Error starting camera preview: " + e.getMessage());
         }
     }
 
@@ -188,120 +186,47 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         return result;
     }
 
-    private VpImagePoint project(VpHomogeneousMatrix cMo, VpPoint obj) {
-        double tagSize = 0.05;
-        obj.changeFrame(cMo);
-        obj.projection();
-        double px = 600, py = 600, u0 = w/2.0, v0 = h/2.0;
-        double u = 600 * obj.get_x() + u0;
-        double v = 600 * obj.get_y() + v0;
+//    private VpImagePoint project(VpHomogeneousMatrix cMo, VpPoint obj) {
+//        obj.changeFrame(cMo);
+//        obj.projection();
+//        double px = 600, py = 600, u0 = mW/2.0, v0 = mH/2.0;
+//        double u = px * obj.get_x() + u0;
+//        double v = py * obj.get_y() + v0;
+//
+//        return new VpImagePoint(v, u);
+//    }
 
-        return new VpImagePoint(v, u);
-    }
-
-    // Getting 24 FPS, 640x480 size images
     public void onPreviewFrame(byte[] data, Camera camera) {
-//        if (System.currentTimeMillis() > 50 + lastTime)
+//        if (System.currentTimeMillis() > 50 + mLastTime)
         {
-            imageUChar = new VpImageUChar(data,h,w,true);
+            mImageUChar = new VpImageUChar(data, mH, mW,true);
 
             // do the image processing
             // Its working even without grey scale conversion
-            List<VpHomogeneousMatrix> matrices = detectorAprilTag.detect(imageUChar, tagSize, cameraParameters);
+            // TODO: check the original image color space
+            List<VpHomogeneousMatrix> matrices = mDetectorAprilTag.detect(mImageUChar, mTagSize, mCameraParameters);
 
-            int[] tags_id = detectorAprilTag.getTagsId();
+            int[] tags_id = mDetectorAprilTag.getTagsId();
             Log.d("CameraPreview.java",matrices.size() + " tags detected");
             Log.d("CameraPreview.java", "tags_id=" + Arrays.toString(tags_id));
 
+            int strokeWidth = 8;
             if (!matrices.isEmpty()) {
-                // TODO: this does not work unfortunately
-                // JNI DETECTED ERROR IN APPLICATION: attempt to return an instance of java.lang.Object[] from long[][] org.visp.detection.VpDetectorAprilTag.getTagsCorners(long)
-                // from long[][] org.visp.detection.VpDetectorAprilTag.getTagsCorners(long)
-                List<List<VpImagePoint>> tagsCorners_visp = detectorAprilTag.getTagsCorners();
-//                for (List<VpImagePoint> tagCorners : tagsCorners_visp) {
-//                    Log.d("CameraPreview.java","tagCorners=" + tagCorners.size());
-//                }
+                List<List<VpImagePoint>> tagsCorners_visp = mDetectorAprilTag.getTagsCorners();
+                int[] tag_ids = mDetectorAprilTag.getTagsId();
 
-                int strokeWidth = 5;
-                updateResults(tagsCorners_visp, strokeWidth, matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
-                        + (System.currentTimeMillis() - lastTime) +" ms");
-
-
-
-
-
-//                List<List<VpImagePoint>> tagsCorners = new ArrayList<List<VpImagePoint>>(matrices.size());
-//                int idx = 0;
-//                Log.d("CameraPreview.java","image size: " + w + " x " + h);
-//                for (VpHomogeneousMatrix cMo : matrices) {
-//                    List<VpImagePoint> corners = new ArrayList<VpImagePoint>();
-//                    Log.d("CameraPreview.java","cMo:\n" + cMo.toString());
-//
-//                    w = mCamera.getParameters().getPreviewSize().width;
-//                    h = mCamera.getParameters().getPreviewSize().height;
-//                    Log.d("CameraPreview.java","image size: " + w + " x " + h + " ; mDisplayOrientation=" + mDisplayOrientation);
-//
-//                    double tagSize = 0.08;
-//                    VpPoint obj0 = new VpPoint(-tagSize / 2.0, tagSize / 2.0, 0.0);
-//                    corners.add(project(cMo, obj0));
-//
-//                    VpPoint obj1 = new VpPoint(tagSize / 2.0, tagSize / 2.0, 0.0);
-//                    corners.add(project(cMo, obj1));
-//
-//                    VpPoint obj2 = new VpPoint(tagSize / 2.0, -tagSize / 2.0, 0.0);
-//                    corners.add(project(cMo, obj2));
-//
-//                    VpPoint obj3 = new VpPoint(-tagSize / 2.0, -tagSize / 2.0, 0.0);
-//                    corners.add(project(cMo, obj3));
-//
-//                    tagsCorners.add(corners);
-//
-//                    idx++;
-//                }
-
-//                int strokeWidth = 5;
-//                updateResults(tagsCorners, strokeWidth, matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
-//                        + (System.currentTimeMillis() - lastTime) +" ms");
+                updateResults(tagsCorners_visp, strokeWidth, tag_ids,
+                        matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
+                        + (System.currentTimeMillis() - mLastTime) +" ms");
             } else {
+                // Display text info
                 List<List<VpImagePoint>> tagsCorners = new ArrayList<List<VpImagePoint>>();
 
-                updateResults(tagsCorners, 10, matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
-                        + (System.currentTimeMillis() - lastTime) +" ms");
+                int[] emptyIds = {};
+                updateResults(tagsCorners, strokeWidth, emptyIds,
+                        matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
+                        + (System.currentTimeMillis() - mLastTime) +" ms");
             }
-
-
-            // int startX, int stopX, int startY, int stopY, int color, int strokeWidth
-//            updateResult(startX, stopX, startY, stopY, color, strokeWidth, matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
-//                    + (System.currentTimeMillis() - lastTime) +" ms");
-
-//            Log.e("CameraPreview", "camera.getPreviewFormat()=" + camera.getParameters().getPreviewFormat()); // 17 ; NV21
-//            Log.e("CameraPreview", "(mHolder != null)? " + (mHolder != null));
-
-//            if (mHolder.getSurface() != null) {
-//                Paint paint = new Paint();
-//                paint.setColor(Color.RED); // Red color
-//                int lineWidth = 10;
-//                paint.setStrokeWidth(lineWidth); // Set the width of the line
-//                paint.setAntiAlias(true); // Smooth out the edges of the line
-//
-//                // Draw a red line on the canvas (example: from (50, 50) to (500, 500))
-//                canvas = mHolder.getSurface().lockCanvas(new Rect());
-//                canvas.drawLine(50, 50, 500, 500, paint);
-//                mHolder.unlockCanvasAndPost(canvas);
-//            }
-//            Canvas canvas = mHolder.lockCanvas();
-//            if (canvas != null) {
-//                // Set up the paint for drawing the red line
-//                Paint paint = new Paint();
-//                paint.setColor(Color.RED); // Red color
-//                int lineWidth = 10;
-//                paint.setStrokeWidth(lineWidth); // Set the width of the line
-//                paint.setAntiAlias(true); // Smooth out the edges of the line
-//
-//                // Draw a red line on the canvas (example: from (50, 50) to (500, 500))
-//                canvas.drawLine(50, 50, 500, 500, paint);
-//                mHolder.unlockCanvasAndPost(canvas);
-//            }
 
             // TODO: read this
             // https://www.geeksforgeeks.org/android/mvc-model-view-controller-architecture-pattern-in-android-with-example/
@@ -317,12 +242,13 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             // https://stackoverflow.com/questions/4965724/layered-surfaceviews-in-a-framelayout-in-android
             // https://stackoverflow.com/questions/57742739/drawing-on-surfaceview
 
-            lastTime = System.currentTimeMillis();
+            mLastTime = System.currentTimeMillis();
         }
     }
 
     public void setAprilTagMethod(int selection) {
-        method = selection;
-        detectorAprilTag.setAprilTagFamily(methods[method]);
+        mMethod = selection;
+        mDetectorAprilTag.setAprilTagFamily(mMethods[mMethod]);
+        mDetectorAprilTag.setAprilTagDecisionMarginThreshold(mDetectionMarginThresholds[mMethod]);
     }
 }
