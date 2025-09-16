@@ -11,6 +11,7 @@ import android.os.Bundle;
 
 import android.graphics.PixelFormat;
 import android.hardware.Camera;
+import android.util.Log;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -41,6 +42,7 @@ public class CameraPreviewActivity extends MainActivity  {
      * Id of the camera to access. 0 is the first camera.
      */
     private static final int CAMERA_ID = 0;
+    private static final String TAG = "CameraPreviewActivity";
 
     private Camera mCamera;
     private int mW, mH;
@@ -52,6 +54,7 @@ public class CameraPreviewActivity extends MainActivity  {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "CameraPreviewActivity::onCreate()");
         super.onCreate(savedInstanceState);
 
         // ChatGPT
@@ -63,13 +66,14 @@ public class CameraPreviewActivity extends MainActivity  {
         // Open an instance of the first camera and retrieve its info.
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
         mCamera = getCameraInstance(CAMERA_ID);
-        Camera.getCameraInfo(CAMERA_ID, cameraInfo);
 
         if (mCamera == null) {
+            Log.d(TAG, "CameraPreviewActivity::onCreate() ; mCamera == null");
             // Camera is not available, display error message
             Toast.makeText(this, "Camera is not available.", Toast.LENGTH_SHORT).show();
             setContentView(R.layout.camera_unavailable);
         } else {
+            Camera.getCameraInfo(CAMERA_ID, cameraInfo);
             setContentView(R.layout.activity_camera_preview);
 
             mBtnAutoFocus = findViewById(R.id.btnAutoFocus);
@@ -143,7 +147,7 @@ public class CameraPreviewActivity extends MainActivity  {
         }
     }
 
-    public static void updateResults(List<List<VpImagePoint>> cornersList, int strokeWidth, int[] ids, String s) {
+    public static void updateResults(List<List<VpImagePoint>> cornersList, int strokeWidth, int[] ids, String s, int orientation, int w, int h) {
         int RED = Color.RED; // -65536
         int GREEN = Color.GREEN; // -16711936
         int YELLOW = Color.YELLOW; // -256
@@ -162,38 +166,54 @@ public class CameraPreviewActivity extends MainActivity  {
         List<Double> centerX = new ArrayList<>(cornersList.size());
         List<Double> centerY = new ArrayList<>(cornersList.size());
         for (List<VpImagePoint> corners : cornersList) {
-            double[] startX_ = {corners.get(0).get_v(), corners.get(0).get_v(), corners.get(1).get_v(), corners.get(2).get_v()};
-            double[] startY_ = {corners.get(0).get_u(), corners.get(0).get_u(), corners.get(1).get_u(), corners.get(2).get_u()};
-            double[] stopX_ = {corners.get(1).get_v(), corners.get(3).get_v(), corners.get(2).get_v(), corners.get(3).get_v()};
-            double[] stopY_ = {corners.get(1).get_u(), corners.get(3).get_u(), corners.get(2).get_u(), corners.get(3).get_u()};
+            double[] startX_ = {corners.get(0).get_u(), corners.get(0).get_u(), corners.get(1).get_u(), corners.get(2).get_u()};
+            double[] startY_ = {corners.get(0).get_v(), corners.get(0).get_v(), corners.get(1).get_v(), corners.get(2).get_v()};
+            double[] stopX_ = {corners.get(1).get_u(), corners.get(3).get_u(), corners.get(2).get_u(), corners.get(3).get_u()};
+            double[] stopY_ = {corners.get(1).get_v(), corners.get(3).get_v(), corners.get(2).get_v(), corners.get(3).get_v()};
 
             list_startX.add(startX_);
             list_startY.add(startY_);
             list_stopX.add(stopX_);
             list_stopY.add(stopY_);
 
-            centerX.add( (corners.get(0).get_v() + corners.get(1).get_v() + corners.get(2).get_v() + corners.get(3).get_v()) / 4 );
-            centerY.add( (corners.get(0).get_u() + corners.get(1).get_u() + corners.get(2).get_u() + corners.get(3).get_u()) / 4 );
+            centerX.add( (corners.get(0).get_u() + corners.get(1).get_u() + corners.get(2).get_u() + corners.get(3).get_u()) / 4 );
+            centerY.add( (corners.get(0).get_v() + corners.get(1).get_v() + corners.get(2).get_v() + corners.get(3).get_v()) / 4 );
         }
 
-        mLineSurface.drawLines(list_startX, list_startY, list_stopX, list_stopY, color_, strokeWidth_, centerX, centerY, ids);
+        mLineSurface.drawLines(list_startX, list_startY, list_stopX, list_stopY, color_, strokeWidth_, centerX, centerY, ids, orientation, w, h);
 
         mResultInfo.setText(s);
     }
 
     @Override
     public void onPause() {
+        Log.d(TAG, "CameraPreviewActivity::onPause()");
         super.onPause();
         // Stop camera access
         releaseCamera();
     }
 
+    @Override
+    public void onResume() {
+        Log.d(TAG, "CameraPreviewActivity::onResume()");
+        super.onResume();
+        if (mCamera == null) {
+            try {
+                mCamera = getCameraInstance(CAMERA_ID);
+            } catch (Exception e) {
+                Log.e(TAG, "CameraPreviewActivity::onResume() ; Error opening camera: " + e.getMessage());
+            }
+        }
+    }
+
     /** A safe way to get an instance of the Camera object. */
     private Camera getCameraInstance(int cameraId) {
+        Log.d(TAG, "CameraPreviewActivity::getCameraInstance()");
         Camera c = null;
         try {
             c = Camera.open(cameraId); // attempt to get a Camera instance
         } catch (Exception e) {
+            Log.d(TAG, "CameraPreviewActivity::getCameraInstance() ; Camera " + cameraId + " is not available: " + e.getMessage());
             // Camera is not available (in use or does not exist)
             Toast.makeText(this, "Camera " + cameraId + " is not available: " + e.getMessage(),
                     Toast.LENGTH_SHORT).show();
@@ -202,7 +222,9 @@ public class CameraPreviewActivity extends MainActivity  {
     }
 
     private void releaseCamera() {
+        Log.d(TAG, "CameraPreviewActivity::releaseCamera()");
         if (mCamera != null) {
+            mCamera.stopPreview();
             mCamera.release();        // release the camera for other applications
             mCamera = null;
         }

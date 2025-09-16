@@ -99,6 +99,11 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
     public void surfaceCreated(SurfaceHolder holder) {
         // The Surface has been created, now tell the camera where to draw the preview.
+        Log.d(TAG, "CameraPreview::surfaceCreated()");
+        if (mCamera == null) {
+            return;
+        }
+
         try {
             mLastTime = System.currentTimeMillis();
             mCamera.setPreviewDisplay(holder);
@@ -111,9 +116,13 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
     public void surfaceDestroyed(SurfaceHolder holder) {
         // empty. Take care of releasing the Camera preview in your activity.
+        Log.d(TAG, "CameraPreview::surfaceDestroyed()");
+        mCamera.setPreviewCallback(null);
     }
 
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
+        Log.d(TAG, "CameraPreview::surfaceChanged() ; format=" + format + " ; w=" + w + " ; h=" + h);
+
         // If your preview can change or rotate, take care of those events here.
         // Make sure to stop the preview before resizing or reformatting it.
 
@@ -197,6 +206,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 //    }
 
     public void onPreviewFrame(byte[] data, Camera camera) {
+//        Log.d(TAG, "CameraPreview::onPreviewFrame()");
 //        if (System.currentTimeMillis() > 50 + mLastTime)
         {
             mImageUChar = new VpImageUChar(data, mH, mW,true);
@@ -211,13 +221,14 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             Log.d("CameraPreview.java", "tags_id=" + Arrays.toString(tags_id));
 
             int strokeWidth = 8;
+            int orientation = calculatePreviewOrientation(mCameraInfo, mDisplayOrientation);
             if (!matrices.isEmpty()) {
                 List<List<VpImagePoint>> tagsCorners_visp = mDetectorAprilTag.getTagsCorners();
                 int[] tag_ids = mDetectorAprilTag.getTagsId();
 
                 updateResults(tagsCorners_visp, strokeWidth, tag_ids,
                         matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
-                        + (System.currentTimeMillis() - mLastTime) +" ms");
+                        + (System.currentTimeMillis() - mLastTime) +" ms", orientation, mW, mH);
             } else {
                 // Display text info
                 List<List<VpImagePoint>> tagsCorners = new ArrayList<List<VpImagePoint>>();
@@ -225,7 +236,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
                 int[] emptyIds = {};
                 updateResults(tagsCorners, strokeWidth, emptyIds,
                         matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
-                        + (System.currentTimeMillis() - mLastTime) +" ms");
+                        + (System.currentTimeMillis() - mLastTime) +" ms", orientation, mW, mH);
             }
 
             // TODO: read this
@@ -241,6 +252,10 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             // https://www.dev2qa.com/android-surfaceview-drawing-example/
             // https://stackoverflow.com/questions/4965724/layered-surfaceviews-in-a-framelayout-in-android
             // https://stackoverflow.com/questions/57742739/drawing-on-surfaceview
+
+            // Background handler to open the camera:
+            // https://stackoverflow.com/a/38036223
+            // https://stackoverflow.com/questions/18149964/best-use-of-handlerthread-over-other-similar-classes/19154438#19154438
 
             mLastTime = System.currentTimeMillis();
         }
