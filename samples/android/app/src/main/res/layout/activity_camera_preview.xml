@@ -24,12 +24,19 @@
         android:orientation="horizontal"
         android:gravity="center">
 
+        <!-- Settings Button -->
+        <Button
+            android:id="@+id/btnSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/camera_preview_settings" />
+
         <!-- Autofocus Button -->
         <Button
             android:id="@+id/btnAutoFocus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Auto Focus" />
+            android:text="@string/camera_preview_auto_focus" />
 
         <!-- Spinner (ComboBox) -->
         <Spinner

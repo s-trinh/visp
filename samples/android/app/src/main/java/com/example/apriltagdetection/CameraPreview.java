@@ -214,28 +214,29 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             // do the image processing
             // Its working even without grey scale conversion
             // TODO: check the original image color space
-            List<VpHomogeneousMatrix> matrices = mDetectorAprilTag.detect(mImageUChar, mTagSize, mCameraParameters);
+            List<VpHomogeneousMatrix> cMo_list = mDetectorAprilTag.detect(mImageUChar, mTagSize, mCameraParameters);
 
             int[] tags_id = mDetectorAprilTag.getTagsId();
-            Log.d("CameraPreview.java",matrices.size() + " tags detected");
+            Log.d("CameraPreview.java",cMo_list.size() + " tags detected");
             Log.d("CameraPreview.java", "tags_id=" + Arrays.toString(tags_id));
 
             int strokeWidth = 8;
             int orientation = calculatePreviewOrientation(mCameraInfo, mDisplayOrientation);
-            if (!matrices.isEmpty()) {
+            if (!cMo_list.isEmpty()) {
                 List<List<VpImagePoint>> tagsCorners_visp = mDetectorAprilTag.getTagsCorners();
                 int[] tag_ids = mDetectorAprilTag.getTagsId();
 
-                updateResults(tagsCorners_visp, strokeWidth, tag_ids,
-                        matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
+                updateResults(tagsCorners_visp, strokeWidth, tag_ids, cMo_list,
+                        cMo_list.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
                         + (System.currentTimeMillis() - mLastTime) +" ms", orientation, mW, mH);
             } else {
                 // Display text info
                 List<List<VpImagePoint>> tagsCorners = new ArrayList<List<VpImagePoint>>();
+                List<VpHomogeneousMatrix> empty_cMo = new ArrayList<>();
 
                 int[] emptyIds = {};
-                updateResults(tagsCorners, strokeWidth, emptyIds,
-                        matrices.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
+                updateResults(tagsCorners, strokeWidth, emptyIds, empty_cMo,
+                        cMo_list.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
                         + (System.currentTimeMillis() - mLastTime) +" ms", orientation, mW, mH);
             }
 
@@ -265,5 +266,13 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         mMethod = selection;
         mDetectorAprilTag.setAprilTagFamily(mMethods[mMethod]);
         mDetectorAprilTag.setAprilTagDecisionMarginThreshold(mDetectionMarginThresholds[mMethod]);
+    }
+
+    public void setCameraFocal(double focal) {
+        mCameraParameters.initPersProjWithoutDistortion(focal, focal, mW / 2.0, mH / 2.0);
+    }
+
+    public void setTagSize(double tagSize) {
+        mTagSize = tagSize;
     }
 }

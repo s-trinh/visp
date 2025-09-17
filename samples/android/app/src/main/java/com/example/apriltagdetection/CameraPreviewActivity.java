@@ -1,6 +1,7 @@
 package com.example.apriltagdetection;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 
 import androidx.core.app.ActivityCompat;
@@ -15,15 +16,18 @@ import android.util.Log;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.view.View;
 
+import org.visp.core.VpHomogeneousMatrix;
 import org.visp.core.VpImagePoint;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -43,13 +47,19 @@ public class CameraPreviewActivity extends MainActivity  {
      */
     private static final int CAMERA_ID = 0;
     private static final String TAG = "CameraPreviewActivity";
+    private static final int CAM_FOCAL_REQUEST_CODE = 1;
 
+    Camera.CameraInfo mCameraInfo;
     private Camera mCamera;
     private int mW, mH;
     static TextView mResultInfo;
     static LineSurfaceView mLineSurface;
     private Spinner mSpinner;
+    FrameLayout mFrameLayout;
     private CameraPreview mPreview;
+    private Button mBtnSettings;
+    private double mFocalLength;
+    private double mTagSize;
     private Button mBtnAutoFocus;
 
     @Override
@@ -64,7 +74,7 @@ public class CameraPreviewActivity extends MainActivity  {
         }
 
         // Open an instance of the first camera and retrieve its info.
-        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+        mCameraInfo = new Camera.CameraInfo();
         mCamera = getCameraInstance(CAMERA_ID);
 
         if (mCamera == null) {
@@ -73,81 +83,125 @@ public class CameraPreviewActivity extends MainActivity  {
             Toast.makeText(this, "Camera is not available.", Toast.LENGTH_SHORT).show();
             setContentView(R.layout.camera_unavailable);
         } else {
-            Camera.getCameraInfo(CAMERA_ID, cameraInfo);
-            setContentView(R.layout.activity_camera_preview);
-
-            mBtnAutoFocus = findViewById(R.id.btnAutoFocus);
-            // Set up the autofocus button
-            mBtnAutoFocus.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (mCamera != null) {
-                        mCamera.autoFocus(new Camera.AutoFocusCallback() {
-                            @Override
-                            public void onAutoFocus(boolean success, Camera camera) {
-                                if (!success) {
-                                    Toast.makeText(CameraPreviewActivity.this, "Cannot perform camera autofocus",
-                                            Toast.LENGTH_SHORT).show();
-                                }
-                            }
-                        });
-                    }
-                }
-            });
-
-            mSpinner = findViewById(R.id.spinner);
-            String[] items = {
-                    "TAG_36h11", "TAG_25h9", "TAG_25h7", "TAG_16h5", "TAG_CIRCLE21h7",
-                    "TAG_ARUCO_4x4_1000", "TAG_ARUCO_5x5_1000", "TAG_ARUCO_6x6_1000", "TAG_ARUCO_MIP_36h12"
-            };
-
-            // Create an ArrayAdapter to populate the Spinner with data
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, items);
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            mSpinner.setAdapter(adapter);
-            mSpinner.setSelection(0);
-
-            // Set the listener for item selection
-            mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                // Handle item selection
-                @Override
-                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                    // Get the selected item
-                    String selectedItem = parentView.getItemAtPosition(position).toString();
-
-                    // Show a toast with the selected item
-                    Toast.makeText(CameraPreviewActivity.this, "Selected: " + selectedItem, Toast.LENGTH_SHORT).show();
-
-                    mPreview.setAprilTagMethod(position);
-                }
-
-                // Handle no item selected
-                @Override
-                public void onNothingSelected(AdapterView<?> parentView) {
-                    Toast.makeText(CameraPreviewActivity.this, "No item selected", Toast.LENGTH_SHORT).show();
-                }
-            });
-
-            mResultInfo = findViewById(R.id.resultTV);
-            mLineSurface = findViewById(R.id.surfaceView);
-            mLineSurface.setZOrderOnTop(true);
-            mLineSurface.getHolder().setFormat(PixelFormat.TRANSLUCENT);
-
-            // init the byte array
-            mW = mCamera.getParameters().getPreviewSize().width;
-            mH = mCamera.getParameters().getPreviewSize().height;
-
-            // Get the rotation of the screen to adjust the preview image accordingly.
-            final int displayRotation = getWindowManager().getDefaultDisplay().getRotation();
-
-            // Create the Preview view and set it as the content of this Activity.
-            mPreview = new CameraPreview(this, mCamera, cameraInfo, displayRotation);
-            FrameLayout preview = findViewById(R.id.camera_preview);
-            preview.addView(mPreview);
+            init();
         }
     }
 
-    public static void updateResults(List<List<VpImagePoint>> cornersList, int strokeWidth, int[] ids, String s, int orientation, int w, int h) {
+    private void init() {
+        Camera.getCameraInfo(CAMERA_ID, mCameraInfo);
+        setContentView(R.layout.activity_camera_preview);
+
+        mBtnSettings = findViewById(R.id.btnSettings);
+        mBtnSettings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d(TAG, "CameraPreviewActivity::mBtnSettings::onClick()");
+
+                mCamera.setPreviewCallback(null);
+                mFrameLayout.removeView(mPreview);
+                mPreview = null;
+                releaseCamera();
+
+                Intent intent = new Intent(CameraPreviewActivity.this, SettingsPanelActivity.class);
+                startActivityForResult(intent, CAM_FOCAL_REQUEST_CODE);
+            }
+        });
+
+        // Default values, see activity_settings.xml
+        mFocalLength = 600;
+        mTagSize = 0.1;
+
+        mBtnAutoFocus = findViewById(R.id.btnAutoFocus);
+        // Set up the autofocus button
+        mBtnAutoFocus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mCamera != null) {
+                    mCamera.autoFocus(new Camera.AutoFocusCallback() {
+                        @Override
+                        public void onAutoFocus(boolean success, Camera camera) {
+                            if (!success) {
+                                Toast.makeText(CameraPreviewActivity.this, "Cannot perform camera autofocus",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+                }
+            }
+        });
+
+        mSpinner = findViewById(R.id.spinner);
+        String[] items = {
+                "TAG_36h11", "TAG_25h9", "TAG_25h7", "TAG_16h5", "TAG_CIRCLE21h7",
+                "TAG_ARUCO_4x4", "TAG_ARUCO_5x5", "TAG_ARUCO_6x6", "TAG_ARUCO_MIP_36h12"
+        };
+
+        // Create an ArrayAdapter to populate the Spinner with data
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, items);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mSpinner.setAdapter(adapter);
+        mSpinner.setSelection(0);
+
+        // Set the listener for item selection
+        mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            // Handle item selection
+            @Override
+            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                // Get the selected item
+                String selectedItem = parentView.getItemAtPosition(position).toString();
+
+                // Show a toast with the selected item
+                Toast.makeText(CameraPreviewActivity.this, "Selected: " + selectedItem, Toast.LENGTH_SHORT).show();
+
+                mPreview.setAprilTagMethod(position);
+            }
+
+            // Handle no item selected
+            @Override
+            public void onNothingSelected(AdapterView<?> parentView) {
+                Toast.makeText(CameraPreviewActivity.this, "No item selected", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        mResultInfo = findViewById(R.id.resultTV);
+        mLineSurface = findViewById(R.id.surfaceView);
+        mLineSurface.setZOrderOnTop(true);
+        mLineSurface.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+
+        // init the byte array
+        mW = mCamera.getParameters().getPreviewSize().width;
+        mH = mCamera.getParameters().getPreviewSize().height;
+
+        // Get the rotation of the screen to adjust the preview image accordingly.
+        final int displayRotation = getWindowManager().getDefaultDisplay().getRotation();
+
+        // Create the Preview view and set it as the content of this Activity.
+        mPreview = new CameraPreview(this, mCamera, mCameraInfo, displayRotation);
+        mFrameLayout = findViewById(R.id.camera_preview);
+        mFrameLayout.addView(mPreview);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == CAM_FOCAL_REQUEST_CODE && resultCode == RESULT_OK) {
+            String cameraFocalValue_str = data.getStringExtra("cameraFocalValue");
+            if (cameraFocalValue_str != null) {
+                mFocalLength = Double.parseDouble(cameraFocalValue_str);
+                mPreview.setCameraFocal(mFocalLength);
+            }
+
+            String tagSizeValue_str = data.getStringExtra("tagSizeValue");
+            if (tagSizeValue_str != null) {
+                mTagSize = Double.parseDouble(tagSizeValue_str);
+                mPreview.setTagSize(mTagSize);
+            }
+        }
+    }
+
+    public static void updateResults(List<List<VpImagePoint>> cornersList, int strokeWidth, int[] ids, List<VpHomogeneousMatrix> cMoList,
+                                     String s, int orientation, int w, int h) {
         int RED = Color.RED; // -65536
         int GREEN = Color.GREEN; // -16711936
         int YELLOW = Color.YELLOW; // -256
@@ -180,7 +234,34 @@ public class CameraPreviewActivity extends MainActivity  {
             centerY.add( (corners.get(0).get_v() + corners.get(1).get_v() + corners.get(2).get_v() + corners.get(3).get_v()) / 4 );
         }
 
-        mLineSurface.drawLines(list_startX, list_startY, list_stopX, list_stopY, color_, strokeWidth_, centerX, centerY, ids, orientation, w, h);
+        List<Double> tagDistances = new ArrayList<>(cMoList.size());
+        for (VpHomogeneousMatrix cMo : cMoList) {
+            double[] cMo_array = new double[16];
+            if (false) {
+                // TODO: VpHomogeneousMatrix::convert() does not work
+                cMo.convert(cMo_array);
+                Log.d(TAG, "CameraPreviewActivity::updateResults() ; cMo_array[0][0]=" + cMo_array[0] + " ; cMo_array[0][1]=" + cMo_array[1]);
+                Log.d(TAG, "CameraPreviewActivity::updateResults() ; cMo=" + cMo);
+            } else {
+                String[] cMo_array_str = cMo.toString().split("\\s+");
+//                Log.d(TAG, "CameraPreviewActivity::updateResults() ; cMo=" + cMo);
+//                Log.d(TAG, "CameraPreviewActivity::updateResults() ; cMo_array_str=" + cMo_array_str.length);
+                cMo_array = Arrays.stream(cMo_array_str)
+                        .mapToDouble(Double::parseDouble)
+                        .toArray();
+            }
+
+            double tx = cMo_array[3];
+            double ty = cMo_array[7];
+            double tz = cMo_array[11];
+//            Log.d(TAG, "CameraPreviewActivity::updateResults() ; tx=" + tx + " ; ty=" + ty + " ; tz=" + tz);
+
+            double dist = Math.sqrt(tx*tx + ty*ty + tz*tz);
+            tagDistances.add(dist);
+        }
+
+        mLineSurface.drawLines(list_startX, list_startY, list_stopX, list_stopY, color_, strokeWidth_, centerX, centerY, ids,
+                tagDistances.stream().mapToDouble(Double::valueOf).toArray(), orientation, w, h);
 
         mResultInfo.setText(s);
     }
@@ -203,6 +284,10 @@ public class CameraPreviewActivity extends MainActivity  {
             } catch (Exception e) {
                 Log.e(TAG, "CameraPreviewActivity::onResume() ; Error opening camera: " + e.getMessage());
             }
+        }
+
+        if (mPreview == null) {
+            init();
         }
     }
 

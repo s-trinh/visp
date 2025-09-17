@@ -11,6 +11,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import java.util.List;
+import java.util.Locale;
 
 public class LineSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
     private static final String TAG = "LineSurfaceView";
@@ -42,8 +43,8 @@ public class LineSurfaceView extends SurfaceView implements SurfaceHolder.Callba
     }
 
     public void drawLines(List<double[]> list_startX, List<double[]> list_startY, List<double[]> list_stopX, List<double[]> list_stopY,
-                          int[] color_, int[] strokeWidth_, List<Double> centerX, List<Double> centerY, int[] ids_, int orientation,
-                          int width, int height) {
+                          int[] color_, int[] strokeWidth_, List<Double> centerX, List<Double> centerY, int[] ids_, double[] dist_,
+                          int orientation, int width, int height) {
 //        Log.d(TAG, "LineSurfaceView::drawLine()");
         Canvas canvas = mSurfaceHolder.lockCanvas();
 
@@ -96,22 +97,33 @@ public class LineSurfaceView extends SurfaceView implements SurfaceHolder.Callba
                 paint.setTextSize(40);
                 paint.setTextAlign(Paint.Align.CENTER);
 
+                Paint paint2 = new Paint(paint);
+                paint2.setColor(Color.parseColor("fuchsia"));
+
+                int offset_dist = 40;
                 if (orientation == 0) {
                     float scaleX = view_w / width;
                     float scaleY = view_h / height;
 
                     canvas.drawText(String.valueOf(ids_[i]), scaleX * centerX.get(i).floatValue(), scaleY * centerY.get(i).floatValue(), paint);
+
+                    canvas.drawText(String.format(Locale.US, "%.2f", dist_[i]) + " m", scaleX * centerX.get(i).floatValue(),
+                            scaleY * centerY.get(i).floatValue() + offset_dist, paint2);
                 } else if (orientation == 90) {
                     float scaleX = view_w / height;
                     float scaleY = view_h / width;
 
                     canvas.drawText(String.valueOf(ids_[i]), scaleX * (view_w - centerY.get(i).floatValue()), scaleY * (centerX.get(i).floatValue()), paint);
+                    canvas.drawText(String.format(Locale.US, "%.2f", dist_[i]) + " m", scaleX * (view_w - centerY.get(i).floatValue()),
+                            scaleY * (centerX.get(i).floatValue()) + offset_dist, paint2);
                 } else {
                     // 180°
                     float scaleX = view_w / width;
                     float scaleY = view_h / height;
 
                     canvas.drawText(String.valueOf(ids_[i]), scaleX * (width - centerX.get(i).floatValue()), scaleY * (height - centerY.get(i).floatValue()), paint);
+                    canvas.drawText(String.format(Locale.US, "%.2f", dist_[i]) + " m", scaleX * (width - centerX.get(i).floatValue()),
+                            scaleY * (height - centerY.get(i).floatValue()) + offset_dist, paint2);
                 }
             }
 

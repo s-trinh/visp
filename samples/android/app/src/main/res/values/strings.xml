@@ -3,4 +3,16 @@
     <string name="app_created_by_akshay_sharma"><u>App Created by Akshay Sharma</u></string>
     <string name="tag_description">AprilTag is a visual fiducial system, useful for a wide variety of tasks including augmented reality, robotics, and camera calibration. This app computes the precise 3D position, orientation, and identity of the tags relative to the camera. \n\n The original AprilTag library is implemented in C with no external dependencies. This example uses an Android SDK which I developed as a part of my GSoC Project with focus on real-time performance </string>
     <string name="description2"><u>Link to my GSoC Project</u></string>
+
+    <!-- Camera preview panel -->
+    <string name="camera_preview_settings"><u>Settings</u></string>
+    <string name="camera_preview_auto_focus"><u>Auto Focus</u></string>
+
+    <!-- Settings panel -->
+    <string name="camera_focal"><u>Camera focal:</u></string>
+    <string name="camera_focal_default"><u>600</u></string>
+    <string name="tag_size"><u>Tag size (m):</u></string>
+    <string name="tag_size_default"><u>0.1</u></string>
+    <string name="button_validate"><u>Validate</u></string>
+
 </resources>
