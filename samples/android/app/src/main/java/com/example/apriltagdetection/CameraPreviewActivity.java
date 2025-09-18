@@ -61,6 +61,8 @@ public class CameraPreviewActivity extends MainActivity  {
     private double mFocalLength;
     private double mTagSize;
     private Button mBtnAutoFocus;
+    private Boolean mUpdatedFocal;
+    private Boolean mUpdatedTagSize;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +75,12 @@ public class CameraPreviewActivity extends MainActivity  {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 100);
         }
 
+        mUpdatedFocal = false;
+        mUpdatedTagSize = false;
+        init();
+    }
+
+    private void init() {
         // Open an instance of the first camera and retrieve its info.
         mCameraInfo = new Camera.CameraInfo();
         mCamera = getCameraInstance(CAMERA_ID);
@@ -82,12 +90,10 @@ public class CameraPreviewActivity extends MainActivity  {
             // Camera is not available, display error message
             Toast.makeText(this, "Camera is not available.", Toast.LENGTH_SHORT).show();
             setContentView(R.layout.camera_unavailable);
-        } else {
-            init();
-        }
-    }
 
-    private void init() {
+            return;
+        }
+
         Camera.getCameraInfo(CAMERA_ID, mCameraInfo);
         setContentView(R.layout.activity_camera_preview);
 
@@ -97,19 +103,41 @@ public class CameraPreviewActivity extends MainActivity  {
             public void onClick(View v) {
                 Log.d(TAG, "CameraPreviewActivity::mBtnSettings::onClick()");
 
+                Camera.Parameters params = mCamera.getParameters();
+                float focalLength_mm = params.getFocalLength();
+                Camera.Size size = params.getPictureSize();
+
+                // Physical sensor size
+                // See: https://stackoverflow.com/a/41032402/6055233
+                float horizontalViewAngle = params.getHorizontalViewAngle();
+                float verticalViewAngle = params.getVerticalViewAngle();
+                double sensorWidth = focalLength_mm * 2*Math.tan(Math.toRadians(horizontalViewAngle/2));
+                double sensorHeight = focalLength_mm * 2*Math.tan(Math.toRadians(verticalViewAngle/2));
+
                 mCamera.setPreviewCallback(null);
                 mFrameLayout.removeView(mPreview);
                 mPreview = null;
                 releaseCamera();
 
                 Intent intent = new Intent(CameraPreviewActivity.this, SettingsPanelActivity.class);
+
+                intent.putExtra("camera_focal_mm", focalLength_mm);
+                intent.putExtra("camera_native_w", size.width);
+                intent.putExtra("camera_native_h", size.height);
+                intent.putExtra("camera_hfov", horizontalViewAngle);
+                intent.putExtra("camera_vfov", verticalViewAngle);
+                intent.putExtra("camera_sensor_w", sensorWidth);
+                intent.putExtra("camera_sensor_h", sensorHeight);
+
+                intent.putExtra("image_w", mW);
+                intent.putExtra("image_h", mH);
+
+                intent.putExtra("focal", mFocalLength);
+                intent.putExtra("tag_size", mTagSize);
+
                 startActivityForResult(intent, CAM_FOCAL_REQUEST_CODE);
             }
         });
-
-        // Default values, see activity_settings.xml
-        mFocalLength = 600;
-        mTagSize = 0.1;
 
         mBtnAutoFocus = findViewById(R.id.btnAutoFocus);
         // Set up the autofocus button
@@ -179,23 +207,49 @@ public class CameraPreviewActivity extends MainActivity  {
         mPreview = new CameraPreview(this, mCamera, mCameraInfo, displayRotation);
         mFrameLayout = findViewById(R.id.camera_preview);
         mFrameLayout.addView(mPreview);
+
+        if (!mUpdatedFocal) {
+            Camera.Parameters params = mCamera.getParameters();
+            float focalLength_mm = params.getFocalLength();
+            Camera.Size size = params.getPictureSize();
+
+            float horizontalViewAngle = params.getHorizontalViewAngle();
+            double sensorWidth = focalLength_mm * 2*Math.tan(Math.toRadians(horizontalViewAngle/2));
+
+            // Focal length computed from sensor specs
+            mFocalLength = focalLength_mm / (sensorWidth / size.width);
+            // Scale the focal length wrt. the current image resolution
+            mFocalLength = mFocalLength * mW / size.width;
+
+            mPreview.setCameraFocal(mFocalLength);
+        }
+        if (!mUpdatedTagSize) {
+            mTagSize = 0.1;
+            mPreview.setTagSize(mTagSize);
+        }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        init();
+
         if (requestCode == CAM_FOCAL_REQUEST_CODE && resultCode == RESULT_OK) {
             String cameraFocalValue_str = data.getStringExtra("cameraFocalValue");
             if (cameraFocalValue_str != null) {
                 mFocalLength = Double.parseDouble(cameraFocalValue_str);
                 mPreview.setCameraFocal(mFocalLength);
+
+                mUpdatedFocal = true;
             }
 
             String tagSizeValue_str = data.getStringExtra("tagSizeValue");
             if (tagSizeValue_str != null) {
                 mTagSize = Double.parseDouble(tagSizeValue_str);
                 mPreview.setTagSize(mTagSize);
+
+                mUpdatedTagSize = true;
             }
         }
     }
