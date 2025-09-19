@@ -54,20 +54,25 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         23, // TAG_ARUCO_MIP_36h12
     };
     private int mMethod;
-    private static float[] mDetectionMarginThresholds = {
-            -1, // TAG_36h11
-            -1, // TAG_25h9
-            -1, // TAG_25h7
-            100, // TAG_16h5
-            -1, // TAG_CIRCLE21h7
-            100, // TAG_ARUCO_4x4_1000
-            100, // TAG_ARUCO_5x5_1000
-            100, // TAG_ARUCO_6x6_1000
-            -1, // TAG_ARUCO_MIP_36h12
-    };
+//    private static float[] mDetectionMarginThresholds = {
+//            -1, // TAG_36h11
+//            -1, // TAG_25h9
+//            -1, // TAG_25h7
+//            100, // TAG_16h5
+//            -1, // TAG_CIRCLE21h7
+//            100, // TAG_ARUCO_4x4_1000
+//            100, // TAG_ARUCO_5x5_1000
+//            100, // TAG_ARUCO_6x6_1000
+//            -1, // TAG_ARUCO_MIP_36h12
+//    };
+    private boolean mDisplayTagFrame;
+    private double mDisplayTagFrameRatio;
+    private float mAprilTagQuadDecimate;
+    private float mAprilTagMarginThreshold;
+    private int mAprilTagNbThreads;
 
     public CameraPreview(Context context, Camera camera, Camera.CameraInfo cameraInfo,
-                         int displayOrientation) {
+                         int displayOrientation, boolean displayFrame, double displayFrameRatio) {
         super(context);
 
         // Do not initialize if no camera has been set
@@ -92,9 +97,17 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         mTagSize = 0.053;
 
         mDetectorAprilTag = new VpDetectorAprilTag();
-        mMethod = 0;
-        mDetectorAprilTag.setAprilTagFamily(mMethods[mMethod]); // TAG_36h11
-        mDetectorAprilTag.setAprilTagDecisionMarginThreshold(mDetectionMarginThresholds[mMethod]);
+        mMethod = 0; // TAG_36h11
+        mDetectorAprilTag.setAprilTagFamily(mMethods[mMethod]);
+        mAprilTagMarginThreshold = 50;
+        mDetectorAprilTag.setAprilTagDecisionMarginThreshold(mAprilTagMarginThreshold);
+        mAprilTagQuadDecimate = 2;
+        mDetectorAprilTag.setAprilTagQuadDecimate(mAprilTagQuadDecimate);
+        mAprilTagNbThreads = 1;
+        mDetectorAprilTag.setAprilTagNbThreads(mAprilTagNbThreads);
+
+        mDisplayTagFrame = displayFrame;
+        mDisplayTagFrameRatio = displayFrameRatio;
     }
 
     public void surfaceCreated(SurfaceHolder holder) {
@@ -196,16 +209,6 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         return result;
     }
 
-//    private VpImagePoint project(VpHomogeneousMatrix cMo, VpPoint obj) {
-//        obj.changeFrame(cMo);
-//        obj.projection();
-//        double px = 600, py = 600, u0 = mW/2.0, v0 = mH/2.0;
-//        double u = px * obj.get_x() + u0;
-//        double v = py * obj.get_y() + v0;
-//
-//        return new VpImagePoint(v, u);
-//    }
-
     public void onPreviewFrame(byte[] data, Camera camera) {
 //        Log.d(TAG, "CameraPreview::onPreviewFrame()");
 //        if (System.currentTimeMillis() > 50 + mLastTime)
@@ -229,7 +232,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
                 updateResults(tagsCorners_visp, strokeWidth, tag_ids, cMo_list,
                         cMo_list.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
-                        + (System.currentTimeMillis() - mLastTime) +" ms", orientation, mW, mH);
+                        + (System.currentTimeMillis() - mLastTime) +" ms", orientation, mW, mH, mDisplayTagFrame, mDisplayTagFrameRatio, mTagSize, mCameraParameters);
             } else {
                 // Display text info
                 List<List<VpImagePoint>> tagsCorners = new ArrayList<List<VpImagePoint>>();
@@ -238,7 +241,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
                 int[] emptyIds = {};
                 updateResults(tagsCorners, strokeWidth, emptyIds, empty_cMo,
                         cMo_list.size() + " tags with id= " + Arrays.toString(tags_id) + " detected within "
-                        + (System.currentTimeMillis() - mLastTime) +" ms", orientation, mW, mH);
+                        + (System.currentTimeMillis() - mLastTime) +" ms", orientation, mW, mH, mDisplayTagFrame, mDisplayTagFrameRatio, mTagSize, mCameraParameters);
             }
 
             // TODO: read this
@@ -266,7 +269,22 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     public void setAprilTagMethod(int selection) {
         mMethod = selection;
         mDetectorAprilTag.setAprilTagFamily(mMethods[mMethod]);
-        mDetectorAprilTag.setAprilTagDecisionMarginThreshold(mDetectionMarginThresholds[mMethod]);
+        mDetectorAprilTag.setAprilTagDecisionMarginThreshold(mAprilTagMarginThreshold);
+    }
+
+    public void setAprilTagQuadDecimate(float quad_decimate) {
+        mAprilTagQuadDecimate = quad_decimate;
+        mDetectorAprilTag.setAprilTagQuadDecimate(mAprilTagQuadDecimate);
+    }
+
+    public void setAprilTagMarginThreshold(float margin) {
+        mAprilTagMarginThreshold = margin;
+        mDetectorAprilTag.setAprilTagDecisionMarginThreshold(margin);
+    }
+
+    public void setAprilTagNbThreads(int nThreads) {
+        mAprilTagNbThreads = nThreads;
+        mDetectorAprilTag.setAprilTagNbThreads(nThreads);
     }
 
     public void setCameraFocal(double focal) {
@@ -275,5 +293,13 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
     public void setTagSize(double tagSize) {
         mTagSize = tagSize;
+    }
+
+    public void setDisplayTagFrame(boolean display) {
+        mDisplayTagFrame = display;
+    }
+
+    public  void setDisplayTagFrameRatio(double ratio) {
+        mDisplayTagFrameRatio = ratio;
     }
 }

@@ -16,15 +16,16 @@ import android.util.Log;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.view.View;
 
+import org.visp.core.VpCameraParameters;
 import org.visp.core.VpHomogeneousMatrix;
 import org.visp.core.VpImagePoint;
+import org.visp.core.VpPoint;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,7 +48,7 @@ public class CameraPreviewActivity extends MainActivity  {
      */
     private static final int CAMERA_ID = 0;
     private static final String TAG = "CameraPreviewActivity";
-    private static final int CAM_FOCAL_REQUEST_CODE = 1;
+    private static final int SETTINGS_REQUEST_CODE = 1;
 
     Camera.CameraInfo mCameraInfo;
     private Camera mCamera;
@@ -61,8 +62,14 @@ public class CameraPreviewActivity extends MainActivity  {
     private double mFocalLength;
     private double mTagSize;
     private Button mBtnAutoFocus;
-    private Boolean mUpdatedFocal;
-    private Boolean mUpdatedTagSize;
+    private boolean mUpdatedFocal;
+    private boolean mUpdatedTagSize;
+    private boolean mDisplayTagFrame;
+    private double mTagFrameDisplayRatio;
+    private int mAprilTagSelectionPosition;
+    private int mAprilTagQuadDecimate;
+    private int mAprilTagDecisionMargin;
+    private int mAprilTagNbThreads;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,12 +111,15 @@ public class CameraPreviewActivity extends MainActivity  {
                 Log.d(TAG, "CameraPreviewActivity::mBtnSettings::onClick()");
 
                 Camera.Parameters params = mCamera.getParameters();
+                // the focal length. Returns -1.0 when the device doesn't report focal length information.
                 float focalLength_mm = params.getFocalLength();
                 Camera.Size size = params.getPictureSize();
 
                 // Physical sensor size
                 // See: https://stackoverflow.com/a/41032402/6055233
+                // "horizontal angle of view. Returns -1.0 when the device doesn't report view angle information."
                 float horizontalViewAngle = params.getHorizontalViewAngle();
+                // "vertical angle of view. Returns -1.0 when the device doesn't report view angle information."
                 float verticalViewAngle = params.getVerticalViewAngle();
                 double sensorWidth = focalLength_mm * 2*Math.tan(Math.toRadians(horizontalViewAngle/2));
                 double sensorHeight = focalLength_mm * 2*Math.tan(Math.toRadians(verticalViewAngle/2));
@@ -135,7 +145,15 @@ public class CameraPreviewActivity extends MainActivity  {
                 intent.putExtra("focal", mFocalLength);
                 intent.putExtra("tag_size", mTagSize);
 
-                startActivityForResult(intent, CAM_FOCAL_REQUEST_CODE);
+                intent.putExtra("display_tag_frame", mDisplayTagFrame);
+                intent.putExtra("display_tag_frame_ratio", mTagFrameDisplayRatio);
+
+                intent.putExtra("aprilTag_selection_position", mAprilTagSelectionPosition);
+                intent.putExtra("aprilTag_quad_decimate", mAprilTagQuadDecimate);
+                intent.putExtra("aprilTag_decision_margin", mAprilTagDecisionMargin);
+                intent.putExtra("aprilTag_nb_threads", mAprilTagNbThreads);
+
+                startActivityForResult(intent, SETTINGS_REQUEST_CODE);
             }
         });
 
@@ -164,27 +182,22 @@ public class CameraPreviewActivity extends MainActivity  {
                 "TAG_ARUCO_4x4", "TAG_ARUCO_5x5", "TAG_ARUCO_6x6", "TAG_ARUCO_MIP_36h12"
         };
 
-        // Create an ArrayAdapter to populate the Spinner with data
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, items);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mSpinner.setAdapter(adapter);
-        mSpinner.setSelection(0);
+        mAprilTagSelectionPosition = 0;
+        mSpinner.setSelection(mAprilTagSelectionPosition);
 
-        // Set the listener for item selection
         mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            // Handle item selection
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                // Get the selected item
                 String selectedItem = parentView.getItemAtPosition(position).toString();
-
-                // Show a toast with the selected item
                 Toast.makeText(CameraPreviewActivity.this, "Selected: " + selectedItem, Toast.LENGTH_SHORT).show();
 
+                mAprilTagSelectionPosition = position;
                 mPreview.setAprilTagMethod(position);
             }
 
-            // Handle no item selected
             @Override
             public void onNothingSelected(AdapterView<?> parentView) {
                 Toast.makeText(CameraPreviewActivity.this, "No item selected", Toast.LENGTH_SHORT).show();
@@ -204,7 +217,7 @@ public class CameraPreviewActivity extends MainActivity  {
         final int displayRotation = getWindowManager().getDefaultDisplay().getRotation();
 
         // Create the Preview view and set it as the content of this Activity.
-        mPreview = new CameraPreview(this, mCamera, mCameraInfo, displayRotation);
+        mPreview = new CameraPreview(this, mCamera, mCameraInfo, displayRotation, mDisplayTagFrame, mTagFrameDisplayRatio);
         mFrameLayout = findViewById(R.id.camera_preview);
         mFrameLayout.addView(mPreview);
 
@@ -214,12 +227,16 @@ public class CameraPreviewActivity extends MainActivity  {
             Camera.Size size = params.getPictureSize();
 
             float horizontalViewAngle = params.getHorizontalViewAngle();
-            double sensorWidth = focalLength_mm * 2*Math.tan(Math.toRadians(horizontalViewAngle/2));
+            if (horizontalViewAngle > 0) {
+                double sensorWidth = focalLength_mm * 2*Math.tan(Math.toRadians(horizontalViewAngle/2));
 
-            // Focal length computed from sensor specs
-            mFocalLength = focalLength_mm / (sensorWidth / size.width);
-            // Scale the focal length wrt. the current image resolution
-            mFocalLength = mFocalLength * mW / size.width;
+                // Focal length computed from sensor specs
+                mFocalLength = focalLength_mm / (sensorWidth / size.width);
+                // Scale the focal length wrt. the current image resolution
+                mFocalLength = mFocalLength * mW / size.width;
+            } else {
+                mFocalLength = 600;
+            }
 
             mPreview.setCameraFocal(mFocalLength);
         }
@@ -227,6 +244,17 @@ public class CameraPreviewActivity extends MainActivity  {
             mTagSize = 0.1;
             mPreview.setTagSize(mTagSize);
         }
+
+        mDisplayTagFrame = false;
+        mTagFrameDisplayRatio = 0.5;
+
+        mAprilTagSelectionPosition = 0;
+        mAprilTagQuadDecimate = 2;
+        mPreview.setAprilTagQuadDecimate(mAprilTagQuadDecimate);
+        mAprilTagDecisionMargin = 50;
+        mPreview.setAprilTagMarginThreshold(mAprilTagDecisionMargin);
+        mAprilTagNbThreads = 1;
+        mPreview.setAprilTagNbThreads(mAprilTagNbThreads);
     }
 
     @Override
@@ -235,7 +263,7 @@ public class CameraPreviewActivity extends MainActivity  {
 
         init();
 
-        if (requestCode == CAM_FOCAL_REQUEST_CODE && resultCode == RESULT_OK) {
+        if (requestCode == SETTINGS_REQUEST_CODE && resultCode == RESULT_OK) {
             String cameraFocalValue_str = data.getStringExtra("cameraFocalValue");
             if (cameraFocalValue_str != null) {
                 mFocalLength = Double.parseDouble(cameraFocalValue_str);
@@ -251,11 +279,50 @@ public class CameraPreviewActivity extends MainActivity  {
 
                 mUpdatedTagSize = true;
             }
+
+            String displayTagFrame_str = data.getStringExtra("displayFrameChecked");
+            if (displayTagFrame_str != null) {
+                mDisplayTagFrame = Boolean.parseBoolean(displayTagFrame_str);
+                mPreview.setDisplayTagFrame(mDisplayTagFrame);
+
+                String tagFrameSizeRatio_str = data.getStringExtra("tagFrameRatio");
+                if (tagFrameSizeRatio_str != null) {
+                    mTagFrameDisplayRatio = Double.parseDouble(tagFrameSizeRatio_str) > 0 ? Double.parseDouble(tagFrameSizeRatio_str) : mTagFrameDisplayRatio;
+                    mPreview.setDisplayTagFrameRatio(mTagFrameDisplayRatio);
+                }
+            }
+
+            // Set the AprilTag method selection to the correct value
+            String aprilTagSelectionPosition_str = data.getStringExtra("aprilTagSelectionPosition");
+            if (aprilTagSelectionPosition_str != null) {
+                mAprilTagSelectionPosition = Integer.parseInt(aprilTagSelectionPosition_str);
+                mSpinner.setSelection(mAprilTagSelectionPosition);
+                mPreview.setAprilTagMethod(mAprilTagSelectionPosition);
+            }
+
+            String aprilTagQuadDecimate_str = data.getStringExtra("aprilTagQuadDecimate");
+            if (aprilTagQuadDecimate_str != null) {
+                mAprilTagQuadDecimate = Integer.parseInt(aprilTagQuadDecimate_str);
+                mPreview.setAprilTagQuadDecimate(mAprilTagQuadDecimate);
+            }
+
+            String aprilTagDecisionMargin_str = data.getStringExtra("aprilTagDecisionMargin");
+            if (aprilTagDecisionMargin_str != null) {
+                mAprilTagDecisionMargin = Integer.parseInt(aprilTagDecisionMargin_str);
+                mPreview.setAprilTagMarginThreshold(mAprilTagDecisionMargin);
+            }
+
+            String aprilTagNbThreads_str = data.getStringExtra("aprilTagNbThreads");
+            if (aprilTagNbThreads_str != null) {
+                mAprilTagNbThreads = Integer.parseInt(aprilTagNbThreads_str);
+                mPreview.setAprilTagNbThreads(mAprilTagNbThreads);
+            }
         }
     }
 
     public static void updateResults(List<List<VpImagePoint>> cornersList, int strokeWidth, int[] ids, List<VpHomogeneousMatrix> cMoList,
-                                     String s, int orientation, int w, int h) {
+                                     String s, int orientation, int w, int h, boolean displayTagFrame, double tagFrameRatio,
+                                     double tagSize, VpCameraParameters cam) {
         int RED = Color.RED; // -65536
         int GREEN = Color.GREEN; // -16711936
         int YELLOW = Color.YELLOW; // -256
@@ -289,6 +356,8 @@ public class CameraPreviewActivity extends MainActivity  {
         }
 
         List<Double> tagDistances = new ArrayList<>(cMoList.size());
+        List<double[]> list_oX = new ArrayList<>(cornersList.size());
+        List<double[]> list_oY = new ArrayList<>(cornersList.size());
         for (VpHomogeneousMatrix cMo : cMoList) {
             double[] cMo_array = new double[16];
             if (false) {
@@ -312,12 +381,41 @@ public class CameraPreviewActivity extends MainActivity  {
 
             double dist = Math.sqrt(tx*tx + ty*ty + tz*tz);
             tagDistances.add(dist);
+
+            // Tag frame
+            {
+                VpPoint origin = new VpPoint(0, 0, 0);
+                VpImagePoint im_origin = project(cMo, origin, cam);
+                Log.d(TAG, "CameraPreviewActivity::updateResults() ; im_origin=" + im_origin);
+
+                VpPoint oX = new VpPoint(tagSize * tagFrameRatio, 0, 0);
+                VpImagePoint im_ox = project(cMo, oX, cam);
+
+                VpPoint oY = new VpPoint(0, tagSize * tagFrameRatio, 0);
+                VpImagePoint im_oy = project(cMo, oY, cam);
+
+                VpPoint oZ = new VpPoint(0, 0, tagSize * tagFrameRatio);
+                VpImagePoint im_oz = project(cMo, oZ, cam);
+
+                list_oX.add(new double[] {im_origin.get_u(), im_ox.get_u(), im_oy.get_u(), im_oz.get_u()} );
+                list_oY.add(new double[] {im_origin.get_v(), im_ox.get_v(), im_oy.get_v(), im_oz.get_v()} );
+            }
         }
 
         mLineSurface.drawLines(list_startX, list_startY, list_stopX, list_stopY, color_, strokeWidth_, centerX, centerY, ids,
-                tagDistances.stream().mapToDouble(Double::valueOf).toArray(), orientation, w, h);
+                tagDistances.stream().mapToDouble(Double::valueOf).toArray(), orientation, w, h, displayTagFrame, list_oX, list_oY);
 
         mResultInfo.setText(s);
+    }
+
+    private static VpImagePoint project(VpHomogeneousMatrix cMo, VpPoint obj, VpCameraParameters cam) {
+        obj.changeFrame(cMo);
+        obj.projection();
+        double px = cam.get_px(), py = cam.get_py(), u0 = cam.get_u0(), v0 = cam.get_v0();
+        double u = px * obj.get_x() + u0;
+        double v = py * obj.get_y() + v0;
+
+        return new VpImagePoint(v, u);
     }
 
     @Override

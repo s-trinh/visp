@@ -21,6 +21,18 @@
     <!-- Tag -->
     <string name="tag_size">Tag size (m):</string>
     <string name="tag_size_default">0.1</string>
+    <!-- Frame size -->
+    <string name="display_frame_text">Display the marker frame?</string>
+    <string name="frame_size_ratio">Frame size ratio:</string>
+    <string name="frame_size_ratio_default">0.5</string>
+    <!-- AprilTag -->
+    <string name="apriltag_quad_decimate">AprilTag quad_decimate:</string>
+    <string name="apriltag_quad_decimate_default">2</string>
+    <string name="apriltag_decision_margin">AprilTag decision_margin:</string>
+    <string name="apriltag_decision_margin_default">50</string>
+    <string name="apriltag_nb_threads">AprilTag nb threads:</string>
+    <string name="apriltag_nb_threads_default">1</string>
+    <!-- Bottom -->
     <string name="button_validate">Validate</string>
     <string name="original_credit_desc">This app is derived from the works of Akshay Sharma produced during the <a href="https://summerofcode.withgoogle.com/archive/2018/projects/5711312218750976">GSoC 2018</a> project and <a href="https://visp.inria.fr">ViSP.</a></string>
     <string name="apriltag_desc">The underlying detection method is based on the code from the <a href="https://github.com/AprilRobotics/apriltag">AprilTag 3</a> GitHub repository.</string>

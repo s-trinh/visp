@@ -10,6 +10,8 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import org.visp.core.VpHomogeneousMatrix;
+
 import java.util.List;
 import java.util.Locale;
 
@@ -44,7 +46,7 @@ public class LineSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 
     public void drawLines(List<double[]> list_startX, List<double[]> list_startY, List<double[]> list_stopX, List<double[]> list_stopY,
                           int[] color_, int[] strokeWidth_, List<Double> centerX, List<Double> centerY, int[] ids_, double[] dist_,
-                          int orientation, int width, int height) {
+                          int orientation, int width, int height, boolean draw_frame, List<double[]> list_frameX, List<double[]> list_frameY) {
 //        Log.d(TAG, "LineSurfaceView::drawLine()");
         Canvas canvas = mSurfaceHolder.lockCanvas();
 
@@ -68,39 +70,20 @@ public class LineSurfaceView extends SurfaceView implements SurfaceHolder.Callba
                     paint.setColor(color);
                     paint.setStrokeWidth(strokeWidth);
 
-                    if (orientation == 0) {
-                        double scaleX = view_w / width;
-                        double scaleY = view_h / height;
-
-                        canvas.drawLine((float) (scaleX * startX), (float) (scaleY * startY),
-                                (float) (scaleX * stopX), (float) (scaleY * stopY), paint);
-                    } else if (orientation == 90) {
-                        double scaleX = view_w / height;
-                        double scaleY = view_h / width;
-
-                        canvas.drawLine((float) (scaleX * (view_w - startY)), (float) (scaleY * startX),
-                                (float) (scaleX * (view_w - stopY)), (float) (scaleY * stopX), paint);
-                    } else {
-                        // 180°
-                        double scaleX = view_w / width;
-                        double scaleY = view_h / height;
-
-                        canvas.drawLine((float) (scaleX * (width - startX)), (float) (scaleY * (height - startY)),
-                                (float) (scaleX * (width - stopX)), (float) (scaleY * (height - stopY)), paint);
-                    }
+                    canvasDrawLine(canvas, startX, startY, stopX, stopY, orientation, width, height, paint);
                 }
 
                 // Draw id
                 Paint paint = new Paint();
                 paint.setColor(Color.parseColor("aqua"));
                 paint.setStrokeWidth(8);
-                paint.setTextSize(40);
+                paint.setTextSize(50);
                 paint.setTextAlign(Paint.Align.CENTER);
 
                 Paint paint2 = new Paint(paint);
                 paint2.setColor(Color.parseColor("fuchsia"));
 
-                int offset_dist = 40;
+                int offset_dist = 50;
                 if (orientation == 0) {
                     float scaleX = view_w / width;
                     float scaleY = view_h / height;
@@ -125,9 +108,76 @@ public class LineSurfaceView extends SurfaceView implements SurfaceHolder.Callba
                     canvas.drawText(String.format(Locale.US, "%.2f", dist_[i]) + " m", scaleX * (width - centerX.get(i).floatValue()),
                             scaleY * (height - centerY.get(i).floatValue()) + offset_dist, paint2);
                 }
+
+                // Draw tag frame
+                Log.d(TAG, "LineSurfaceView::drawLines() ; draw_frame=" + draw_frame);
+                if (draw_frame) {
+                    Paint paint_frame = new Paint();
+                    paint_frame.setStrokeWidth(8);
+
+                    // oX
+                    {
+                        paint_frame.setColor(Color.parseColor("red"));
+                        double startX = list_frameX.get(i)[0];
+                        double stopX = list_frameX.get(i)[1];
+                        double startY = list_frameY.get(i)[0];
+                        double stopY = list_frameY.get(i)[1];
+                        Log.d(TAG, "LineSurfaceView::drawLines() ; startX=" + startX + " ; startY=" + startY + " ; stopX=" + stopX + " ; stopY=" + stopY);
+
+                        canvasDrawLine(canvas, startX, startY, stopX, stopY, orientation, width, height, paint_frame);
+                    }
+                    // oY
+                    {
+                        paint_frame.setColor(Color.parseColor("green"));
+
+                        double startX = list_frameX.get(i)[0];
+                        double stopX = list_frameX.get(i)[2];
+                        double startY = list_frameY.get(i)[0];
+                        double stopY = list_frameY.get(i)[2];
+
+                        canvasDrawLine(canvas, startX, startY, stopX, stopY, orientation, width, height, paint_frame);
+                    }
+                    // oZ
+                    {
+                        paint_frame.setColor(Color.parseColor("blue"));
+
+                        double startX = list_frameX.get(i)[0];
+                        double stopX = list_frameX.get(i)[3];
+                        double startY = list_frameY.get(i)[0];
+                        double stopY = list_frameY.get(i)[3];
+
+                        canvasDrawLine(canvas, startX, startY, stopX, stopY, orientation, width, height, paint_frame);
+                    }
+                }
             }
 
             mSurfaceHolder.unlockCanvasAndPost(canvas);
+        }
+    }
+
+    private void canvasDrawLine(Canvas canvas, double startX, double startY, double stopX, double stopY, int orientation, int width, int height, Paint paint) {
+        float view_w = getWidth();
+        float view_h = getHeight();
+
+        if (orientation == 0) {
+            double scaleX = view_w / width;
+            double scaleY = view_h / height;
+
+            canvas.drawLine((float) (scaleX * startX), (float) (scaleY * startY),
+                    (float) (scaleX * stopX), (float) (scaleY * stopY), paint);
+        } else if (orientation == 90) {
+            double scaleX = view_w / height;
+            double scaleY = view_h / width;
+
+            canvas.drawLine((float) (scaleX * (view_w - startY)), (float) (scaleY * startX),
+                    (float) (scaleX * (view_w - stopY)), (float) (scaleY * stopX), paint);
+        } else {
+            // 180°
+            double scaleX = view_w / width;
+            double scaleY = view_h / height;
+
+            canvas.drawLine((float) (scaleX * (width - startX)), (float) (scaleY * (height - startY)),
+                    (float) (scaleX * (width - stopX)), (float) (scaleY * (height - stopY)), paint);
         }
     }
 

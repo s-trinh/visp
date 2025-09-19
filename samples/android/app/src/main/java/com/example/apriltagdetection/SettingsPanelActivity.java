@@ -5,11 +5,19 @@ import android.os.Bundle;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class SettingsPanelActivity extends AppCompatActivity {
     private static final String TAG = "SettingsPanelActivity";
@@ -62,18 +70,85 @@ public class SettingsPanelActivity extends AppCompatActivity {
         double tagSize = intent.getDoubleExtra("tag_size", 0);
         tagSizeInput.setText(String.valueOf(tagSize));
 
+        CheckBox displayFrameInput = findViewById(R.id.displayMarkerFrame);
+        boolean display_frame = intent.getBooleanExtra("display_tag_frame", false);
+        displayFrameInput.setChecked(display_frame);
+
+        EditText frameSizeRatioInput = findViewById(R.id.markerFrameSizeRatio);
+        double frame_size_ratio = intent.getDoubleExtra("display_tag_frame_ratio", 0.5);
+        frameSizeRatioInput.setText(String.valueOf(frame_size_ratio));
+
+        // AprilTag
+
+        // selection position
+        int apriltag_selection = intent.getIntExtra("aprilTag_selection_position", 0);
+
+        // quad_decimate
+        Spinner quad_decimate_spinner = findViewById(R.id.aprilTagQuadDecimate);
+        Integer[] quad_decimate_options = {1, 2, 3, 4, 6, 8};
+        ArrayAdapter<Integer> quad_decimate_adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, quad_decimate_options);
+        quad_decimate_adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        quad_decimate_spinner.setAdapter(quad_decimate_adapter);
+        Map<Integer, Integer> quad_decimate_options_map = Map.of(
+                1, 0,
+                2, 1,
+                3, 2,
+                4, 3,
+                6, 4,
+                8, 5
+        );
+        quad_decimate_spinner.setSelection(quad_decimate_options_map.get(intent.getIntExtra("aprilTag_quad_decimate", 1)));
+
+        // decision_margin
+        SeekBar decision_margin_seekBar = findViewById(R.id.aprilTagDecisionMargin);
+        TextView decision_margin_value = findViewById(R.id.aprilTagDecisionMarginValue);
+        decision_margin_seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                decision_margin_value.setText(String.valueOf(progress));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                Toast.makeText(SettingsPanelActivity.this, "Margin value: " + decision_margin_seekBar.getProgress(), Toast.LENGTH_SHORT).show();
+            }
+        });
+        decision_margin_seekBar.setProgress(intent.getIntExtra("aprilTag_decision_margin", 50));
+
+
+        // nb threads
+        Spinner nb_threads_spinner = findViewById(R.id.aprilTagNbThreads);
+        Integer[] nb_threads_options = {1, 2, 3, 4};
+        ArrayAdapter<Integer> nb_threads_adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, nb_threads_options);
+        nb_threads_adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        nb_threads_spinner.setAdapter(nb_threads_adapter);
+        nb_threads_spinner.setSelection(intent.getIntExtra("aprilTag_nb_threads", 1) - 1);
+
         Button validate = findViewById(R.id.btnValidateSettings);
         validate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "SettingsPanelActivity::validate::onClick()");
-
                 String cameraFocalInput_str = cameraFocalInput.getText().toString();
                 String tagSizeInput_str = tagSizeInput.getText().toString();
+                String tagFrameRatioInput_str = frameSizeRatioInput.getText().toString();
+                String aprilTagSelectionPosition_str = String.valueOf(apriltag_selection);
+                String aprilTagQuadDecimate_str = quad_decimate_spinner.getSelectedItem().toString();
+                String aprilTagMargin_str = String.valueOf(decision_margin_seekBar.getProgress());
+                String aprilTagNbThreads_str = nb_threads_spinner.getSelectedItem().toString();
 
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra("cameraFocalValue", cameraFocalInput_str);
                 resultIntent.putExtra("tagSizeValue", tagSizeInput_str);
+                resultIntent.putExtra("displayFrameChecked", String.valueOf(displayFrameInput.isChecked()));
+                resultIntent.putExtra("tagFrameRatio", tagFrameRatioInput_str);
+                resultIntent.putExtra("aprilTagSelectionPosition", aprilTagSelectionPosition_str);
+                resultIntent.putExtra("aprilTagQuadDecimate", aprilTagQuadDecimate_str);
+                resultIntent.putExtra("aprilTagDecisionMargin", aprilTagMargin_str);
+                resultIntent.putExtra("aprilTagNbThreads", aprilTagNbThreads_str);
                 setResult(RESULT_OK, resultIntent);
 
                 finish();
