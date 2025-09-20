@@ -54,7 +54,7 @@ public class LineSurfaceView extends SurfaceView implements SurfaceHolder.Callba
             float view_w = getWidth();
             float view_h = getHeight();
 
-            Log.d(TAG, "LineSurfaceView::drawLines() ; view_w=" + view_w + " ; view_h=" + view_h);
+//            Log.d(TAG, "LineSurfaceView::drawLines() ; view_w=" + view_w + " ; view_h=" + view_h);
 
             for (int i = 0; i < list_startX.size(); i++) {
                 for (int j = 0; j < list_startX.get(i).length; j++) {
@@ -122,7 +122,6 @@ public class LineSurfaceView extends SurfaceView implements SurfaceHolder.Callba
                         double stopX = list_frameX.get(i)[1];
                         double startY = list_frameY.get(i)[0];
                         double stopY = list_frameY.get(i)[1];
-                        Log.d(TAG, "LineSurfaceView::drawLines() ; startX=" + startX + " ; startY=" + startY + " ; stopX=" + stopX + " ; stopY=" + stopY);
 
                         canvasDrawLine(canvas, startX, startY, stopX, stopY, orientation, width, height, paint_frame);
                     }

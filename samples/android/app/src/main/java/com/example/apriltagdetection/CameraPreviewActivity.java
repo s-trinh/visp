@@ -59,6 +59,7 @@ public class CameraPreviewActivity extends MainActivity  {
     FrameLayout mFrameLayout;
     private CameraPreview mPreview;
     private Button mBtnSettings;
+    private boolean mCameraFlash;
     private double mFocalLength;
     private double mTagSize;
     private Button mBtnAutoFocus;
@@ -90,6 +91,7 @@ public class CameraPreviewActivity extends MainActivity  {
     private void init() {
         // Open an instance of the first camera and retrieve its info.
         mCameraInfo = new Camera.CameraInfo();
+        mCameraFlash = false;
         mCamera = getCameraInstance(CAMERA_ID);
 
         if (mCamera == null) {
@@ -130,6 +132,8 @@ public class CameraPreviewActivity extends MainActivity  {
                 releaseCamera();
 
                 Intent intent = new Intent(CameraPreviewActivity.this, SettingsPanelActivity.class);
+
+                intent.putExtra("camera_flash", mCameraFlash);
 
                 intent.putExtra("camera_focal_mm", focalLength_mm);
                 intent.putExtra("camera_native_w", size.width);
@@ -264,6 +268,22 @@ public class CameraPreviewActivity extends MainActivity  {
         init();
 
         if (requestCode == SETTINGS_REQUEST_CODE && resultCode == RESULT_OK) {
+            String cameraFlash_str = data.getStringExtra("cameraFlashChecked");
+            if (cameraFlash_str != null) {
+                mCameraFlash = Boolean.parseBoolean(cameraFlash_str);
+
+                // Camera flash
+                Camera.Parameters cam_params = mCamera.getParameters();
+                if (mCameraFlash && cam_params != null) {
+                    if (cam_params.getSupportedFlashModes() != null && cam_params.getSupportedFlashModes().contains(Camera.Parameters.FLASH_MODE_TORCH)) {
+                        cam_params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+                        mCamera.setParameters(cam_params);
+                    } else {
+                        Toast.makeText(this, "Camera flash is not available.", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+
             String cameraFocalValue_str = data.getStringExtra("cameraFocalValue");
             if (cameraFocalValue_str != null) {
                 mFocalLength = Double.parseDouble(cameraFocalValue_str);

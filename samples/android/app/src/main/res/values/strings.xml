@@ -9,6 +9,7 @@
     <string name="camera_preview_auto_focus">Auto Focus</string>
 
     <!-- Settings panel -->
+    <string name="camera_flash">Turn on the camera flash?</string>
     <!-- Sensor characteristics -->
     <string name="camera_lens_focal_mm">Camera focal lens:</string>
     <string name="camera_native_resolution">Camera native resolution:</string>

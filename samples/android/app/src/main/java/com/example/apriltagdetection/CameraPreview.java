@@ -2,6 +2,7 @@ package com.example.apriltagdetection;
 
 import android.content.Context;
 
+import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.util.Log;
 import android.view.Surface;
@@ -215,14 +216,22 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         {
             mImageUChar = new VpImageUChar(data, mH, mW,true);
 
+            // Default format for Camera API is:
+            //   - https://developer.android.com/reference/android/graphics/ImageFormat#NV21
+            //   YCrCb format used for images, which uses the NV21 encoding format.
+            //   This is the default format for Camera preview images, when not otherwise set with Camera.Parameters.setPreviewFormat(int).
+            //   For the android.hardware.camera2 API, the YUV_420_888 format is recommended for YUV output instead.
+            //   Constant Value: 17 (0x00000011)
+//            Camera.Parameters parameters = camera.getParameters();
+//            int previewFormat = parameters.getPreviewFormat();
+//            Log.d("CameraPreview.java", "previewFormat=" + previewFormat + " PREVIEW_FORMAT_NV21=" + ImageFormat.NV21);
+
             // do the image processing
-            // Its working even without grey scale conversion
-            // TODO: check the original image color space
             List<VpHomogeneousMatrix> cMo_list = mDetectorAprilTag.detect(mImageUChar, mTagSize, mCameraParameters);
 
             int[] tags_id = mDetectorAprilTag.getTagsId();
-            Log.d("CameraPreview.java",cMo_list.size() + " tags detected");
-            Log.d("CameraPreview.java", "tags_id=" + Arrays.toString(tags_id));
+//            Log.d("CameraPreview.java",cMo_list.size() + " tags detected");
+//            Log.d("CameraPreview.java", "tags_id=" + Arrays.toString(tags_id));
 
             int strokeWidth = 8;
             int orientation = calculatePreviewOrientation(mCameraInfo, mDisplayOrientation);

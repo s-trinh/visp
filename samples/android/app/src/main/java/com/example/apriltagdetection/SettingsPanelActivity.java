@@ -38,6 +38,13 @@ public class SettingsPanelActivity extends AppCompatActivity {
 
         // Update values
         Intent intent = getIntent();
+
+        // Flash
+        CheckBox cameraFlashInput = findViewById(R.id.cameraFlash);
+        boolean camera_flash = intent.getBooleanExtra("camera_flash", false);
+        cameraFlashInput.setChecked(camera_flash);
+
+        // Camera specs
         float camera_focal_mm = intent.getFloatExtra("camera_focal_mm", 0);
         TextView camera_focal_mm_value = findViewById(R.id.camera_lens_focal_mm_value);
         camera_focal_mm_value.setText(camera_focal_mm + " mm");
@@ -141,6 +148,7 @@ public class SettingsPanelActivity extends AppCompatActivity {
                 String aprilTagNbThreads_str = nb_threads_spinner.getSelectedItem().toString();
 
                 Intent resultIntent = new Intent();
+                resultIntent.putExtra("cameraFlashChecked", String.valueOf(cameraFlashInput.isChecked()));
                 resultIntent.putExtra("cameraFocalValue", cameraFocalInput_str);
                 resultIntent.putExtra("tagSizeValue", tagSizeInput_str);
                 resultIntent.putExtra("displayFrameChecked", String.valueOf(displayFrameInput.isChecked()));
