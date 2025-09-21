@@ -12,11 +12,11 @@ import android.view.SurfaceView;
 import java.util.List;
 import java.util.Locale;
 
-public class LineSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
-    private static final String TAG = "LineSurfaceView";
+public class DisplaySurfaceView extends SurfaceView implements SurfaceHolder.Callback {
+    private static final String TAG = "DisplaySurfaceView";
     private SurfaceHolder mSurfaceHolder;
 
-    public LineSurfaceView(Context context, AttributeSet attrs) {
+    public DisplaySurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }

@@ -54,7 +54,7 @@ public class CameraPreviewActivity extends MainActivity  {
     private Camera mCamera;
     private int mW, mH;
     static TextView mResultInfo;
-    static LineSurfaceView mLineSurface;
+    static DisplaySurfaceView mLineSurface;
     private Spinner mSpinner;
     FrameLayout mFrameLayout;
     private CameraPreview mPreview;
