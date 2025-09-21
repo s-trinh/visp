@@ -77,8 +77,7 @@ public class CameraPreviewActivity extends MainActivity  {
         Log.d(TAG, "CameraPreviewActivity::onCreate()");
         super.onCreate(savedInstanceState);
 
-        // ChatGPT
-        // Arbitrary value? --> https://stackoverflow.com/a/36653669 ?
+        // Arbitrary value for the request code? --> https://stackoverflow.com/a/36653669 ?
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 100);
         }
@@ -95,7 +94,6 @@ public class CameraPreviewActivity extends MainActivity  {
         mCamera = getCameraInstance(CAMERA_ID);
 
         if (mCamera == null) {
-            Log.d(TAG, "CameraPreviewActivity::onCreate() ; mCamera == null");
             // Camera is not available, display error message
             Toast.makeText(this, "Camera is not available.", Toast.LENGTH_SHORT).show();
             setContentView(R.layout.camera_unavailable);
@@ -110,8 +108,6 @@ public class CameraPreviewActivity extends MainActivity  {
         mBtnSettings.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "CameraPreviewActivity::mBtnSettings::onClick()");
-
                 Camera.Parameters params = mCamera.getParameters();
                 // the focal length. Returns -1.0 when the device doesn't report focal length information.
                 float focalLength_mm = params.getFocalLength();
@@ -343,10 +339,10 @@ public class CameraPreviewActivity extends MainActivity  {
     public static void updateResults(List<List<VpImagePoint>> cornersList, int strokeWidth, int[] ids, List<VpHomogeneousMatrix> cMoList,
                                      String s, int orientation, int w, int h, boolean displayTagFrame, double tagFrameRatio,
                                      double tagSize, VpCameraParameters cam) {
-        int RED = Color.RED; // -65536
-        int GREEN = Color.GREEN; // -16711936
-        int YELLOW = Color.YELLOW; // -256
-        int BLUE = Color.BLUE; // -16776961
+        int RED = Color.RED;        // -65536
+        int GREEN = Color.GREEN;    // -16711936
+        int YELLOW = Color.YELLOW;  // -256
+        int BLUE = Color.BLUE;      // -16776961
 
         int[] color_ = {RED, GREEN, YELLOW, BLUE};
         int[] strokeWidth_ = {strokeWidth, strokeWidth, strokeWidth, strokeWidth};
@@ -380,46 +376,34 @@ public class CameraPreviewActivity extends MainActivity  {
         List<double[]> list_oY = new ArrayList<>(cornersList.size());
         for (VpHomogeneousMatrix cMo : cMoList) {
             double[] cMo_array = new double[16];
-            if (false) {
-                // TODO: VpHomogeneousMatrix::convert() does not work
-                cMo.convert(cMo_array);
-                Log.d(TAG, "CameraPreviewActivity::updateResults() ; cMo_array[0][0]=" + cMo_array[0] + " ; cMo_array[0][1]=" + cMo_array[1]);
-                Log.d(TAG, "CameraPreviewActivity::updateResults() ; cMo=" + cMo);
-            } else {
-                String[] cMo_array_str = cMo.toString().split("\\s+");
-//                Log.d(TAG, "CameraPreviewActivity::updateResults() ; cMo=" + cMo);
-//                Log.d(TAG, "CameraPreviewActivity::updateResults() ; cMo_array_str=" + cMo_array_str.length);
-                cMo_array = Arrays.stream(cMo_array_str)
-                        .mapToDouble(Double::parseDouble)
-                        .toArray();
-            }
+
+            String[] cMo_array_str = cMo.toString().split("\\s+");
+            cMo_array = Arrays.stream(cMo_array_str)
+                    .mapToDouble(Double::parseDouble)
+                    .toArray();
 
             double tx = cMo_array[3];
             double ty = cMo_array[7];
             double tz = cMo_array[11];
-//            Log.d(TAG, "CameraPreviewActivity::updateResults() ; tx=" + tx + " ; ty=" + ty + " ; tz=" + tz);
 
             double dist = Math.sqrt(tx*tx + ty*ty + tz*tz);
             tagDistances.add(dist);
 
             // Tag frame
-            {
-                VpPoint origin = new VpPoint(0, 0, 0);
-                VpImagePoint im_origin = project(cMo, origin, cam);
-                Log.d(TAG, "CameraPreviewActivity::updateResults() ; im_origin=" + im_origin);
+            VpPoint origin = new VpPoint(0, 0, 0);
+            VpImagePoint im_origin = project(cMo, origin, cam);
 
-                VpPoint oX = new VpPoint(tagSize * tagFrameRatio, 0, 0);
-                VpImagePoint im_ox = project(cMo, oX, cam);
+            VpPoint oX = new VpPoint(tagSize * tagFrameRatio, 0, 0);
+            VpImagePoint im_ox = project(cMo, oX, cam);
 
-                VpPoint oY = new VpPoint(0, tagSize * tagFrameRatio, 0);
-                VpImagePoint im_oy = project(cMo, oY, cam);
+            VpPoint oY = new VpPoint(0, tagSize * tagFrameRatio, 0);
+            VpImagePoint im_oy = project(cMo, oY, cam);
 
-                VpPoint oZ = new VpPoint(0, 0, tagSize * tagFrameRatio);
-                VpImagePoint im_oz = project(cMo, oZ, cam);
+            VpPoint oZ = new VpPoint(0, 0, tagSize * tagFrameRatio);
+            VpImagePoint im_oz = project(cMo, oZ, cam);
 
-                list_oX.add(new double[] {im_origin.get_u(), im_ox.get_u(), im_oy.get_u(), im_oz.get_u()} );
-                list_oY.add(new double[] {im_origin.get_v(), im_ox.get_v(), im_oy.get_v(), im_oz.get_v()} );
-            }
+            list_oX.add(new double[] {im_origin.get_u(), im_ox.get_u(), im_oy.get_u(), im_oz.get_u()} );
+            list_oY.add(new double[] {im_origin.get_v(), im_ox.get_v(), im_oy.get_v(), im_oz.get_v()} );
         }
 
         mLineSurface.drawLines(list_startX, list_startY, list_stopX, list_stopY, color_, strokeWidth_, centerX, centerY, ids,
@@ -440,7 +424,6 @@ public class CameraPreviewActivity extends MainActivity  {
 
     @Override
     public void onPause() {
-        Log.d(TAG, "CameraPreviewActivity::onPause()");
         super.onPause();
         // Stop camera access
         releaseCamera();
@@ -448,7 +431,6 @@ public class CameraPreviewActivity extends MainActivity  {
 
     @Override
     public void onResume() {
-        Log.d(TAG, "CameraPreviewActivity::onResume()");
         super.onResume();
         if (mCamera == null) {
             try {
@@ -465,12 +447,11 @@ public class CameraPreviewActivity extends MainActivity  {
 
     /** A safe way to get an instance of the Camera object. */
     private Camera getCameraInstance(int cameraId) {
-        Log.d(TAG, "CameraPreviewActivity::getCameraInstance()");
         Camera c = null;
         try {
             c = Camera.open(cameraId); // attempt to get a Camera instance
         } catch (Exception e) {
-            Log.d(TAG, "CameraPreviewActivity::getCameraInstance() ; Camera " + cameraId + " is not available: " + e.getMessage());
+            Log.e(TAG, "CameraPreviewActivity::getCameraInstance() ; Camera " + cameraId + " is not available: " + e.getMessage());
             // Camera is not available (in use or does not exist)
             Toast.makeText(this, "Camera " + cameraId + " is not available: " + e.getMessage(),
                     Toast.LENGTH_SHORT).show();
@@ -479,10 +460,9 @@ public class CameraPreviewActivity extends MainActivity  {
     }
 
     private void releaseCamera() {
-        Log.d(TAG, "CameraPreviewActivity::releaseCamera()");
         if (mCamera != null) {
             mCamera.stopPreview();
-            mCamera.release();        // release the camera for other applications
+            mCamera.release();
             mCamera = null;
         }
     }

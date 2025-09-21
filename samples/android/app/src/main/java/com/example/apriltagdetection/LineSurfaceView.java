@@ -6,11 +6,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-
-import org.visp.core.VpHomogeneousMatrix;
 
 import java.util.List;
 import java.util.Locale;
@@ -31,11 +28,9 @@ public class LineSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        Log.d(TAG, "LineSurfaceView::surfaceCreated()");
     }
 
     public void clear() {
-//        Log.d(TAG, "LineSurfaceView::clear()");
         Canvas canvas = mSurfaceHolder.lockCanvas();
         if (canvas != null) {
             // https://stackoverflow.com/a/9035709
@@ -47,14 +42,11 @@ public class LineSurfaceView extends SurfaceView implements SurfaceHolder.Callba
     public void drawLines(List<double[]> list_startX, List<double[]> list_startY, List<double[]> list_stopX, List<double[]> list_stopY,
                           int[] color_, int[] strokeWidth_, List<Double> centerX, List<Double> centerY, int[] ids_, double[] dist_,
                           int orientation, int width, int height, boolean draw_frame, List<double[]> list_frameX, List<double[]> list_frameY) {
-//        Log.d(TAG, "LineSurfaceView::drawLine()");
         Canvas canvas = mSurfaceHolder.lockCanvas();
 
         if (canvas != null) {
             float view_w = getWidth();
             float view_h = getHeight();
-
-//            Log.d(TAG, "LineSurfaceView::drawLines() ; view_w=" + view_w + " ; view_h=" + view_h);
 
             for (int i = 0; i < list_startX.size(); i++) {
                 for (int j = 0; j < list_startX.get(i).length; j++) {
@@ -110,7 +102,6 @@ public class LineSurfaceView extends SurfaceView implements SurfaceHolder.Callba
                 }
 
                 // Draw tag frame
-                Log.d(TAG, "LineSurfaceView::drawLines() ; draw_frame=" + draw_frame);
                 if (draw_frame) {
                     Paint paint_frame = new Paint();
                     paint_frame.setStrokeWidth(8);
@@ -182,11 +173,9 @@ public class LineSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        Log.d(TAG, "LineSurfaceView::surfaceChanged()");
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        Log.d(TAG, "LineSurfaceView::surfaceDestroyed()");
     }
 }
