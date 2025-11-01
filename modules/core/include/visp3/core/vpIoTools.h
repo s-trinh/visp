@@ -49,6 +49,7 @@
 #include <vector>
 #include <numeric>
 #include <visp3/core/vpColor.h>
+#include <visp3/core/vpEndian.h>
 
 #include <memory>
 #include <map>
@@ -94,6 +95,9 @@ namespace cnpy
 // Copyright (C) 2011  Carl Rogers
 // Released under MIT License
 // license available in LICENSE file, or at http://www.opensource.org/licenses/mit-license.php
+
+using namespace vpEndian;
+
 struct NpyArray
 {
   NpyArray(const std::vector<size_t> &_shape, size_t _word_size, bool _fortran_order) :
@@ -131,6 +135,11 @@ struct NpyArray
     return data_holder->size();
   }
 
+  void reverseData()
+  {
+    std::reverse(data_holder->begin(), data_holder->end());
+  }
+
   std::shared_ptr<std::vector<char> > data_holder;
   std::vector<size_t> shape;
   size_t word_size;
@@ -143,7 +152,7 @@ VISP_EXPORT npz_t npz_load(std::string fname);
 VISP_EXPORT char BigEndianTest();
 VISP_EXPORT char map_type(const std::type_info &t);
 template<typename T> std::vector<char> create_npy_header(const std::vector<size_t> &shape);
-VISP_EXPORT void parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_t> &shape, bool &fortran_order);
+VISP_EXPORT void parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_t> &shape, bool &fortran_order, bool &little_endian);
 VISP_EXPORT void parse_npy_header(unsigned char *buffer, size_t &word_size, std::vector<size_t> &shape, bool &fortran_order);
 VISP_EXPORT void parse_zip_footer(FILE *fp, uint16_t &nrecs, size_t &global_header_size, size_t &global_header_offset);
 VISP_EXPORT NpyArray npz_load(std::string fname, std::string varname);
@@ -196,8 +205,8 @@ template<typename T> void npy_save(std::string fname, const T *data, const std::
   if (fp) {
     //file exists. we need to append to it. read the header, modify the array size
     size_t word_size;
-    bool fortran_order;
-    parse_npy_header(fp, word_size, true_data_shape, fortran_order);
+    bool fortran_order, little_endian;
+    parse_npy_header(fp, word_size, true_data_shape, fortran_order, little_endian);
     assert(!fortran_order);
 
     if (word_size != sizeof(T)) {
@@ -247,6 +256,11 @@ template<typename T> void npy_save(std::string fname, const T *data, const std::
  */
 template<typename T> void npz_save(std::string zipname, std::string fname, const T *data, const std::vector<size_t> &shape, std::string mode = "w")
 {
+//   bool is_LE = true;
+// #ifndef VISP_LITTLE_ENDIAN
+//   is_LE = false;
+// #endif
+
   //first, append a .npy to the fname
   fname += ".npy";
 

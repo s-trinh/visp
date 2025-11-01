@@ -70,6 +70,32 @@ uint32_t swap32bits(uint32_t val)
 }
 
 /*!
+  Swap 32 bits by shifting to the right the first 2 bytes and by shifting to
+  the left the last 2 bytes.
+*/
+uint64_t swap64bits(uint64_t val)
+{
+  // const unsigned int magic_8 = 8;
+  // const unsigned int magic_24 = 24;
+  // const unsigned int magic_0x000000FF = 0x000000FFU;
+  // const unsigned int magic_0x0000FF00 = 0x0000FF00U;
+  // const unsigned int magic_0x00FF0000 = 0x00FF0000U;
+  // const unsigned int magic_0xFF000000 = 0xFF000000U;
+  // return (((val >> magic_24) & magic_0x000000FF) | ((val >> magic_8) & magic_0x0000FF00) | ((val << magic_8) & magic_0x00FF0000) |
+  //         ((val << magic_24) & magic_0xFF000000));
+
+  // https://stackoverflow.com/a/105342
+  return (val >> 56) |
+    ((val<<40) & 0x00FF000000000000) |
+    ((val<<24) & 0x0000FF0000000000) |
+    ((val<<8) & 0x000000FF00000000) |
+    ((val>>8) & 0x00000000FF000000) |
+    ((val>>24) & 0x0000000000FF0000) |
+    ((val>>40) & 0x000000000000FF00) |
+    (val << 56);
+}
+
+/*!
   Swap a float, the union is necessary because of the representation of a
   float in memory in IEEE 754.
 */
@@ -138,6 +164,42 @@ uint16_t reinterpret_cast_uchar_to_uint16_LE(unsigned char *const ptr)
   return swap16bits(*reinterpret_cast<uint16_t *>(ptr));
 #else
   throw std::runtime_error("Not supported endianness for correct  custom reinterpret_cast() function.");
+#endif
+}
+
+uint16_t getLE16bits(uint16_t val)
+{
+#ifdef VISP_LITTLE_ENDIAN
+  return val;
+#else
+  return swap16bits(val);
+#endif
+}
+
+uint32_t getLE32bits(uint32_t val)
+{
+#ifdef VISP_LITTLE_ENDIAN
+  return val;
+#else
+  return swap32bits(val);
+#endif
+}
+
+float getLEFloat(float f)
+{
+#ifdef VISP_LITTLE_ENDIAN
+  return f;
+#else
+  return swapFloat(f);
+#endif
+}
+
+double getLEDouble(double d)
+{
+#ifdef VISP_LITTLE_ENDIAN
+  return d;
+#else
+  return swapDouble(d);
 #endif
 }
 } // namespace vpEndian

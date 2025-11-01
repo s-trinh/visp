@@ -93,11 +93,21 @@ VISP_EXPORT uint16_t swap16bits(uint16_t val);
 
 VISP_EXPORT uint32_t swap32bits(uint32_t val);
 
+VISP_EXPORT uint64_t swap64bits(uint64_t val);
+
 VISP_EXPORT float swapFloat(float f);
 
 VISP_EXPORT double swapDouble(double d);
 
 VISP_EXPORT uint16_t reinterpret_cast_uchar_to_uint16_LE(unsigned char *const ptr);
+
+VISP_EXPORT uint16_t getLE16bits(uint16_t val);
+
+VISP_EXPORT uint32_t getLE32bits(uint32_t val);
+
+VISP_EXPORT float getLEFloat(float f);
+
+VISP_EXPORT double getLEDouble(double d);
 } // namespace vpEndian
 END_VISP_NAMESPACE
 #endif
