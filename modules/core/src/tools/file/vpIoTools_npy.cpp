@@ -59,11 +59,20 @@ using namespace buminiz;
 // anonymous namespace
 namespace
 {
-void reverse_data(std::shared_ptr<std::vector<char> > &data_holder)
-{
-  std::reverse(data_holder->begin(), data_holder->end());
-}
-void reverse_data(std::shared_ptr<std::vector<char> > &data_holder, const std::vector<size_t> &shape, size_t word_size)
+// void reverse_data(std::shared_ptr<std::vector<char> > &data_holder)
+// {
+//   std::reverse(data_holder->begin(), data_holder->end());
+// }
+
+// union S
+// {
+//     std::int32_t n;     // occupies 4 bytes
+//     std::uint16_t s[2]; // occupies 4 bytes
+//     std::uint8_t c;     // occupies 1 byte
+// };
+
+void reverse_data(std::shared_ptr<std::vector<char> > &data_holder, const std::vector<size_t> &shape,
+  size_t word_size, char data_type)
 {
   if (!shape.empty()) {
     size_t total_size = shape[0];
@@ -71,8 +80,49 @@ void reverse_data(std::shared_ptr<std::vector<char> > &data_holder, const std::v
       total_size *= shape[i];
     }
 
-    for (size_t i = 0; i < total_size; i++) {
-      std::reverse(data_holder->begin() + i*word_size, data_holder->begin() + (i+1)*word_size);
+    if (data_type == 'f') {
+      if (word_size == sizeof(long double)) {
+        throw std::runtime_error("Little Endian / Big Endian conversion is not supported for 'long double' type.");
+      }
+
+      if (word_size == sizeof(float)) {
+        for (size_t i = 0; i < total_size; i++) {
+          // std::reverse(data_holder->begin() + i*word_size, data_holder->begin() + (i+1)*word_size);
+
+          union
+          {
+            float d;
+            unsigned char b[4];
+          } dat1;
+
+          dat1.b[0] = *(data_holder->begin() + i*word_size + 0);
+          dat1.b[1] = *(data_holder->begin() + i*word_size + 1);
+          dat1.b[2] = *(data_holder->begin() + i*word_size + 2);
+          dat1.b[3] = *(data_holder->begin() + i*word_size + 3);
+
+          *(data_holder->begin() + i*word_size + 0) = dat1.b[3];
+          *(data_holder->begin() + i*word_size + 1) = dat1.b[2];
+          *(data_holder->begin() + i*word_size + 2) = dat1.b[1];
+          *(data_holder->begin() + i*word_size + 3) = dat1.b[0];
+        }
+      }
+      else {
+     // for (size_t i = 0; i < total_size; i++) {
+     //   // std::reverse(data_holder->begin() + i*word_size, data_holder->begin() + (i+1)*word_size);
+
+     //   // TODO:
+     //   union
+     //   {
+     //     double d;
+     //     unsigned char b[8];
+     //   } dat1, dat2;
+     // }
+      }
+    }
+    else {
+      for (size_t i = 0; i < total_size; i++) {
+        std::reverse(data_holder->begin() + i*word_size, data_holder->begin() + (i+1)*word_size);
+      }
     }
   }
 }
@@ -138,7 +188,8 @@ char visp::cnpy::map_type(const std::type_info &t)
   else { return '?'; }
 }
 
-void visp::cnpy::parse_npy_header(unsigned char *buffer, size_t &word_size, std::vector<size_t> &shape, bool &fortran_order, bool &little_endian)
+void visp::cnpy::parse_npy_header(unsigned char *buffer, size_t &word_size, std::vector<size_t> &shape,
+  bool &fortran_order, bool &little_endian, char &data_type)
 {
   uint16_t header_len = *reinterpret_cast<uint16_t *>(buffer+8);
   std::string header(reinterpret_cast<char *>(buffer+9), header_len);
@@ -157,7 +208,8 @@ void visp::cnpy::parse_npy_header(unsigned char *buffer, size_t &word_size, std:
 
   std::string str_shape = header.substr(loc1+1, loc2-loc1-1);
   while (std::regex_search(str_shape, sm, num_regex)) {
-    shape.push_back(std::stoi(sm[0].str()));
+    // TODO: link
+    shape.push_back(std::stoll(sm[0].str()));
     str_shape = sm.suffix().str();
   }
 
@@ -166,16 +218,15 @@ void visp::cnpy::parse_npy_header(unsigned char *buffer, size_t &word_size, std:
   //not sure when this applies except for byte array
   loc1 = header.find("descr")+9;
   little_endian = ((header[loc1] == '<') || (header[loc1] == '|') ? true : false);
-  std::cout << "little_endian? " << little_endian << std::endl;
-  std::cout << "void visp::cnpy::parse_npy_header(unsigned char *buffer, size_t &word_size, std::vector<size_t> &shape, bool &fortran_order)"
-    << " ; little_endian=" << little_endian << std::endl;
+  data_type = header[loc1+1];
 
   std::string str_ws = header.substr(loc1+2);
   loc2 = str_ws.find("'");
   word_size = atoi(str_ws.substr(0, loc2).c_str());
 }
 
-void visp::cnpy::parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_t> &shape, bool &fortran_order, bool &little_endian)
+void visp::cnpy::parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_t> &shape,
+  bool &fortran_order, bool &little_endian, char &data_type)
 {
   char buffer[256];
   size_t res = fread(buffer, sizeof(char), 11, fp);
@@ -208,7 +259,7 @@ void visp::cnpy::parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_
 
   std::string str_shape = header.substr(loc1+1, loc2-loc1-1);
   while (std::regex_search(str_shape, sm, num_regex)) {
-    shape.push_back(std::stoi(sm[0].str()));
+    shape.push_back(std::stoll(sm[0].str()));
     str_shape = sm.suffix().str();
   }
 
@@ -221,9 +272,7 @@ void visp::cnpy::parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_
   }
   loc1 += 9;
   little_endian = ((header[loc1] == '<') || (header[loc1] == '|') ? true : false);
-
-  // --comment: char type equals header[loc1+1];
-  // --comment: assert type equals map_type(T);
+  data_type = header[loc1+1];
 
   std::string str_ws = header.substr(loc1+2);
   loc2 = str_ws.find("'");
@@ -259,7 +308,8 @@ visp::cnpy::NpyArray load_the_npy_file(FILE *fp)
   std::vector<size_t> shape;
   size_t word_size;
   bool fortran_order, little_endian;
-  visp::cnpy::parse_npy_header(fp, word_size, shape, fortran_order, little_endian);
+  char data_type = 'i'; // integer type
+  visp::cnpy::parse_npy_header(fp, word_size, shape, fortran_order, little_endian, data_type);
 
   visp::cnpy::NpyArray arr(shape, word_size, fortran_order);
   size_t nread = fread(arr.data<char>(), 1, arr.num_bytes(), fp);
@@ -268,11 +318,13 @@ visp::cnpy::NpyArray load_the_npy_file(FILE *fp)
   }
 #ifdef VISP_LITTLE_ENDIAN
   if (!little_endian) {
-    reverse_data(arr.data_holder);
+    // reverse_data(arr.data_holder); // TODO:
+    reverse_data(arr.data_holder, arr.shape, arr.word_size, data_type);
   }
 #else
   if (little_endian) {
-    reverse_data(arr.data_holder);
+    // reverse_data(arr.data_holder); // TODO:
+    reverse_data(arr.data_holder, arr.shape, arr.word_size, data_type);
   }
 #endif
   return arr;
@@ -311,7 +363,8 @@ visp::cnpy::NpyArray load_the_npz_array(FILE *fp, uint32_t compr_bytes, uint32_t
   size_t word_size;
   bool fortran_order;
   bool little_endian = true;
-  visp::cnpy::parse_npy_header(&buffer_uncompr[0], word_size, shape, fortran_order, little_endian);
+  char data_type = 'i'; // integer type
+  visp::cnpy::parse_npy_header(&buffer_uncompr[0], word_size, shape, fortran_order, little_endian, data_type);
 
   visp::cnpy::NpyArray array(shape, word_size, fortran_order);
 
@@ -320,11 +373,11 @@ visp::cnpy::NpyArray load_the_npz_array(FILE *fp, uint32_t compr_bytes, uint32_t
 
 #ifdef VISP_LITTLE_ENDIAN
   if (!little_endian) {
-    reverse_data(array.data_holder, array.shape, array.word_size);
+    reverse_data(array.data_holder, array.shape, array.word_size, data_type);
   }
 #else
   if (little_endian) {
-    reverse_data(array.data_holder, array.shape, array.word_size);
+    reverse_data(array.data_holder, array.shape, array.word_size, data_type);
   }
 #endif
 
@@ -341,11 +394,19 @@ visp::cnpy::NpyArray load_the_npz_array(FILE *fp, uint32_t compr_bytes, uint32_t
 
   \sa To see how to use it, you may have a look at \ref tutorial-npz
  */
-visp::cnpy::npz_t visp::cnpy::npz_load(std::string fname)
+visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
 {
-  FILE *fp = fopen(fname.c_str(), "rb");
+  struct AutoCloser
+  {
+    FILE *fp;
+    ~AutoCloser(void)
+    {
+      fclose(fp);
+    }
+  } closer;
+  closer.fp = fopen(fname.c_str(), "rb");
 
-  if (!fp) {
+  if (!closer.fp) {
     throw std::runtime_error("npz_load: Error! Unable to open file "+fname+"!");
   }
 
@@ -370,7 +431,7 @@ visp::cnpy::npz_t visp::cnpy::npz_load(std::string fname)
   bool same_endianness = true;
   while (!quit) {
     std::vector<char> local_header(val_30);
-    size_t headerres = fread(&local_header[0], sizeof(char), val_30, fp);
+    size_t headerres = fread(&local_header[0], sizeof(char), val_30, closer.fp);
     if (headerres != 30) {
       throw std::runtime_error("npz_load: failed fread");
     }
@@ -395,7 +456,7 @@ visp::cnpy::npz_t visp::cnpy::npz_load(std::string fname)
       //read in the variable name
       uint16_t name_len = swap16bits_if(*(uint16_t *)&local_header[index_26], !same_endianness);
       std::string varname(name_len, ' ');
-      size_t vname_res = fread(&varname[0], sizeof(char), name_len, fp);
+      size_t vname_res = fread(&varname[0], sizeof(char), name_len, closer.fp);
       if (vname_res != name_len) {
         throw std::runtime_error("npz_load: failed fread");
       }
@@ -407,7 +468,7 @@ visp::cnpy::npz_t visp::cnpy::npz_load(std::string fname)
       uint16_t extra_field_len = swap16bits_if(*(uint16_t *)&local_header[index_28], !same_endianness);
       if (extra_field_len > 0) {
         std::vector<char> buff(extra_field_len);
-        size_t efield_res = swap64bits_if(fread(&buff[0], sizeof(char), extra_field_len, fp), !same_endianness);
+        size_t efield_res = swap64bits_if(fread(&buff[0], sizeof(char), extra_field_len, closer.fp), !same_endianness);
         if (efield_res != extra_field_len) {
           throw std::runtime_error("npz_load: failed fread");
         }
@@ -418,15 +479,14 @@ visp::cnpy::npz_t visp::cnpy::npz_load(std::string fname)
       uint32_t uncompr_bytes = swap32bits_if(*reinterpret_cast<uint32_t *>(&local_header[0] + val_22), !same_endianness);
 
       if (compr_method == 0) {
-        arrays[varname] = load_the_npy_file(fp);
+        arrays[varname] = load_the_npy_file(closer.fp);
       }
       else {
-        arrays[varname] = load_the_npz_array(fp, compr_bytes, uncompr_bytes);
+        arrays[varname] = load_the_npz_array(closer.fp, compr_bytes, uncompr_bytes);
       }
     }
   }
 
-  fclose(fp);
   return arrays;
 }
 
@@ -441,11 +501,20 @@ visp::cnpy::npz_t visp::cnpy::npz_load(std::string fname)
 
   \sa To see how to use it, you may have a look at \ref tutorial-npz
  */
-visp::cnpy::NpyArray visp::cnpy::npz_load(std::string fname, std::string varname)
+visp::cnpy::NpyArray visp::cnpy::npz_load(const std::string &fname, const std::string &varname)
 {
-  FILE *fp = fopen(fname.c_str(), "rb");
+  // https://github.com/nmcclatchey/Bugfix-for-cnpy/blob/e148a5ce5db80fa3e28ce6d551343cfc8ebdc832/cnpy.cpp#L285
+  struct AutoCloser
+  {
+    FILE *fp;
+    ~AutoCloser(void)
+    {
+      fclose(fp);
+    }
+  } closer;
+  closer.fp = fopen(fname.c_str(), "rb");
 
-  if (!fp) {
+  if (!closer.fp) {
     throw std::runtime_error("npz_load: Unable to open file "+fname);
   }
 
@@ -469,7 +538,7 @@ visp::cnpy::NpyArray visp::cnpy::npz_load(std::string fname, std::string varname
   bool same_endianness = true;
   while (!quit) {
     std::vector<char> local_header(val_30);
-    size_t header_res = fread(&local_header[0], sizeof(char), val_30, fp);
+    size_t header_res = fread(&local_header[0], sizeof(char), val_30, closer.fp);
     if (header_res != 30) {
       throw std::runtime_error("npz_load: failed fread");
     }
@@ -493,7 +562,7 @@ visp::cnpy::NpyArray visp::cnpy::npz_load(std::string fname, std::string varname
       //read in the variable name
       uint16_t name_len = swap16bits_if(*(uint16_t *)&local_header[index_26], !same_endianness);
       std::string vname(name_len, ' ');
-      size_t vname_res = fread(&vname[0], sizeof(char), name_len, fp);
+      size_t vname_res = fread(&vname[0], sizeof(char), name_len, closer.fp);
       if (vname_res != name_len) {
         throw std::runtime_error("npz_load: failed fread");
       }
@@ -501,26 +570,23 @@ visp::cnpy::NpyArray visp::cnpy::npz_load(std::string fname, std::string varname
 
       //read in the extra field
       uint16_t extra_field_len = swap16bits_if(*(uint16_t *)&local_header[index_28], !same_endianness);
-      fseek(fp, extra_field_len, SEEK_CUR); //skip past the extra field
+      fseek(closer.fp, extra_field_len, SEEK_CUR); //skip past the extra field
 
       uint16_t compr_method = swap16bits_if(*reinterpret_cast<uint16_t *>(&local_header[0] + val_8), !same_endianness);
       uint32_t compr_bytes = swap32bits_if(*reinterpret_cast<uint32_t *>(&local_header[0] + val_18), !same_endianness);
       uint32_t uncompr_bytes = swap32bits_if(*reinterpret_cast<uint32_t *>(&local_header[0] + val_22), !same_endianness);
 
       if (vname == varname) {
-        NpyArray array = (compr_method == 0) ? load_the_npy_file(fp) : load_the_npz_array(fp, compr_bytes, uncompr_bytes);
-        fclose(fp);
+        NpyArray array = (compr_method == 0) ? load_the_npy_file(closer.fp) : load_the_npz_array(closer.fp, compr_bytes, uncompr_bytes);
         return array;
       }
       else {
           //skip past the data
         uint32_t size = swap32bits_if(*(uint32_t *)&local_header[22], !same_endianness);
-        fseek(fp, size, SEEK_CUR);
+        fseek(closer.fp, size, SEEK_CUR);
       }
     }
   }
-
-  fclose(fp);
 
   //if we get here, we haven't found the variable in the file
   throw std::runtime_error("npz_load: Variable name "+varname+" not found in "+fname);
@@ -534,18 +600,24 @@ visp::cnpy::NpyArray visp::cnpy::npz_load(std::string fname, std::string varname
   \warning This function has only been tested on little endian platform.
   \note Original library: <a href="https://github.com/rogersce/cnpy">cnpy</a> with MIT license.
  */
-visp::cnpy::NpyArray visp::cnpy::npy_load(std::string fname)
+visp::cnpy::NpyArray visp::cnpy::npy_load(const std::string &fname)
 {
+  struct AutoCloser
+  {
+    FILE *fp;
+    ~AutoCloser(void)
+    {
+      fclose(fp);
+    }
+  } closer;
+  closer.fp = fopen(fname.c_str(), "rb");
 
-  FILE *fp = fopen(fname.c_str(), "rb");
-
-  if (!fp) {
+  if (!closer.fp) {
     throw std::runtime_error("npy_load: Unable to open file "+fname);
   }
 
-  NpyArray arr = load_the_npy_file(fp);
+  NpyArray arr = load_the_npy_file(closer.fp);
 
-  fclose(fp);
   return arr;
 }
 

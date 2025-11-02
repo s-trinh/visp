@@ -139,15 +139,15 @@ struct NpyArray
 };
 
 using npz_t = std::map<std::string, NpyArray>;
-VISP_EXPORT npz_t npz_load(std::string fname);
+VISP_EXPORT npz_t npz_load(const std::string &fname);
 VISP_EXPORT char BigEndianTest();
 VISP_EXPORT char map_type(const std::type_info &t);
 template<typename T> std::vector<char> create_npy_header(const std::vector<size_t> &shape);
-VISP_EXPORT void parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_t> &shape, bool &fortran_order, bool &little_endian);
-VISP_EXPORT void parse_npy_header(unsigned char *buffer, size_t &word_size, std::vector<size_t> &shape, bool &fortran_order, bool &little_endian);
+VISP_EXPORT void parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_t> &shape, bool &fortran_order, bool &little_endian, char &data_type);
+VISP_EXPORT void parse_npy_header(unsigned char *buffer, size_t &word_size, std::vector<size_t> &shape, bool &fortran_order, bool &little_endian, char &data_type);
 VISP_EXPORT void parse_zip_footer(FILE *fp, uint16_t &nrecs, size_t &global_header_size, size_t &global_header_offset);
-VISP_EXPORT NpyArray npz_load(std::string fname, std::string varname);
-VISP_EXPORT NpyArray npy_load(std::string fname);
+VISP_EXPORT NpyArray npz_load(const std::string &fname, const std::string &varname);
+VISP_EXPORT NpyArray npy_load(const std::string &fname);
 
 template<typename T> std::vector<char> &operator+=(std::vector<char> &lhs, const T rhs)
 {
@@ -186,7 +186,7 @@ template<> inline std::vector<char> &operator+=(std::vector<char> &lhs, const ch
   \warning This function has only been tested on little endian platform.
   \note Original library: <a href="https://github.com/rogersce/cnpy">cnpy</a> with MIT license.
  */
-template<typename T> void npy_save(std::string fname, const T *data, const std::vector<size_t> shape, std::string mode = "w")
+template<typename T> void npy_save(const std::string &fname, const T *data, const std::vector<size_t> shape, const std::string &mode = "w")
 {
   FILE *fp = NULL;
   std::vector<size_t> true_data_shape; //if appending, the shape of existing + new data
@@ -197,21 +197,22 @@ template<typename T> void npy_save(std::string fname, const T *data, const std::
     //file exists. we need to append to it. read the header, modify the array size
     size_t word_size;
     bool fortran_order, little_endian;
-    parse_npy_header(fp, word_size, true_data_shape, fortran_order, little_endian);
+    char data_type = 'i';
+    parse_npy_header(fp, word_size, true_data_shape, fortran_order, little_endian, data_type);
     assert(!fortran_order);
 
     if (word_size != sizeof(T)) {
-      std::cout<<"libnpy error: "<<fname<<" has word size "<<word_size<<" but npy_save appending data sized "<<sizeof(T)<<"\n";
+      std::cerr << "libnpy error: " << fname << " has word size " << word_size << " but npy_save appending data sized " << sizeof(T) << "\n";
       assert(word_size == sizeof(T));
     }
     if (true_data_shape.size() != shape.size()) {
-      std::cout<<"libnpy error: npy_save attempting to append misdimensioned data to "<<fname<<"\n";
+      std::cerr << "libnpy error: npy_save attempting to append misdimensioned data to " << fname << "\n";
       assert(true_data_shape.size() != shape.size());
     }
 
     for (size_t i = 1; i < shape.size(); ++i) {
       if (shape[i] != true_data_shape[i]) {
-        std::cout<<"libnpy error: npy_save attempting to append misshaped data to "<<fname<<"\n";
+        std::cout << "libnpy error: npy_save attempting to append misshaped data to " << fname << "\n";
         assert(shape[i] == true_data_shape[i]);
       }
     }
@@ -223,7 +224,7 @@ template<typename T> void npy_save(std::string fname, const T *data, const std::
   }
 
   std::vector<char> header = create_npy_header<T>(true_data_shape);
-  size_t nels = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<size_t>());
+  size_t nels = std::accumulate(shape.begin(), shape.end(), static_cast<size_t>(1), std::multiplies<size_t>());
 
   fseek(fp, 0, SEEK_SET);
   fwrite(&header[0], sizeof(char), header.size(), fp);
@@ -284,7 +285,9 @@ template<typename T> void npz_save(std::string zipname, std::string fname, const
 
   //get the CRC of the data to be added
   uint32_t crc = vp_mz_crc32(0L, (uint8_t *)&npy_header[0], npy_header.size());
-  crc = vp_mz_crc32(crc, (uint8_t *)data, nels*sizeof(T));
+  if (nels > 0) {
+    crc = vp_mz_crc32(crc, (uint8_t *)data, nels*sizeof(T));
+  }
 
   //build the local header
   std::vector<char> local_header;
@@ -346,7 +349,7 @@ template<typename T> void npz_save(std::string zipname, std::string fname, const
   \warning This function has only been tested on little endian platform.
   \note Original library: <a href="https://github.com/rogersce/cnpy">cnpy</a> with MIT license.
  */
-template<typename T> void npy_save(std::string fname, const std::vector<T> data, std::string mode = "w")
+template<typename T> void npy_save(const std::string &fname, const std::vector<T> data, const std::string &mode = "w")
 {
   std::vector<size_t> shape;
   shape.push_back(data.size());
@@ -365,7 +368,7 @@ template<typename T> void npy_save(std::string fname, const std::vector<T> data,
 
   \sa To see how to use it, you may have a look at \ref tutorial-npz
  */
-template<typename T> void npz_save(std::string zipname, std::string fname, const std::vector<T> data, std::string mode = "w")
+template<typename T> void npz_save(const std::string &zipname, const std::string &fname, const std::vector<T> data, const std::string &mode = "w")
 {
   std::vector<size_t> shape;
   shape.push_back(data.size());

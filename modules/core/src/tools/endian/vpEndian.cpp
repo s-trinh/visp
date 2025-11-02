@@ -84,6 +84,11 @@ uint64_t swap64bits(uint64_t val)
   // return (((val >> magic_24) & magic_0x000000FF) | ((val >> magic_8) & magic_0x0000FF00) | ((val << magic_8) & magic_0x00FF0000) |
   //         ((val << magic_24) & magic_0xFF000000));
 
+  // TODO: magic_val
+  // TODO: magic_val
+  // TODO: magic_val
+  // TODO: magic_val
+
   // https://stackoverflow.com/a/105342
   return (val >> 56) |
     ((val<<40) & 0x00FF000000000000) |
