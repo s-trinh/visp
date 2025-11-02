@@ -49,7 +49,6 @@
 #include <vector>
 #include <numeric>
 #include <visp3/core/vpColor.h>
-#include <visp3/core/vpEndian.h>
 
 #include <memory>
 #include <map>
@@ -95,8 +94,6 @@ namespace cnpy
 // Copyright (C) 2011  Carl Rogers
 // Released under MIT License
 // license available in LICENSE file, or at http://www.opensource.org/licenses/mit-license.php
-
-using namespace vpEndian;
 
 struct NpyArray
 {
