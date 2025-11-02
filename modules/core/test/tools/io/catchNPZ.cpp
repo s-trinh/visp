@@ -85,7 +85,7 @@ TEST_CASE("Test visp::cnpy::npy_load/npz_save", "[visp::cnpy I/O]")
     // For null-terminated character handling, see:
     // https://stackoverflow.com/a/8247804
     // https://stackoverflow.com/a/45491652
-    const std::string read_string = std::string(vec_arr_string_data.begin(), vec_arr_string_data.end());
+    const std::string read_string(vec_arr_string_data.begin(), vec_arr_string_data.end());
     CHECK(save_string == read_string);
   }
 

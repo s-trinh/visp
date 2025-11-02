@@ -135,11 +135,6 @@ struct NpyArray
     return data_holder->size();
   }
 
-  void reverseData()
-  {
-    std::reverse(data_holder->begin(), data_holder->end());
-  }
-
   std::shared_ptr<std::vector<char> > data_holder;
   std::vector<size_t> shape;
   size_t word_size;
@@ -153,7 +148,7 @@ VISP_EXPORT char BigEndianTest();
 VISP_EXPORT char map_type(const std::type_info &t);
 template<typename T> std::vector<char> create_npy_header(const std::vector<size_t> &shape);
 VISP_EXPORT void parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_t> &shape, bool &fortran_order, bool &little_endian);
-VISP_EXPORT void parse_npy_header(unsigned char *buffer, size_t &word_size, std::vector<size_t> &shape, bool &fortran_order);
+VISP_EXPORT void parse_npy_header(unsigned char *buffer, size_t &word_size, std::vector<size_t> &shape, bool &fortran_order, bool &little_endian);
 VISP_EXPORT void parse_zip_footer(FILE *fp, uint16_t &nrecs, size_t &global_header_size, size_t &global_header_offset);
 VISP_EXPORT NpyArray npz_load(std::string fname, std::string varname);
 VISP_EXPORT NpyArray npy_load(std::string fname);

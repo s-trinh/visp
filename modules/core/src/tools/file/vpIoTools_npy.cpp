@@ -55,6 +55,29 @@ using namespace buminiz;
 // Released under MIT License
 // license available in LICENSE file, or at http://www.opensource.org/licenses/mit-license.php
 
+
+// anonymous namespace
+namespace
+{
+void reverse_data(std::shared_ptr<std::vector<char> > &data_holder)
+{
+  std::reverse(data_holder->begin(), data_holder->end());
+}
+void reverse_data(std::shared_ptr<std::vector<char> > &data_holder, const std::vector<size_t> &shape, size_t word_size)
+{
+  if (!shape.empty()) {
+    size_t total_size = shape[0];
+    for (size_t i = 1; i < shape.size(); i++) {
+      total_size *= shape[i];
+    }
+
+    for (size_t i = 0; i < total_size; i++) {
+      std::reverse(data_holder->begin() + i*word_size, data_holder->begin() + (i+1)*word_size);
+    }
+  }
+}
+} // anonymous namespace
+
 char visp::cnpy::BigEndianTest()
 {
   int x = 1;
@@ -88,7 +111,7 @@ char visp::cnpy::map_type(const std::type_info &t)
   else { return '?'; }
 }
 
-void visp::cnpy::parse_npy_header(unsigned char *buffer, size_t &word_size, std::vector<size_t> &shape, bool &fortran_order)
+void visp::cnpy::parse_npy_header(unsigned char *buffer, size_t &word_size, std::vector<size_t> &shape, bool &fortran_order, bool &little_endian)
 {
   uint16_t header_len = *reinterpret_cast<uint16_t *>(buffer+8);
   std::string header(reinterpret_cast<char *>(buffer+9), header_len);
@@ -115,10 +138,10 @@ void visp::cnpy::parse_npy_header(unsigned char *buffer, size_t &word_size, std:
   //byte order code | stands for not applicable.
   //not sure when this applies except for byte array
   loc1 = header.find("descr")+9;
-  bool littleEndian = (((header[loc1] == '<') || (header[loc1] == '|')) ? true : false);
-  UNUSED(littleEndian); assert(littleEndian);
+  little_endian = ((header[loc1] == '<') || (header[loc1] == '|') ? true : false);
+  std::cout << "little_endian? " << little_endian << std::endl;
   std::cout << "void visp::cnpy::parse_npy_header(unsigned char *buffer, size_t &word_size, std::vector<size_t> &shape, bool &fortran_order)"
-    << " ; littleEndian=" << littleEndian << std::endl;
+    << " ; little_endian=" << little_endian << std::endl;
 
   std::string str_ws = header.substr(loc1+2);
   loc2 = str_ws.find("'");
@@ -226,14 +249,13 @@ visp::cnpy::NpyArray load_the_npy_file(FILE *fp)
   if (nread != arr.num_bytes()) {
     throw std::runtime_error("load_the_npy_file: failed fread");
   }
-  bool same_endianness = true;
 #ifdef VISP_LITTLE_ENDIAN
   if (!little_endian) {
-    arr.reverseData();
+    reverse_data(arr.data_holder);
   }
 #else
   if (little_endian) {
-    arr.reverseData();
+    reverse_data(arr.data_holder);
   }
 #endif
   return arr;
@@ -273,12 +295,23 @@ visp::cnpy::NpyArray load_the_npz_array(FILE *fp, uint32_t compr_bytes, uint32_t
   bool fortran_order;
   std::cout << "visp::cnpy::NpyArray load_the_npz_array(FILE *fp, uint32_t compr_bytes, uint32_t uncompr_bytes) call"
     << "visp::cnpy::parse_npy_header(&buffer_uncompr[0], word_size, shape, fortran_order);" << std::endl;
-  visp::cnpy::parse_npy_header(&buffer_uncompr[0], word_size, shape, fortran_order);
+  bool little_endian = true;
+  visp::cnpy::parse_npy_header(&buffer_uncompr[0], word_size, shape, fortran_order, little_endian);
 
   visp::cnpy::NpyArray array(shape, word_size, fortran_order);
 
   size_t offset = uncompr_bytes - array.num_bytes();
   memcpy(array.data<unsigned char>(), &buffer_uncompr[0]+offset, array.num_bytes());
+
+#ifdef VISP_LITTLE_ENDIAN
+  if (!little_endian) {
+    reverse_data(array.data_holder, array.shape, array.word_size);
+  }
+#else
+  if (little_endian) {
+    reverse_data(array.data_holder, array.shape, array.word_size);
+  }
+#endif
 
   return array;
 }
@@ -411,6 +444,10 @@ visp::cnpy::npz_t visp::cnpy::npz_load(std::string fname)
  */
 visp::cnpy::NpyArray visp::cnpy::npz_load(std::string fname, std::string varname)
 {
+  // TODO:
+  // TODO:
+  // TODO:
+  // TODO:
   FILE *fp = fopen(fname.c_str(), "rb");
 
   if (!fp) {
