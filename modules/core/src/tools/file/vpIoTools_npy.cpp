@@ -221,10 +221,6 @@ void visp::cnpy::parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_
   }
   loc1 += 9;
   little_endian = ((header[loc1] == '<') || (header[loc1] == '|') ? true : false);
-  std::cout << "little_endian? " << little_endian << std::endl;
-  // UNUSED(littleEndian); assert(littleEndian);
-  std::cout << "void visp::cnpy::parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_t> &shape, bool &fortran_order)"
-    << " ; little_endian=" << little_endian << std::endl;
 
   // --comment: char type equals header[loc1+1];
   // --comment: assert type equals map_type(T);
@@ -232,7 +228,6 @@ void visp::cnpy::parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_
   std::string str_ws = header.substr(loc1+2);
   loc2 = str_ws.find("'");
   word_size = atoi(str_ws.substr(0, loc2).c_str());
-  std::cout << "word_size=" << word_size << std::endl;
 }
 
 void visp::cnpy::parse_zip_footer(FILE *fp, uint16_t &nrecs, size_t &global_header_size, size_t &global_header_offset)
@@ -264,13 +259,8 @@ visp::cnpy::NpyArray load_the_npy_file(FILE *fp)
   std::vector<size_t> shape;
   size_t word_size;
   bool fortran_order, little_endian;
-  std::cout << "visp::cnpy::NpyArray load_the_npy_file(FILE *fp) call visp::cnpy::parse_npy_header(fp, word_size, shape, fortran_order);" << std::endl;
   visp::cnpy::parse_npy_header(fp, word_size, shape, fortran_order, little_endian);
 
-  std::cout << "load_the_npy_file, word_size=" << word_size << " ; fortran_order=" << fortran_order << std::endl;
-  for (size_t i = 0; i < shape.size(); i++) {
-    std::cout << "shape[" << i << "]=" << shape[i] << std::endl;
-  }
   visp::cnpy::NpyArray arr(shape, word_size, fortran_order);
   size_t nread = fread(arr.data<char>(), 1, arr.num_bytes(), fp);
   if (nread != arr.num_bytes()) {
@@ -320,8 +310,6 @@ visp::cnpy::NpyArray load_the_npz_array(FILE *fp, uint32_t compr_bytes, uint32_t
   std::vector<size_t> shape;
   size_t word_size;
   bool fortran_order;
-  std::cout << "visp::cnpy::NpyArray load_the_npz_array(FILE *fp, uint32_t compr_bytes, uint32_t uncompr_bytes) call"
-    << "visp::cnpy::parse_npy_header(&buffer_uncompr[0], word_size, shape, fortran_order);" << std::endl;
   bool little_endian = true;
   visp::cnpy::parse_npy_header(&buffer_uncompr[0], word_size, shape, fortran_order, little_endian);
 
@@ -355,7 +343,6 @@ visp::cnpy::NpyArray load_the_npz_array(FILE *fp, uint32_t compr_bytes, uint32_t
  */
 visp::cnpy::npz_t visp::cnpy::npz_load(std::string fname)
 {
-  std::cout << "visp::cnpy::npz_t visp::cnpy::npz_load(std::string fname)" << std::endl;
   FILE *fp = fopen(fname.c_str(), "rb");
 
   if (!fp) {
@@ -381,9 +368,7 @@ visp::cnpy::npz_t visp::cnpy::npz_load(std::string fname)
   bool get_file_endianness = false;
   bool file_is_LE = true;
   bool same_endianness = true;
-  int iter = 0;
   while (!quit) {
-    std::cout << "iter=" << iter << std::endl;
     std::vector<char> local_header(val_30);
     size_t headerres = fread(&local_header[0], sizeof(char), val_30, fp);
     if (headerres != 30) {
@@ -396,9 +381,6 @@ visp::cnpy::npz_t visp::cnpy::npz_load(std::string fname)
         file_is_LE = false;
       }
       same_endianness = (host_is_LE == file_is_LE);
-
-      std::cout << "file_is_LE? " << file_is_LE << std::endl;
-      std::cout << "same_endianness? " << same_endianness << std::endl;
     }
 
     if (
@@ -414,7 +396,6 @@ visp::cnpy::npz_t visp::cnpy::npz_load(std::string fname)
       uint16_t name_len = swap16bits_if(*(uint16_t *)&local_header[index_26], !same_endianness);
       std::string varname(name_len, ' ');
       size_t vname_res = fread(&varname[0], sizeof(char), name_len, fp);
-      std::cout << "varname=" << varname << " ; vname_res=" << vname_res << std::endl;
       if (vname_res != name_len) {
         throw std::runtime_error("npz_load: failed fread");
       }
@@ -433,7 +414,6 @@ visp::cnpy::npz_t visp::cnpy::npz_load(std::string fname)
       }
 
       uint16_t compr_method = swap16bits_if(*reinterpret_cast<uint16_t *>(&local_header[0] + val_8), !same_endianness);
-      std::cout << "compr_method=" << compr_method << std::endl;
       uint32_t compr_bytes = swap32bits_if(*reinterpret_cast<uint32_t *>(&local_header[0] + val_18), !same_endianness);
       uint32_t uncompr_bytes = swap32bits_if(*reinterpret_cast<uint32_t *>(&local_header[0] + val_22), !same_endianness);
 
@@ -444,8 +424,6 @@ visp::cnpy::npz_t visp::cnpy::npz_load(std::string fname)
         arrays[varname] = load_the_npz_array(fp, compr_bytes, uncompr_bytes);
       }
     }
-
-    iter++;
   }
 
   fclose(fp);
@@ -502,9 +480,6 @@ visp::cnpy::NpyArray visp::cnpy::npz_load(std::string fname, std::string varname
         file_is_LE = false;
       }
       same_endianness = (host_is_LE == file_is_LE);
-
-      std::cout << "file_is_LE? " << file_is_LE << std::endl;
-      std::cout << "same_endianness? " << same_endianness << std::endl;
     }
 
     //if we've reached the global header, stop reading

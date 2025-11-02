@@ -94,7 +94,6 @@ namespace cnpy
 // Copyright (C) 2011  Carl Rogers
 // Released under MIT License
 // license available in LICENSE file, or at http://www.opensource.org/licenses/mit-license.php
-
 struct NpyArray
 {
   NpyArray(const std::vector<size_t> &_shape, size_t _word_size, bool _fortran_order) :
@@ -248,11 +247,6 @@ template<typename T> void npy_save(std::string fname, const T *data, const std::
  */
 template<typename T> void npz_save(std::string zipname, std::string fname, const T *data, const std::vector<size_t> &shape, std::string mode = "w")
 {
-//   bool is_LE = true;
-// #ifndef VISP_LITTLE_ENDIAN
-//   is_LE = false;
-// #endif
-
   //first, append a .npy to the fname
   fname += ".npy";
 

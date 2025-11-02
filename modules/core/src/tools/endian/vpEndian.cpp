@@ -166,41 +166,5 @@ uint16_t reinterpret_cast_uchar_to_uint16_LE(unsigned char *const ptr)
   throw std::runtime_error("Not supported endianness for correct  custom reinterpret_cast() function.");
 #endif
 }
-
-uint16_t getLE16bits(uint16_t val)
-{
-#ifdef VISP_LITTLE_ENDIAN
-  return val;
-#else
-  return swap16bits(val);
-#endif
-}
-
-uint32_t getLE32bits(uint32_t val)
-{
-#ifdef VISP_LITTLE_ENDIAN
-  return val;
-#else
-  return swap32bits(val);
-#endif
-}
-
-float getLEFloat(float f)
-{
-#ifdef VISP_LITTLE_ENDIAN
-  return f;
-#else
-  return swapFloat(f);
-#endif
-}
-
-double getLEDouble(double d)
-{
-#ifdef VISP_LITTLE_ENDIAN
-  return d;
-#else
-  return swapDouble(d);
-#endif
-}
 } // namespace vpEndian
 END_VISP_NAMESPACE
