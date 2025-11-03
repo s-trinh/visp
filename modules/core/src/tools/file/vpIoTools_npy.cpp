@@ -68,9 +68,22 @@ void reverse_data(std::shared_ptr<std::vector<char> > &data_holder, const std::v
       total_size *= shape[i];
     }
 
-    for (size_t i = 0; i < total_size; i++) {
-      std::reverse(data_holder->begin() + i*word_size, data_holder->begin() + (i+1)*word_size);
+    // std::complex
+    if (data_type == 'c') {
+      const size_t half_word_size = word_size / 2;
+      for (size_t i = 0; i < total_size; i++) {
+        // real
+        std::reverse(data_holder->begin() + i*word_size, data_holder->begin() + i*word_size + half_word_size);
+        // imag
+        std::reverse(data_holder->begin() + i*word_size + half_word_size, data_holder->begin() + (i+1)*word_size);
+      }
     }
+    else {
+      for (size_t i = 0; i < total_size; i++) {
+        std::reverse(data_holder->begin() + i*word_size, data_holder->begin() + (i+1)*word_size);
+      }
+    }
+
   }
 }
 
@@ -344,7 +357,8 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
   struct AutoCloser
   {
     FILE *fp;
-    ~AutoCloser(void)
+    AutoCloser() : fp(nullptr) { }
+    ~AutoCloser()
     {
       fclose(fp);
     }
@@ -451,7 +465,8 @@ visp::cnpy::NpyArray visp::cnpy::npz_load(const std::string &fname, const std::s
   struct AutoCloser
   {
     FILE *fp;
-    ~AutoCloser(void)
+    AutoCloser() : fp(nullptr) { }
+    ~AutoCloser()
     {
       fclose(fp);
     }
@@ -525,7 +540,7 @@ visp::cnpy::NpyArray visp::cnpy::npz_load(const std::string &fname, const std::s
         return array;
       }
       else {
-          //skip past the data
+        //skip past the data
         uint32_t size = swap32bits_if(*(uint32_t *)&local_header[22], !same_endianness);
         fseek(closer.fp, size, SEEK_CUR);
       }
@@ -549,7 +564,8 @@ visp::cnpy::NpyArray visp::cnpy::npy_load(const std::string &fname)
   struct AutoCloser
   {
     FILE *fp;
-    ~AutoCloser(void)
+    AutoCloser() : fp(nullptr) { }
+    ~AutoCloser()
     {
       fclose(fp);
     }

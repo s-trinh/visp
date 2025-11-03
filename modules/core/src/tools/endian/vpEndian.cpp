@@ -28,12 +28,12 @@
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  * Description:
- * Functions for correct endianness handling.
+ * Functions for endianness handling.
  */
 
 /*!
   \file vpEndian.cpp
-  \brief Functions for correct endianness handling.
+  \brief Functions for endianness handling.
 */
 #include <stdexcept>
 #include <visp3/core/vpEndian.h>

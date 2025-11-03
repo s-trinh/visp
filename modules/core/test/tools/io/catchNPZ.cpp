@@ -87,6 +87,13 @@ TEST_CASE("Test visp::cnpy::npy_load/npz_save", "[visp::cnpy I/O]")
     // https://stackoverflow.com/a/45491652
     const std::string read_string(vec_arr_string_data.begin(), vec_arr_string_data.end());
     CHECK(save_string == read_string);
+
+    // Direct variable access
+    visp::cnpy::NpyArray arr_string_data_direct = visp::cnpy::npz_load(npz_filename, identifier);
+    std::vector<char> vec_arr_string_data_direct = arr_string_data_direct.as_vec<char>();
+
+    const std::string read_string_direct(vec_arr_string_data_direct.begin(), vec_arr_string_data_direct.end());
+    CHECK(read_string_direct == read_string);
   }
 
   SECTION("Read/Save multi-dimensional array")
@@ -115,6 +122,15 @@ TEST_CASE("Test visp::cnpy::npy_load/npz_save", "[visp::cnpy I/O]")
       REQUIRE(save_vec_copy.size() == read_vec.size());
       for (size_t i = 0; i < read_vec.size(); ++i) {
         CHECK(save_vec_copy[i] == read_vec[i]);
+      }
+
+      // Direct variable access
+      visp::cnpy::NpyArray arr_vec_data_direct = visp::cnpy::npz_load(npz_filename, identifier);
+      std::vector<int> read_vec_direct = arr_vec_data_direct.as_vec<int>();
+
+      REQUIRE(read_vec_direct.size() == read_vec.size());
+      for (size_t i = 0; i < read_vec.size(); ++i) {
+        CHECK(read_vec_direct[i] == read_vec[i]);
       }
     }
   }
@@ -153,6 +169,14 @@ TEST_CASE("Test visp::cnpy::npy_load/npz_save", "[visp::cnpy I/O]")
 
       CHECK(I_save_copy.getSize() == I_read.getSize());
       CHECK(I_save_copy == I_read);
+
+      // Direct variable access
+      visp::cnpy::NpyArray arr_vec_data_direct = visp::cnpy::npz_load(npz_filename, identifier);
+      vpImage<vpRGBa> I_read_direct(arr_vec_data_direct.data<vpRGBa>(), static_cast<unsigned int>(arr_vec_data_direct.shape[0]),
+                             static_cast<unsigned int>(arr_vec_data_direct.shape[1]), copy_data);
+
+      CHECK(I_read.getSize() == I_read_direct.getSize());
+      CHECK(I_read == I_read_direct);
     }
   }
 
@@ -188,6 +212,13 @@ TEST_CASE("Test visp::cnpy::npy_load/npz_save", "[visp::cnpy I/O]")
 
       CHECK(complex_data_copy.real() == complex_data_read.real());
       CHECK(complex_data_copy.imag() == complex_data_read.imag());
+
+      // Direct variable access
+      visp::cnpy::NpyArray arr_vec_data_direct = visp::cnpy::npz_load(npz_filename, identifier);
+      std::complex<double> complex_data_read_direct = *arr_vec_data.data<std::complex<double>>();
+
+      CHECK(complex_data_read_direct.real() == complex_data_read.real());
+      CHECK(complex_data_read_direct.imag() == complex_data_read.imag());
     }
   }
 
@@ -220,6 +251,16 @@ TEST_CASE("Test visp::cnpy::npy_load/npz_save", "[visp::cnpy I/O]")
         CHECK(vec_complex_data_copy[i].real() == vec_complex_data_read[i].real());
         CHECK(vec_complex_data_copy[i].imag() == vec_complex_data_read[i].imag());
       }
+
+      // Direct variable access
+      visp::cnpy::NpyArray arr_vec_data_direct = visp::cnpy::npz_load(npz_filename, identifier);
+      std::vector<std::complex<double>> vec_complex_data_read_direct = arr_vec_data_direct.as_vec<std::complex<double>>();
+
+      REQUIRE(vec_complex_data_read_direct.size() == vec_complex_data_read.size());
+      for (size_t i = 0; i < vec_complex_data_read_direct.size(); i++) {
+        CHECK(vec_complex_data_read_direct[i].real() == vec_complex_data_read[i].real());
+        CHECK(vec_complex_data_read_direct[i].imag() == vec_complex_data_read[i].imag());
+      }
     }
   }
 
@@ -244,6 +285,12 @@ TEST_CASE("Test visp::cnpy::npy_load/npz_save", "[visp::cnpy I/O]")
       // std::cout << "cMo_read:\n" << cMo_read << std::endl;
 
       CHECK(cMo_save_copy == cMo_read);
+
+      // Direct variable access
+      visp::cnpy::NpyArray arr_vec_data_direct = visp::cnpy::npz_load(npz_filename, identifier);
+      vpHomogeneousMatrix cMo_read_direct(arr_vec_data_direct.as_vec<double>());
+
+      CHECK(cMo_read_direct == cMo_read);
     }
   }
 
@@ -279,6 +326,21 @@ TEST_CASE("Test visp::cnpy::npy_load/npz_save", "[visp::cnpy I/O]")
         // std::cout << "cMo_read:\n" << cMo_read << std::endl;
         CHECK(vec_cMo_save_copy[i] == cMo_read);
       }
+
+      // Direct variable access
+      visp::cnpy::NpyArray arr_vec_data_direct = visp::cnpy::npz_load(npz_filename, identifier);
+      std::vector<double> vec_cMo_read_direct = arr_vec_data_direct.as_vec<double>();
+      REQUIRE(arr_vec_data_direct.shape.size() == arr_vec_data.shape.size());
+      REQUIRE(arr_vec_data_direct.shape[0] == arr_vec_data.shape[0]);
+
+      for (size_t i = 0; i < arr_vec_data_direct.shape[0]; i++) {
+        std::vector<double>::const_iterator first = vec_cMo_read_direct.begin() + i*arr_vec_data_direct.shape[1];
+        std::vector<double>::const_iterator last = first + arr_vec_data_direct.shape[1];
+        std::vector<double> subvec_cMo_read_direct(first, last);
+        vpHomogeneousMatrix cMo_read_direct(subvec_cMo_read_direct);
+        // std::cout << "cMo_read:\n" << cMo_read << std::endl;
+        CHECK(vec_cMo_save_copy[i] == cMo_read_direct);
+      }
     }
   }
   REQUIRE(vpIoTools::remove(directory_filename));
@@ -294,7 +356,7 @@ TEMPLATE_LIST_TEST_CASE("Test visp::cnpy::npy_load/npz_save", "[BasicTypes][list
   REQUIRE(vpIoTools::checkDirectory(directory_filename));
   std::string npz_filename = directory_filename + "/test_npz_read_write.npz";
 
-  const std::string identifier = "data";
+  std::string identifier = "data";
   TestType save_data_copy;
   {
     TestType save_data = std::numeric_limits<TestType>::min();
@@ -307,8 +369,14 @@ TEMPLATE_LIST_TEST_CASE("Test visp::cnpy::npy_load/npz_save", "[BasicTypes][list
     visp::cnpy::NpyArray arr_data = npz_data[identifier];
     TestType read_data = *arr_data.data<TestType>();
     CHECK(save_data_copy == read_data);
+
+    // Direct variable access
+    visp::cnpy::NpyArray arr_data_direct = visp::cnpy::npz_load(npz_filename, identifier);
+    TestType read_data_direct = *arr_data_direct.data<TestType>();
+    CHECK(read_data_direct == read_data);
   }
 
+  identifier = "data2";
   {
     TestType save_data = std::numeric_limits<TestType>::max();
     visp::cnpy::npz_save(npz_filename, identifier, &save_data, { 1 }, "a"); // append
@@ -320,10 +388,173 @@ TEMPLATE_LIST_TEST_CASE("Test visp::cnpy::npy_load/npz_save", "[BasicTypes][list
     visp::cnpy::NpyArray arr_data = npz_data[identifier];
     TestType read_data = *arr_data.data<TestType>();
     CHECK(save_data_copy == read_data);
+
+    // Direct variable access
+    visp::cnpy::NpyArray arr_data_direct = visp::cnpy::npz_load(npz_filename, identifier);
+    TestType read_data_direct = *arr_data_direct.data<TestType>();
+    CHECK(read_data_direct == read_data);
+  }
+  {
+    visp::cnpy::npz_t npz_data = visp::cnpy::npz_load(npz_filename);
+    REQUIRE(npz_data.find(identifier) != npz_data.end());
+    visp::cnpy::NpyArray arr_data = npz_data[identifier];
+    TestType read_data = *arr_data.data<TestType>();
+    CHECK(save_data_copy == read_data);
   }
 
   REQUIRE(vpIoTools::remove(directory_filename));
   REQUIRE(!vpIoTools::checkDirectory(directory_filename));
+}
+
+namespace
+{
+void loadData(const std::string &npz_filename,
+  int &int_data, double &double_data, std::complex<double> &complex_data,
+  std::vector<int> &vec_int, std::vector<float> &vec_flt, bool has_complex)
+{
+  const std::string int_identifier = "My int data";
+  const std::string double_identifier = "My double data";
+  const std::string matrix_int_identifier = "My int matrix data";
+  const std::string matrix_flt_identifier = "My float matrix data";
+
+  visp::cnpy::npz_t npz_data = visp::cnpy::npz_load(npz_filename);
+  visp::cnpy::npz_t::iterator it_int = npz_data.find(int_identifier);
+  visp::cnpy::npz_t::iterator it_double = npz_data.find(double_identifier);
+  visp::cnpy::npz_t::iterator it_matrix_int = npz_data.find(matrix_int_identifier);
+  visp::cnpy::npz_t::iterator it_matrix_flt = npz_data.find(matrix_flt_identifier);
+
+  REQUIRE(it_int != npz_data.end());
+  REQUIRE(it_double != npz_data.end());
+  REQUIRE(it_matrix_int != npz_data.end());
+  REQUIRE(it_matrix_flt != npz_data.end());
+
+  visp::cnpy::NpyArray arr_data_int = it_int->second;
+  visp::cnpy::NpyArray arr_data_double = it_double->second;
+  visp::cnpy::NpyArray arr_data_matrix_int = it_matrix_int->second;
+  visp::cnpy::NpyArray arr_data_matrix_flt = it_matrix_flt->second;
+
+  int_data = *arr_data_int.data<int>();
+  double_data = *arr_data_double.data<double>();
+  vec_int = arr_data_matrix_int.as_vec<int>();
+  vec_flt = arr_data_matrix_flt.as_vec<float>();
+
+  if (has_complex) {
+    const std::string complex_identifier = "My complex data";
+    visp::cnpy::npz_t::iterator it_complex = npz_data.find(complex_identifier);
+    REQUIRE(it_complex != npz_data.end());
+
+    visp::cnpy::NpyArray arr_data_complex = it_complex->second;
+    complex_data = *arr_data_complex.data<std::complex<double>>();
+  }
+}
+}
+
+// TODO: visp-images version check
+TEST_CASE("Test little-endian / big-endian npz loading", "[visp::cnpy I/O]")
+{
+  const bool has_complex = true;
+  SECTION("Check little-endian correctness for npz loading")
+  {
+    std::string npz_filename = "npz_data_LE_3.npz"; // TODO:
+
+    // ground-truth values
+    const int gt_int_data = 99;
+    const double gt_double_data = 3.14;
+    const std::complex<double> gt_complex_data(gt_int_data, gt_double_data);
+    const size_t height = 5, width = 7, channels = 3;
+    std::vector<int> gt_vec_int;
+    std::vector<float> gt_vec_flt;
+    for (int i = 0; i < static_cast<int>(height*width*channels); ++i) {
+      gt_vec_int.push_back(i);
+      gt_vec_flt.push_back(i);
+    }
+
+    int int_data;
+    double double_data;
+    std::complex<double> complex_data;
+    std::vector<int> vec_int;
+    std::vector<float> vec_flt;
+    loadData(npz_filename, int_data, double_data, complex_data, vec_int, vec_flt, has_complex);
+
+    CHECK(int_data == gt_int_data);
+    CHECK(double_data == gt_double_data);
+    CHECK(complex_data.real() == gt_complex_data.real());
+    CHECK(complex_data.imag() == gt_complex_data.imag());
+
+    REQUIRE(gt_vec_int.size() == gt_vec_flt.size());
+    REQUIRE(gt_vec_int.size() == vec_int.size());
+    REQUIRE(gt_vec_int.size() == vec_flt.size());
+    for (size_t i = 0; i < gt_vec_int.size(); i++) {
+      REQUIRE(gt_vec_int[i] == vec_int[i]);
+      REQUIRE(gt_vec_flt[i] == vec_flt[i]);
+    }
+  }
+
+  SECTION("Check little-endian vs big_endian correctness for npz loading")
+  {
+    std::string npz_filename_LE = "npz_data_LE_3.npz"; // TODO:
+    std::string npz_filename_BE = "npz_data_BE_3.npz"; // TODO:
+    visp::cnpy::npz_t npz_data_LE = visp::cnpy::npz_load(npz_filename_LE);
+    visp::cnpy::npz_t npz_data_BE = visp::cnpy::npz_load(npz_filename_BE);
+
+    int int_data_LE, int_data_BE;
+    double double_data_LE, double_data_BE;
+    std::complex<double> complex_data_LE, complex_data_BE;
+    std::vector<int> vec_int_LE, vec_int_BE;
+    std::vector<float> vec_flt_LE, vec_flt_BE;
+
+    loadData(npz_filename_LE, int_data_LE, double_data_LE, complex_data_LE, vec_int_LE, vec_flt_LE, has_complex);
+    loadData(npz_filename_BE, int_data_BE, double_data_BE, complex_data_BE, vec_int_BE, vec_flt_BE, has_complex);
+
+    CHECK(int_data_LE == int_data_BE);
+    CHECK(double_data_LE == double_data_BE);
+    CHECK(complex_data_LE.real() == complex_data_BE.real());
+    CHECK(complex_data_LE.imag() == complex_data_BE.imag());
+
+    REQUIRE(vec_int_LE.size() == vec_flt_LE.size());
+    REQUIRE(vec_int_LE.size() == vec_int_BE.size());
+    REQUIRE(vec_int_LE.size() == vec_flt_BE.size());
+    for (size_t i = 0; i < vec_int_LE.size(); i++) {
+      CHECK(vec_int_LE[i] == vec_int_BE[i]);
+      CHECK(vec_flt_LE[i] == vec_flt_BE[i]);
+    }
+  }
+}
+
+// TODO: visp-images version check
+TEST_CASE("Test loading correctness wrt. Numpy generate npz", "[visp::cnpy I/O]")
+{
+  std::string npz_filename = "npz_data_LE_3_numpy.npz"; // TODO:
+  const bool has_complex = false;
+
+  // ground-truth values
+  const int gt_int_data = 99;
+  const double gt_double_data = 3.14;
+  const size_t height = 5, width = 7, channels = 3;
+  std::vector<int> gt_vec_int;
+  std::vector<float> gt_vec_flt;
+  for (int i = 0; i < static_cast<int>(height*width*channels); ++i) {
+    gt_vec_int.push_back(i);
+    gt_vec_flt.push_back(i);
+  }
+
+  int int_data;
+  double double_data;
+  std::complex<double> complex_data;
+  std::vector<int> vec_int;
+  std::vector<float> vec_flt;
+  loadData(npz_filename, int_data, double_data, complex_data, vec_int, vec_flt, has_complex);
+
+  CHECK(int_data == gt_int_data);
+  CHECK(double_data == gt_double_data);
+
+  REQUIRE(gt_vec_int.size() == gt_vec_flt.size());
+  REQUIRE(gt_vec_int.size() == vec_int.size());
+  REQUIRE(gt_vec_int.size() == vec_flt.size());
+  for (size_t i = 0; i < gt_vec_int.size(); i++) {
+    CHECK(gt_vec_int[i] == vec_int[i]);
+    CHECK(gt_vec_flt[i] == vec_flt[i]);
+  }
 }
 
 int main(int argc, char *argv[])
