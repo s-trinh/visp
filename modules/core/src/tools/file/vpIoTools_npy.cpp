@@ -59,18 +59,6 @@ using namespace buminiz;
 // anonymous namespace
 namespace
 {
-// void reverse_data(std::shared_ptr<std::vector<char> > &data_holder)
-// {
-//   std::reverse(data_holder->begin(), data_holder->end());
-// }
-
-// union S
-// {
-//     std::int32_t n;     // occupies 4 bytes
-//     std::uint16_t s[2]; // occupies 4 bytes
-//     std::uint8_t c;     // occupies 1 byte
-// };
-
 void reverse_data(std::shared_ptr<std::vector<char> > &data_holder, const std::vector<size_t> &shape,
   size_t word_size, char data_type)
 {
@@ -80,49 +68,8 @@ void reverse_data(std::shared_ptr<std::vector<char> > &data_holder, const std::v
       total_size *= shape[i];
     }
 
-    if (data_type == 'f') {
-      if (word_size == sizeof(long double)) {
-        throw std::runtime_error("Little Endian / Big Endian conversion is not supported for 'long double' type.");
-      }
-
-      if (word_size == sizeof(float)) {
-        for (size_t i = 0; i < total_size; i++) {
-          // std::reverse(data_holder->begin() + i*word_size, data_holder->begin() + (i+1)*word_size);
-
-          union
-          {
-            float d;
-            unsigned char b[4];
-          } dat1;
-
-          dat1.b[0] = *(data_holder->begin() + i*word_size + 0);
-          dat1.b[1] = *(data_holder->begin() + i*word_size + 1);
-          dat1.b[2] = *(data_holder->begin() + i*word_size + 2);
-          dat1.b[3] = *(data_holder->begin() + i*word_size + 3);
-
-          *(data_holder->begin() + i*word_size + 0) = dat1.b[3];
-          *(data_holder->begin() + i*word_size + 1) = dat1.b[2];
-          *(data_holder->begin() + i*word_size + 2) = dat1.b[1];
-          *(data_holder->begin() + i*word_size + 3) = dat1.b[0];
-        }
-      }
-      else {
-     // for (size_t i = 0; i < total_size; i++) {
-     //   // std::reverse(data_holder->begin() + i*word_size, data_holder->begin() + (i+1)*word_size);
-
-     //   // TODO:
-     //   union
-     //   {
-     //     double d;
-     //     unsigned char b[8];
-     //   } dat1, dat2;
-     // }
-      }
-    }
-    else {
-      for (size_t i = 0; i < total_size; i++) {
-        std::reverse(data_holder->begin() + i*word_size, data_holder->begin() + (i+1)*word_size);
-      }
+    for (size_t i = 0; i < total_size; i++) {
+      std::reverse(data_holder->begin() + i*word_size, data_holder->begin() + (i+1)*word_size);
     }
   }
 }
@@ -318,12 +265,10 @@ visp::cnpy::NpyArray load_the_npy_file(FILE *fp)
   }
 #ifdef VISP_LITTLE_ENDIAN
   if (!little_endian) {
-    // reverse_data(arr.data_holder); // TODO:
     reverse_data(arr.data_holder, arr.shape, arr.word_size, data_type);
   }
 #else
   if (little_endian) {
-    // reverse_data(arr.data_holder); // TODO:
     reverse_data(arr.data_holder, arr.shape, arr.word_size, data_type);
   }
 #endif
@@ -449,7 +394,6 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
       ((local_header[index_2] != 0x04) || (local_header[index_3] != 0x03))
     ) {
       //if we've reached the global header, stop reading
-      std::cout << "quit header" << std::endl;
       quit = true;
     }
     else {

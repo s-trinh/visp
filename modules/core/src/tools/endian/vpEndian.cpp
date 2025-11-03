@@ -75,29 +75,26 @@ uint32_t swap32bits(uint32_t val)
 */
 uint64_t swap64bits(uint64_t val)
 {
-  // const unsigned int magic_8 = 8;
-  // const unsigned int magic_24 = 24;
-  // const unsigned int magic_0x000000FF = 0x000000FFU;
-  // const unsigned int magic_0x0000FF00 = 0x0000FF00U;
-  // const unsigned int magic_0x00FF0000 = 0x00FF0000U;
-  // const unsigned int magic_0xFF000000 = 0xFF000000U;
-  // return (((val >> magic_24) & magic_0x000000FF) | ((val >> magic_8) & magic_0x0000FF00) | ((val << magic_8) & magic_0x00FF0000) |
-  //         ((val << magic_24) & magic_0xFF000000));
-
-  // TODO: magic_val
-  // TODO: magic_val
-  // TODO: magic_val
-  // TODO: magic_val
+  const unsigned int magic_8 = 8;
+  const unsigned int magic_24 = 24;
+  const unsigned int magic_40 = 24;
+  const unsigned int magic_56 = 24;
+  const uint64_t magic_0x000000000000FF00 = 0x000000000000FF00;
+  const uint64_t magic_0x0000000000FF0000 = 0x0000000000FF0000;
+  const uint64_t magic_0x00000000FF000000 = 0x00000000FF000000;
+  const uint64_t magic_0x000000FF00000000 = 0x000000FF00000000;
+  const uint64_t magic_0x0000FF0000000000 = 0x0000FF0000000000;
+  const uint64_t magic_0x00FF000000000000 = 0x00FF000000000000;
 
   // https://stackoverflow.com/a/105342
-  return (val >> 56) |
-    ((val<<40) & 0x00FF000000000000) |
-    ((val<<24) & 0x0000FF0000000000) |
-    ((val<<8) & 0x000000FF00000000) |
-    ((val>>8) & 0x00000000FF000000) |
-    ((val>>24) & 0x0000000000FF0000) |
-    ((val>>40) & 0x000000000000FF00) |
-    (val << 56);
+  return (val >> magic_56) |
+    ((val << magic_40) & magic_0x00FF000000000000) |
+    ((val << magic_24) & magic_0x0000FF0000000000) |
+    ((val << magic_8)  & magic_0x000000FF00000000) |
+    ((val >> magic_8)  & magic_0x00000000FF000000) |
+    ((val >> magic_24) & magic_0x0000000000FF0000) |
+    ((val >> magic_40) & magic_0x000000000000FF00) |
+    (val << magic_56);
 }
 
 /*!
@@ -170,6 +167,32 @@ uint16_t reinterpret_cast_uchar_to_uint16_LE(unsigned char *const ptr)
 #else
   throw std::runtime_error("Not supported endianness for correct  custom reinterpret_cast() function.");
 #endif
+}
+
+/*!
+  Return true if the executed code runs on a big-endian platform.
+*/
+bool isBigEndian()
+{
+#if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
+  // https://github.com/mreininghaus/cnpypp/blob/c6cd4e2078e4f39e862720b66fb211c45577c510/src/cnpy%2B%2B.cpp#L29-L37
+  // https://stackoverflow.com/questions/1001307/detecting-endianness-programmatically-in-a-c-program
+  static_assert(sizeof(uint32_t) == 4);
+
+  union
+  {
+    uint32_t i;
+    char c[4];
+  } constexpr test = { 0x01020304 };
+#else
+  union
+  {
+    uint32_t i;
+    char c[4];
+  } test = { 0x01020304 };
+#endif
+
+  return (test.c[0] == 0x01);
 }
 } // namespace vpEndian
 END_VISP_NAMESPACE

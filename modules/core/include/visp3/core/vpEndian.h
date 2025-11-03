@@ -99,6 +99,8 @@ VISP_EXPORT float swapFloat(float f);
 
 VISP_EXPORT double swapDouble(double d);
 
+VISP_EXPORT bool isBigEndian();
+
 VISP_EXPORT uint16_t reinterpret_cast_uchar_to_uint16_LE(unsigned char *const ptr);
 } // namespace vpEndian
 END_VISP_NAMESPACE
