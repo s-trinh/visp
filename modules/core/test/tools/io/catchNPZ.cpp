@@ -585,7 +585,7 @@ TEST_CASE("Test little-endian / big-endian npz loading", "[visp::cnpy I/O]")
       double_data_LE, complex_data_LE, vec_int_LE, vec_flt_LE, vec_complex_data_LE, has_complex);
 
     loadData(npz_filename_BE, b_data_false_BE, b_data_true_BE, uint32_data_BE, int64_data_BE, float_data_BE,
-      double_data_BE, complex_data_BE, vec_int_BE, vec_flt_BE, vec_complex_data_LE, has_complex);
+      double_data_BE, complex_data_BE, vec_int_BE, vec_flt_BE, vec_complex_data_BE, has_complex);
 
     CHECK(b_data_false_LE == b_data_false_BE);
     CHECK(b_data_true_LE == b_data_true_BE);
