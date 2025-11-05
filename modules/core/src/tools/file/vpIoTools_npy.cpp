@@ -198,9 +198,9 @@ void visp::cnpy::parse_npy_header(unsigned char *buffer, size_t &word_size, std:
 
   std::string str_ws = header.substr(loc1+2);
   loc2 = str_ws.find("'");
-  word_size = atoi(str_ws.substr(0, loc2).c_str());
+  static_assert(sizeof(long long) == 8);
+  word_size = atoll(str_ws.substr(0, loc2).c_str());
 #ifdef VISP_BIG_ENDIAN
-  static_assert(sizeof(word_size) == 8);
   word_size = vpEndian::swap64bits(word_size);
 #endif
 
@@ -266,9 +266,9 @@ void visp::cnpy::parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_
 
   std::string str_ws = header.substr(loc1+2);
   loc2 = str_ws.find("'");
-  word_size = atoi(str_ws.substr(0, loc2).c_str());
+  static_assert(sizeof(long long) == 8);
+  word_size = atoll(str_ws.substr(0, loc2).c_str());
 #ifdef VISP_BIG_ENDIAN
-  static_assert(sizeof(word_size) == 8);
   word_size = vpEndian::swap64bits(word_size);
 #endif
 
