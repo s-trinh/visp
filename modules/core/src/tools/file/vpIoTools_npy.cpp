@@ -206,6 +206,7 @@ void visp::cnpy::parse_npy_header(unsigned char *buffer, size_t &word_size, std:
 //   word_size = vpEndian::swap64bits(word_size);
 // #endif
 
+  // TODO:
 #ifdef VISP_BIG_ENDIAN
   static_assert(sizeof(long long) == 8);
   size_t str_ws_val_atoll = atoll(str_ws.substr(0, loc2).c_str());
@@ -220,6 +221,7 @@ void visp::cnpy::parse_npy_header(unsigned char *buffer, size_t &word_size, std:
 #else
   word_size = atoll(str_ws.substr(0, loc2).c_str());
 #endif
+  word_size = atoi(str_ws.substr(0, loc2).c_str());
 
   // TODO:
   std::cout << "[parse_npy_header][uchar*] word_size=" << word_size << std::endl;
@@ -285,6 +287,7 @@ void visp::cnpy::parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_
   loc2 = str_ws.find("'");
   std::cout << "[parse_npy_header][FILE *] word_size, str_ws=" << str_ws.substr(0, loc2) << std::endl;
 
+  // TODO:
 #ifdef VISP_BIG_ENDIAN
   static_assert(sizeof(long long) == 8);
   size_t str_ws_val_atoll = atoll(str_ws.substr(0, loc2).c_str());
@@ -299,6 +302,7 @@ void visp::cnpy::parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_
 #else
   word_size = atoll(str_ws.substr(0, loc2).c_str());
 #endif
+  word_size = atoi(str_ws.substr(0, loc2).c_str());
 
   // TODO:
   std::cout << "[parse_npy_header][FILE *] word_size=" << word_size << std::endl;
