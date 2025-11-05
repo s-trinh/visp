@@ -279,6 +279,9 @@ template<typename T> void npz_save(std::string zipname, std::string fname, const
     fseek(fp, static_cast<long>(global_header_offset), SEEK_SET);
     global_header.resize(global_header_size);
     size_t res = fread(&global_header[0], sizeof(char), global_header_size, fp);
+
+    // TODO:
+    std::cout << "[npz_save] res=" << res << " ; global_header_size=" << global_header_size << std::endl;
     if (res != global_header_size) {
       throw std::runtime_error("npz_save: header read error while adding to existing zip");
     }
