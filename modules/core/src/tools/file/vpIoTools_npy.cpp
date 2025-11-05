@@ -198,10 +198,27 @@ void visp::cnpy::parse_npy_header(unsigned char *buffer, size_t &word_size, std:
 
   std::string str_ws = header.substr(loc1+2);
   loc2 = str_ws.find("'");
-  static_assert(sizeof(long long) == 8);
-  word_size = atoll(str_ws.substr(0, loc2).c_str());
+
+  // TODO: !!!!!!
+//   static_assert(sizeof(long long) == 8);
+//   word_size = atoll(str_ws.substr(0, loc2).c_str());
+// #ifdef VISP_BIG_ENDIAN
+//   word_size = vpEndian::swap64bits(word_size);
+// #endif
+
 #ifdef VISP_BIG_ENDIAN
-  word_size = vpEndian::swap64bits(word_size);
+  static_assert(sizeof(long long) == 8);
+  size_t str_ws_val_atoll = atoll(str_ws.substr(0, loc2).c_str());
+  size_t str_ws_val_atoi = atoi(str_ws.substr(0, loc2).c_str());
+
+  std::string str_ws_sub = str_ws.substr(0, loc2);
+  std::reverse(str_ws_sub.begin(), str_ws_sub.end());
+  word_size = atoll(str_ws_sub.c_str());
+  std::cout << "[parse_npy_header][FILE *][BE] word_size, str_ws_val_atoll=" << str_ws_val_atoll << " ; str_ws_val_atoi=" << str_ws_val_atoi
+    << " ; swap(atoll)=" << vpEndian::swap64bits(str_ws_val_atoll) << " ; swap(atoi)=" << vpEndian::swap64bits(str_ws_val_atoi)
+    << " ; atoll(str.reverse)=" << word_size << " ; atoi(str.reverse)=" << atoi(str_ws_sub.c_str()) << std::endl;
+#else
+  word_size = atoll(str_ws.substr(0, loc2).c_str());
 #endif
 
   // TODO:
@@ -266,10 +283,21 @@ void visp::cnpy::parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_
 
   std::string str_ws = header.substr(loc1+2);
   loc2 = str_ws.find("'");
-  static_assert(sizeof(long long) == 8);
-  word_size = atoll(str_ws.substr(0, loc2).c_str());
+  std::cout << "[parse_npy_header][FILE *] word_size, str_ws=" << str_ws.substr(0, loc2) << std::endl;
+
 #ifdef VISP_BIG_ENDIAN
-  word_size = vpEndian::swap64bits(word_size);
+  static_assert(sizeof(long long) == 8);
+  size_t str_ws_val_atoll = atoll(str_ws.substr(0, loc2).c_str());
+  size_t str_ws_val_atoi = atoi(str_ws.substr(0, loc2).c_str());
+
+  std::string str_ws_sub = str_ws.substr(0, loc2);
+  std::reverse(str_ws_sub.begin(), str_ws_sub.end());
+  word_size = atoll(str_ws_sub.c_str());
+  std::cout << "[parse_npy_header][FILE *][BE] word_size, str_ws_val_atoll=" << str_ws_val_atoll << " ; str_ws_val_atoi=" << str_ws_val_atoi
+    << " ; swap(atoll)=" << vpEndian::swap64bits(str_ws_val_atoll) << " ; swap(atoi)=" << vpEndian::swap64bits(str_ws_val_atoi)
+    << " ; atoll(str.reverse)=" << word_size << " ; atoi(str.reverse)=" << atoi(str_ws_sub.c_str()) << std::endl;
+#else
+  word_size = atoll(str_ws.substr(0, loc2).c_str());
 #endif
 
   // TODO:
