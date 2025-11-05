@@ -292,6 +292,20 @@ void visp::cnpy::parse_zip_footer(FILE *fp, uint16_t &nrecs, size_t &global_head
   std::cout << std::endl;
 
   uint16_t disk_no, disk_start, nrecs_on_disk, comment_len;
+
+  // TODO:
+#ifdef VISP_BIG_ENDIAN
+  std::cout << "[parse_zip_footer] #ifdef VISP_BIG_ENDIAN=" << std::endl;
+
+  disk_no = vpEndian::swap16bits(*(uint16_t *)&footer[4]);
+  disk_start = vpEndian::swap16bits(*(uint16_t *)&footer[6]);
+  nrecs_on_disk = vpEndian::swap16bits(*(uint16_t *)&footer[8]);
+  nrecs = vpEndian::swap16bits(*(uint16_t *)&footer[10]);
+  global_header_size = vpEndian::swap32bits(*(uint32_t *)&footer[12]);
+  global_header_offset = vpEndian::swap32bits(*(uint32_t *)&footer[16]);
+  comment_len = vpEndian::swap16bits(*(uint16_t *)&footer[20]);
+
+#else
   disk_no = *(uint16_t *)&footer[4];
   disk_start = *(uint16_t *)&footer[6];
   nrecs_on_disk = *(uint16_t *)&footer[8];
@@ -299,26 +313,6 @@ void visp::cnpy::parse_zip_footer(FILE *fp, uint16_t &nrecs, size_t &global_head
   global_header_size = *(uint32_t *)&footer[12];
   global_header_offset = *(uint32_t *)&footer[16];
   comment_len = *(uint16_t *)&footer[20];
-
-  // TODO:
-  std::cout << "[parse_zip_footer] disk_no=" << disk_no << std::endl;
-  std::cout << "[parse_zip_footer] disk_start=" << disk_start << std::endl;
-  std::cout << "[parse_zip_footer] nrecs_on_disk=" << nrecs_on_disk << std::endl;
-  std::cout << "[parse_zip_footer] nrecs=" << nrecs << std::endl;
-  std::cout << "[parse_zip_footer] global_header_size=" << global_header_size << std::endl;
-  std::cout << "[parse_zip_footer] global_header_offset=" << global_header_offset << std::endl;
-  std::cout << "[parse_zip_footer] comment_len=" << comment_len << std::endl;
-
-#ifdef VISP_BIG_ENDIAN
-  std::cout << "[parse_zip_footer] #ifdef VISP_BIG_ENDIAN=" << std::endl;
-
-  disk_no = vpEndian::swap16bits(disk_no);
-  disk_start = vpEndian::swap16bits(disk_start);
-  nrecs_on_disk = vpEndian::swap16bits(nrecs_on_disk);
-  nrecs = vpEndian::swap16bits(nrecs);;
-  global_header_size = vpEndian::swap32bits(nrecs);;
-  global_header_offset = vpEndian::swap32bits(nrecs);
-  comment_len = vpEndian::swap16bits(comment_len);
 #endif
 
   {
