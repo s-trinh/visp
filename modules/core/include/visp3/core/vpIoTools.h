@@ -49,11 +49,16 @@
 #include <vector>
 #include <numeric>
 #include <visp3/core/vpColor.h>
+#include <visp3/core/vpEndian.h>
 
 #include <memory>
 #include <map>
 #include <cassert>
 #include <complex>
+
+// TODO:
+// #undef VISP_LITTLE_ENDIAN
+// #define VISP_BIG_ENDIAN
 
 #if VISP_CXX_STANDARD > VISP_CXX_STANDARD_98
 
@@ -229,7 +234,12 @@ template<typename T> void npy_save(const std::string &fname, const T *data, cons
   fseek(fp, 0, SEEK_SET);
   fwrite(&header[0], sizeof(char), header.size(), fp);
   fseek(fp, 0, SEEK_END);
+#ifdef VISP_BIG_ENDIAN
+  static_assert(sizeof(nels) == 8);
+  fwrite(data, sizeof(T), vpEndian::swap64bits(nels), fp);
+#else
   fwrite(data, sizeof(T), nels, fp);
+#endif
   fclose(fp);
 }
 
@@ -292,6 +302,19 @@ template<typename T> void npz_save(std::string zipname, std::string fname, const
   //build the local header
   std::vector<char> local_header;
   local_header += "PK"; //first part of sig
+#ifdef VISP_BIG_ENDIAN
+  local_header += vpEndian::swap16bits(static_cast<uint16_t>(0x0403)); //second part of sig
+  local_header += vpEndian::swap16bits(static_cast<uint16_t>(20)); //min version to extract
+  local_header += vpEndian::swap16bits(static_cast<uint16_t>(0)); //general purpose bit flag
+  local_header += vpEndian::swap16bits(static_cast<uint16_t>(0)); //compression method
+  local_header += vpEndian::swap16bits(static_cast<uint16_t>(0)); //file last mod time
+  local_header += vpEndian::swap16bits(static_cast<uint16_t>(0));     //file last mod date
+  local_header += vpEndian::swap32bits(static_cast<uint32_t>(crc)); //crc
+  local_header += vpEndian::swap32bits(static_cast<uint32_t>(nbytes)); //compressed size
+  local_header += vpEndian::swap32bits(static_cast<uint32_t>(nbytes)); //uncompressed size
+  local_header += vpEndian::swap16bits(static_cast<uint16_t>(fname.size())); //fname length
+  local_header += vpEndian::swap16bits(static_cast<uint16_t>(0)); //extra field length
+#else
   local_header += static_cast<uint16_t>(0x0403); //second part of sig
   local_header += static_cast<uint16_t>(20); //min version to extract
   local_header += static_cast<uint16_t>(0); //general purpose bit flag
@@ -303,10 +326,21 @@ template<typename T> void npz_save(std::string zipname, std::string fname, const
   local_header += static_cast<uint32_t>(nbytes); //uncompressed size
   local_header += static_cast<uint16_t>(fname.size()); //fname length
   local_header += static_cast<uint16_t>(0); //extra field length
+#endif
   local_header += fname;
 
   //build global header
   global_header += "PK"; //first part of sig
+#ifdef VISP_BIG_ENDIAN
+  global_header += vpEndian::swap16bits(static_cast<uint16_t>(0x0201)); //second part of sig
+  global_header += vpEndian::swap16bits(static_cast<uint16_t>(20)); //version made by
+  global_header.insert(global_header.end(), local_header.begin()+4, local_header.begin()+30);
+  global_header += static_cast<uint16_t>(0); //file comment length
+  global_header += static_cast<uint16_t>(0); //disk number where file starts
+  global_header += static_cast<uint16_t>(0); //internal file attributes
+  global_header += static_cast<uint32_t>(0); //external file attributes
+  global_header += vpEndian::swap32bits(static_cast<uint32_t>(global_header_offset)); //relative offset of local file header, since it begins where the global header used to begin
+#else
   global_header += static_cast<uint16_t>(0x0201); //second part of sig
   global_header += static_cast<uint16_t>(20); //version made by
   global_header.insert(global_header.end(), local_header.begin()+4, local_header.begin()+30);
@@ -315,11 +349,21 @@ template<typename T> void npz_save(std::string zipname, std::string fname, const
   global_header += static_cast<uint16_t>(0); //internal file attributes
   global_header += static_cast<uint32_t>(0); //external file attributes
   global_header += static_cast<uint32_t>(global_header_offset); //relative offset of local file header, since it begins where the global header used to begin
+#endif
   global_header += fname;
 
   //build footer
   std::vector<char> footer;
   footer += "PK"; //first part of sig
+#ifdef VISP_BIG_ENDIAN
+  footer += vpEndian::swap16bits(static_cast<uint16_t>(0x0605)); //second part of sig
+  footer += static_cast<uint16_t>(0); //number of this disk
+  footer += static_cast<uint16_t>(0); //disk where footer starts
+  footer += vpEndian::swap16bits(static_cast<uint16_t>(nrecs+1)); //number of records on this disk
+  footer += vpEndian::swap16bits(static_cast<uint16_t>(nrecs+1)); //total number of records
+  footer += vpEndian::swap16bits(static_cast<uint32_t>(global_header.size())); //nbytes of global headers
+  footer += vpEndian::swap32bits(static_cast<uint32_t>(global_header_offset + nbytes + local_header.size())); //offset of start of global headers, since global header now starts after newly written array
+#else
   footer += static_cast<uint16_t>(0x0605); //second part of sig
   footer += static_cast<uint16_t>(0); //number of this disk
   footer += static_cast<uint16_t>(0); //disk where footer starts
@@ -327,6 +371,7 @@ template<typename T> void npz_save(std::string zipname, std::string fname, const
   footer += static_cast<uint16_t>(nrecs+1); //total number of records
   footer += static_cast<uint32_t>(global_header.size()); //nbytes of global headers
   footer += static_cast<uint32_t>(global_header_offset + nbytes + local_header.size()); //offset of start of global headers, since global header now starts after newly written array
+#endif
   footer += static_cast<uint16_t>(0); //zip file comment length
 
   //write everything
@@ -400,7 +445,11 @@ template<typename T> std::vector<char> create_npy_header(const std::vector<size_
   header += "NUMPY";
   header += static_cast<char>(0x01); //major version of numpy format
   header += static_cast<char>(0x00); //minor version of numpy format
+#ifdef VISP_BIG_ENDIAN
+  header += vpEndian::swap16bits(static_cast<uint16_t>(dict.size()));
+#else
   header += static_cast<uint16_t>(dict.size());
+#endif
   header.insert(header.end(), dict.begin(), dict.end());
 
   return header;

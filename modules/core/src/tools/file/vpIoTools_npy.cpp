@@ -48,6 +48,10 @@ using namespace buminiz;
 #include <zlib.h>
 #endif
 
+// TODO:
+// #undef VISP_LITTLE_ENDIAN
+// #define VISP_BIG_ENDIAN
+
 // To avoid warnings such as: warning: unused variable ‘littleEndian’ [-Wunused-variable]
 #define UNUSED(x) ((void)(x)) // see: https://stackoverflow.com/a/777359
 
@@ -83,7 +87,19 @@ void reverse_data(std::shared_ptr<std::vector<char> > &data_holder, const std::v
         std::reverse(data_holder->begin() + i*word_size, data_holder->begin() + (i+1)*word_size);
       }
     }
-
+  }
+  else {
+    // 0d-array (number) with NumPy
+    if (data_type == 'c') {
+      const size_t half_word_size = word_size / 2;
+      // real
+      std::reverse(data_holder->begin(), data_holder->begin() + half_word_size);
+      // imag
+      std::reverse(data_holder->begin() + half_word_size, data_holder->begin() + word_size);
+    }
+    else {
+      std::reverse(data_holder->begin(), data_holder->begin() + word_size);
+    }
   }
 }
 
@@ -183,6 +199,13 @@ void visp::cnpy::parse_npy_header(unsigned char *buffer, size_t &word_size, std:
   std::string str_ws = header.substr(loc1+2);
   loc2 = str_ws.find("'");
   word_size = atoi(str_ws.substr(0, loc2).c_str());
+#ifdef VISP_BIG_ENDIAN
+  static_assert(sizeof(word_size) == 8);
+  word_size = vpEndian::swap64bits(word_size);
+#endif
+
+  // TODO:
+  std::cout << "[parse_npy_header][uchar*] word_size=" << word_size << std::endl;
 }
 
 void visp::cnpy::parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_t> &shape,
@@ -223,6 +246,9 @@ void visp::cnpy::parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_
     str_shape = sm.suffix().str();
   }
 
+  // TODO:
+  std::cout << "[parse_npy_header][FILE *] str_shape=" << str_shape << std::endl;
+
   //endian, word size, data type
   //byte order code | stands for not applicable.
   //not sure when this applies except for byte array
@@ -234,9 +260,20 @@ void visp::cnpy::parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_
   little_endian = ((header[loc1] == '<') || (header[loc1] == '|') ? true : false);
   data_type = header[loc1+1];
 
+  // TODO:
+  std::cout << "[parse_npy_header][FILE *] little_endian=" << little_endian << std::endl;
+  std::cout << "[parse_npy_header][FILE *] data_type=" << data_type << std::endl;
+
   std::string str_ws = header.substr(loc1+2);
   loc2 = str_ws.find("'");
   word_size = atoi(str_ws.substr(0, loc2).c_str());
+#ifdef VISP_BIG_ENDIAN
+  static_assert(sizeof(word_size) == 8);
+  word_size = vpEndian::swap64bits(word_size);
+#endif
+
+  // TODO:
+  std::cout << "[parse_npy_header][FILE *] word_size=" << word_size << std::endl;
 }
 
 void visp::cnpy::parse_zip_footer(FILE *fp, uint16_t &nrecs, size_t &global_header_size, size_t &global_header_offset)
@@ -256,6 +293,24 @@ void visp::cnpy::parse_zip_footer(FILE *fp, uint16_t &nrecs, size_t &global_head
   global_header_size = *(uint32_t *)&footer[12];
   global_header_offset = *(uint32_t *)&footer[16];
   comment_len = *(uint16_t *)&footer[20];
+#ifdef VISP_BIG_ENDIAN
+  disk_no = vpEndian::swap16bits(disk_no);
+  disk_start = vpEndian::swap16bits(disk_start);
+  nrecs_on_disk = vpEndian::swap16bits(nrecs_on_disk);
+  nrecs = vpEndian::swap16bits(nrecs);;
+  global_header_size = vpEndian::swap32bits(nrecs);;
+  global_header_offset = vpEndian::swap32bits(nrecs);
+  comment_len = vpEndian::swap16bits(comment_len);
+#endif
+
+  // TODO:
+  std::cout << "[parse_zip_footer] disk_no=" << disk_no << std::endl;
+  std::cout << "[parse_zip_footer] disk_start=" << disk_start << std::endl;
+  std::cout << "[parse_zip_footer] nrecs_on_disk=" << nrecs_on_disk << std::endl;
+  std::cout << "[parse_zip_footer] nrecs=" << nrecs << std::endl;
+  std::cout << "[parse_zip_footer] global_header_size=" << global_header_size << std::endl;
+  std::cout << "[parse_zip_footer] global_header_offset=" << global_header_offset << std::endl;
+  std::cout << "[parse_zip_footer] comment_len=" << comment_len << std::endl;
 
   UNUSED(disk_no); assert(disk_no == 0);
   UNUSED(disk_start); assert(disk_start == 0);
@@ -276,6 +331,14 @@ visp::cnpy::NpyArray load_the_npy_file(FILE *fp)
   if (nread != arr.num_bytes()) {
     throw std::runtime_error("load_the_npy_file: failed fread");
   }
+
+  // TODO:
+  std::cout << "[load_the_npy_file] raw data size=" << arr.data_holder->size() << " ; shape.size=" << arr.shape.size() << std::endl;
+  for (auto ch : *arr.data_holder) {
+    std::cout << static_cast<int>(ch);
+  }
+  std::cout << std::endl;
+
 #ifdef VISP_LITTLE_ENDIAN
   if (!little_endian) {
     reverse_data(arr.data_holder, arr.shape, arr.word_size, data_type);
@@ -294,7 +357,7 @@ visp::cnpy::NpyArray load_the_npz_array(FILE *fp, uint32_t compr_bytes, uint32_t
   std::vector<unsigned char> buffer_uncompr(uncompr_bytes);
   size_t nread = fread(&buffer_compr[0], 1, compr_bytes, fp);
   if (nread != compr_bytes) {
-    throw std::runtime_error("load_the_npy_file: failed fread");
+    throw std::runtime_error("load_the_npz_array: failed fread");
   }
 
   z_stream d_stream;
@@ -385,9 +448,9 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
   host_is_LE = false;
 #endif
 
-  bool get_file_endianness = false;
+  // bool get_file_endianness = false;
   bool file_is_LE = true;
-  bool same_endianness = true;
+  bool same_endianness = (host_is_LE == file_is_LE);
   while (!quit) {
     std::vector<char> local_header(val_30);
     size_t headerres = fread(&local_header[0], sizeof(char), val_30, closer.fp);
@@ -395,17 +458,18 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
       throw std::runtime_error("npz_load: failed fread");
     }
 
-    if (!get_file_endianness) {
-      get_file_endianness = true;
-      if (local_header[index_2] == 0x04 && local_header[index_3] == 0x03) {
-        file_is_LE = false;
-      }
-      same_endianness = (host_is_LE == file_is_LE);
-    }
+    // TODO: these info are always stored as LE
+    // if (!get_file_endianness) {
+    //   get_file_endianness = true;
+    //   if (local_header[index_2] == 0x04 && local_header[index_3] == 0x03) {
+    //     file_is_LE = false;
+    //   }
+    //   same_endianness = (host_is_LE == file_is_LE);
+    // }
 
     if (
-      ((local_header[index_2] != 0x03) || (local_header[index_3] != 0x04)) &&
-      ((local_header[index_2] != 0x04) || (local_header[index_3] != 0x03))
+      ((local_header[index_2] != 0x03) || (local_header[index_3] != 0x04)) /* &&
+      ((local_header[index_2] != 0x04) || (local_header[index_3] != 0x03)) */
     ) {
       //if we've reached the global header, stop reading
       quit = true;
@@ -435,6 +499,11 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
       uint16_t compr_method = swap16bits_if(*reinterpret_cast<uint16_t *>(&local_header[0] + val_8), !same_endianness);
       uint32_t compr_bytes = swap32bits_if(*reinterpret_cast<uint32_t *>(&local_header[0] + val_18), !same_endianness);
       uint32_t uncompr_bytes = swap32bits_if(*reinterpret_cast<uint32_t *>(&local_header[0] + val_22), !same_endianness);
+
+      // TODO:
+      std::cout << "[npz_load] compr_method=" << compr_method << std::endl;
+      std::cout << "[npz_load] compr_bytes=" << compr_bytes << std::endl;
+      std::cout << "[npz_load] uncompr_bytes=" << uncompr_bytes << std::endl;
 
       if (compr_method == 0) {
         arrays[varname] = load_the_npy_file(closer.fp);
@@ -492,9 +561,9 @@ visp::cnpy::NpyArray visp::cnpy::npz_load(const std::string &fname, const std::s
   host_is_LE = false;
 #endif
 
-  bool get_file_endianness = false;
+  // bool get_file_endianness = false;
   bool file_is_LE = true;
-  bool same_endianness = true;
+  bool same_endianness = (host_is_LE == file_is_LE);
   while (!quit) {
     std::vector<char> local_header(val_30);
     size_t header_res = fread(&local_header[0], sizeof(char), val_30, closer.fp);
@@ -502,18 +571,19 @@ visp::cnpy::NpyArray visp::cnpy::npz_load(const std::string &fname, const std::s
       throw std::runtime_error("npz_load: failed fread");
     }
 
-    if (!get_file_endianness) {
-      get_file_endianness = true;
-      if (local_header[index_2] == 0x04 && local_header[index_3] == 0x03) {
-        file_is_LE = false;
-      }
-      same_endianness = (host_is_LE == file_is_LE);
-    }
+    // TODO: these info are always stored as LE
+    // if (!get_file_endianness) {
+    //   get_file_endianness = true;
+    //   if (local_header[index_2] == 0x04 && local_header[index_3] == 0x03) {
+    //     file_is_LE = false;
+    //   }
+    //   same_endianness = (host_is_LE == file_is_LE);
+    // }
 
     //if we've reached the global header, stop reading
     if (
-      ((local_header[index_2] != 0x03) || (local_header[index_3] != 0x04)) &&
-      ((local_header[index_2] != 0x04) || (local_header[index_3] != 0x03))
+      ((local_header[index_2] != 0x03) || (local_header[index_3] != 0x04)) /* &&
+      ((local_header[index_2] != 0x04) || (local_header[index_3] != 0x03)) */
     ) {
       quit = true;
     }
