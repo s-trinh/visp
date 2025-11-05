@@ -172,7 +172,7 @@ template<> inline std::vector<char> &operator+=(std::vector<char> &lhs, const st
 
 template<> inline std::vector<char> &operator+=(std::vector<char> &lhs, const char *rhs)
 {
-//write in little endian
+  //write in little endian
   size_t len = strlen(rhs);
   lhs.reserve(len);
   for (size_t byte = 0; byte < len; ++byte) {
@@ -376,6 +376,12 @@ template<typename T> void npz_save(std::string zipname, std::string fname, const
   footer += static_cast<uint32_t>(global_header_offset + nbytes + local_header.size()); //offset of start of global headers, since global header now starts after newly written array
 #endif
   footer += static_cast<uint16_t>(0); //zip file comment length
+
+  std::cout << "[npz_save] footer:" << std::endl;
+  for (auto foo : footer) {
+    std::cout << static_cast<uint8_t>(foo);
+  }
+  std::cout << std::endl;
 
   //write everything
   fwrite(&local_header[0], sizeof(char), local_header.size(), fp);

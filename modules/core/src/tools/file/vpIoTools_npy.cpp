@@ -285,6 +285,12 @@ void visp::cnpy::parse_zip_footer(FILE *fp, uint16_t &nrecs, size_t &global_head
     throw std::runtime_error("parse_zip_footer: failed fread");
   }
 
+  std::cout << "[parse_zip_footer] footer:" << std::endl;
+  for (auto foo : footer) {
+    std::cout << static_cast<uint8_t>(foo);
+  }
+  std::cout << std::endl;
+
   uint16_t disk_no, disk_start, nrecs_on_disk, comment_len;
   disk_no = *(uint16_t *)&footer[4];
   disk_start = *(uint16_t *)&footer[6];
@@ -316,22 +322,13 @@ void visp::cnpy::parse_zip_footer(FILE *fp, uint16_t &nrecs, size_t &global_head
 #endif
 
   {
-  // TODO:
-    uint16_t disk_no_ = vpEndian::swap16bits(disk_no);
-    uint16_t disk_start_ = vpEndian::swap16bits(disk_start);
-    uint16_t nrecs_on_disk_ = vpEndian::swap16bits(nrecs_on_disk);
-    uint16_t nrecs_ = vpEndian::swap16bits(nrecs);;
-    uint32_t global_header_size_ = vpEndian::swap32bits(nrecs);;
-    uint32_t global_header_offset_ = vpEndian::swap32bits(nrecs);
-    uint16_t comment_len_ = vpEndian::swap16bits(comment_len);
-
-    std::cout << "[parse_zip_footer] disk_no_=" << disk_no_ << std::endl;
-    std::cout << "[parse_zip_footer] disk_start_=" << disk_start_ << std::endl;
-    std::cout << "[parse_zip_footer] nrecs_on_disk_=" << nrecs_on_disk_ << std::endl;
-    std::cout << "[parse_zip_footer] nrecs_=" << nrecs_ << std::endl;
-    std::cout << "[parse_zip_footer] global_header_size_=" << global_header_size_ << std::endl;
-    std::cout << "[parse_zip_footer] global_header_offset_=" << global_header_offset_ << std::endl;
-    std::cout << "[parse_zip_footer] comment_len_=" << comment_len_ << std::endl;
+    std::cout << "[parse_zip_footer] disk_no_=" << disk_no << std::endl;
+    std::cout << "[parse_zip_footer] disk_start_=" << disk_start << std::endl;
+    std::cout << "[parse_zip_footer] nrecs_on_disk_=" << nrecs_on_disk << std::endl;
+    std::cout << "[parse_zip_footer] nrecs_=" << nrecs << std::endl;
+    std::cout << "[parse_zip_footer] global_header_size_=" << global_header_size << std::endl;
+    std::cout << "[parse_zip_footer] global_header_offset_=" << global_header_offset << std::endl;
+    std::cout << "[parse_zip_footer] comment_len_=" << comment_len << std::endl;
   }
 
   UNUSED(disk_no); assert(disk_no == 0);
