@@ -364,7 +364,7 @@ template<typename T> void npz_save(std::string zipname, std::string fname, const
   footer += static_cast<uint16_t>(0); //disk where footer starts
   footer += vpEndian::swap16bits(static_cast<uint16_t>(nrecs+1)); //number of records on this disk
   footer += vpEndian::swap16bits(static_cast<uint16_t>(nrecs+1)); //total number of records
-  footer += vpEndian::swap16bits(static_cast<uint32_t>(global_header.size())); //nbytes of global headers
+  footer += vpEndian::swap32bits(static_cast<uint32_t>(global_header.size())); //nbytes of global headers
   footer += vpEndian::swap32bits(static_cast<uint32_t>(global_header_offset + nbytes + local_header.size())); //offset of start of global headers, since global header now starts after newly written array
 #else
   footer += static_cast<uint16_t>(0x0605); //second part of sig
