@@ -315,6 +315,25 @@ void visp::cnpy::parse_zip_footer(FILE *fp, uint16_t &nrecs, size_t &global_head
   std::cout << "[parse_zip_footer] global_header_offset=" << global_header_offset << std::endl;
   std::cout << "[parse_zip_footer] comment_len=" << comment_len << std::endl;
 
+  {
+  // TODO:
+    uint16_t disk_no_ = vpEndian::swap16bits(disk_no);
+    uint16_t disk_start_ = vpEndian::swap16bits(disk_start);
+    uint16_t nrecs_on_disk_ = vpEndian::swap16bits(nrecs_on_disk);
+    uint16_t nrecs_ = vpEndian::swap16bits(nrecs);;
+    uint32_t global_header_size_ = vpEndian::swap32bits(nrecs);;
+    uint32_t global_header_offset_ = vpEndian::swap32bits(nrecs);
+    uint16_t comment_len_ = vpEndian::swap16bits(comment_len);
+
+    std::cout << "[parse_zip_footer] disk_no_=" << disk_no_ << std::endl;
+    std::cout << "[parse_zip_footer] disk_start_=" << disk_start_ << std::endl;
+    std::cout << "[parse_zip_footer] nrecs_on_disk_=" << nrecs_on_disk_ << std::endl;
+    std::cout << "[parse_zip_footer] nrecs_=" << nrecs_ << std::endl;
+    std::cout << "[parse_zip_footer] global_header_size_=" << global_header_size_ << std::endl;
+    std::cout << "[parse_zip_footer] global_header_offset_=" << global_header_offset_ << std::endl;
+    std::cout << "[parse_zip_footer] comment_len_=" << comment_len_ << std::endl;
+  }
+
   UNUSED(disk_no); assert(disk_no == 0);
   UNUSED(disk_start); assert(disk_start == 0);
   UNUSED(nrecs_on_disk); assert(nrecs_on_disk == nrecs);
