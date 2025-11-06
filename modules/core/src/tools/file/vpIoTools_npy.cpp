@@ -121,6 +121,7 @@ uint32_t swap32bits_if(uint32_t val, bool swap)
   return val;
 }
 
+// TODO: defined but not used
 uint64_t swap64bits_if(uint64_t val, bool swap)
 {
   if (swap) {
@@ -499,8 +500,8 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
   while (!quit) {
     std::vector<char> local_header(val_30);
     size_t headerres = fread(&local_header[0], sizeof(char), val_30, closer.fp);
+    std::cerr << "headerres=" << headerres << std::endl;
     if (headerres != 30) {
-      std::cerr << "headerres=" << headerres << std::endl;
       throw std::runtime_error("npz_load: failed fread 1");
     }
 
@@ -525,8 +526,8 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
       uint16_t name_len = swap16bits_if(*(uint16_t *)&local_header[index_26], !same_endianness);
       std::string varname(name_len, ' ');
       size_t vname_res = fread(&varname[0], sizeof(char), name_len, closer.fp);
+      std::cerr << "vname_res=" << vname_res << " ; name_len=" << name_len << std::endl;
       if (vname_res != name_len) {
-        std::cerr << "vname_res=" << vname_res << " ; name_len=" << name_len << std::endl;
         throw std::runtime_error("npz_load: failed fread 2");
       }
 
@@ -537,9 +538,9 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
       uint16_t extra_field_len = swap16bits_if(*(uint16_t *)&local_header[index_28], !same_endianness);
       if (extra_field_len > 0) {
         std::vector<char> buff(extra_field_len);
-        size_t efield_res = swap64bits_if(fread(&buff[0], sizeof(char), extra_field_len, closer.fp), !same_endianness);
+        size_t efield_res = swap16bits_if(fread(&buff[0], sizeof(char), extra_field_len, closer.fp), !same_endianness);
+        std::cerr << "efield_res=" << efield_res << " ; extra_field_len=" << extra_field_len << std::endl;
         if (efield_res != extra_field_len) {
-          std::cerr << "efield_res=" << efield_res << " ; extra_field_len=" << extra_field_len << std::endl;
           throw std::runtime_error("npz_load: failed fread 3");
         }
       }
@@ -615,8 +616,8 @@ visp::cnpy::NpyArray visp::cnpy::npz_load(const std::string &fname, const std::s
   while (!quit) {
     std::vector<char> local_header(val_30);
     size_t header_res = fread(&local_header[0], sizeof(char), val_30, closer.fp);
+    std::cerr << "header_res=" << header_res << std::endl;
     if (header_res != 30) {
-      std::cerr << "header_res=" << header_res << std::endl;
       throw std::runtime_error("npz_load 2: failed fread");
     }
 
@@ -641,8 +642,8 @@ visp::cnpy::NpyArray visp::cnpy::npz_load(const std::string &fname, const std::s
       uint16_t name_len = swap16bits_if(*(uint16_t *)&local_header[index_26], !same_endianness);
       std::string vname(name_len, ' ');
       size_t vname_res = fread(&vname[0], sizeof(char), name_len, closer.fp);
+      std::cerr << "vname_res=" << vname_res << std::endl;
       if (vname_res != name_len) {
-        std::cerr << "vname_res=" << vname_res << std::endl;
         throw std::runtime_error("npz_load 2: failed fread");
       }
       vname.erase(vname.end()-4, vname.end()); //erase the lagging .npy
