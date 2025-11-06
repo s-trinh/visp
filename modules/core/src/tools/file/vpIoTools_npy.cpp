@@ -500,7 +500,8 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
     std::vector<char> local_header(val_30);
     size_t headerres = fread(&local_header[0], sizeof(char), val_30, closer.fp);
     if (headerres != 30) {
-      throw std::runtime_error("npz_load: failed fread");
+      std::cerr << "headerres=" << headerres << std::endl;
+      throw std::runtime_error("npz_load: failed fread 1");
     }
 
     // TODO: these info are always stored as LE
@@ -525,7 +526,8 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
       std::string varname(name_len, ' ');
       size_t vname_res = fread(&varname[0], sizeof(char), name_len, closer.fp);
       if (vname_res != name_len) {
-        throw std::runtime_error("npz_load: failed fread");
+        std::cerr << "vname_res=" << vname_res << " ; name_len=" << name_len << std::endl;
+        throw std::runtime_error("npz_load: failed fread 2");
       }
 
       //erase the lagging .npy
@@ -537,7 +539,8 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
         std::vector<char> buff(extra_field_len);
         size_t efield_res = swap64bits_if(fread(&buff[0], sizeof(char), extra_field_len, closer.fp), !same_endianness);
         if (efield_res != extra_field_len) {
-          throw std::runtime_error("npz_load: failed fread");
+          std::cerr << "efield_res=" << efield_res << " ; extra_field_len=" << extra_field_len << std::endl;
+          throw std::runtime_error("npz_load: failed fread 3");
         }
       }
 
@@ -613,7 +616,8 @@ visp::cnpy::NpyArray visp::cnpy::npz_load(const std::string &fname, const std::s
     std::vector<char> local_header(val_30);
     size_t header_res = fread(&local_header[0], sizeof(char), val_30, closer.fp);
     if (header_res != 30) {
-      throw std::runtime_error("npz_load: failed fread");
+      std::cerr << "header_res=" << header_res << std::endl;
+      throw std::runtime_error("npz_load 2: failed fread");
     }
 
     // TODO: these info are always stored as LE
@@ -638,7 +642,8 @@ visp::cnpy::NpyArray visp::cnpy::npz_load(const std::string &fname, const std::s
       std::string vname(name_len, ' ');
       size_t vname_res = fread(&vname[0], sizeof(char), name_len, closer.fp);
       if (vname_res != name_len) {
-        throw std::runtime_error("npz_load: failed fread");
+        std::cerr << "vname_res=" << vname_res << std::endl;
+        throw std::runtime_error("npz_load 2: failed fread");
       }
       vname.erase(vname.end()-4, vname.end()); //erase the lagging .npy
 
@@ -663,7 +668,7 @@ visp::cnpy::NpyArray visp::cnpy::npz_load(const std::string &fname, const std::s
   }
 
   //if we get here, we haven't found the variable in the file
-  throw std::runtime_error("npz_load: Variable name "+varname+" not found in "+fname);
+  throw std::runtime_error("npz_load 2: Variable name " + varname + " not found in " + fname);
 }
 
 /*!
