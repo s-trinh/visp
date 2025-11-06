@@ -116,7 +116,8 @@ uint32_t swap32bits_if(uint32_t val, bool swap)
   return val;
 }
 
-  // https://github.com/nmcclatchey/Bugfix-for-cnpy/blob/e148a5ce5db80fa3e28ce6d551343cfc8ebdc832/cnpy.cpp#L285
+// https://github.com/rogersce/cnpy/pull/78/files
+// https://github.com/nmcclatchey/Bugfix-for-cnpy/blob/e148a5ce5db80fa3e28ce6d551343cfc8ebdc832/cnpy.cpp#L285
 struct AutoCloser
 {
   FILE *fp;
@@ -181,7 +182,7 @@ void visp::cnpy::parse_npy_header(unsigned char *buffer, size_t &word_size, std:
 
   std::string str_shape = header.substr(loc1+1, loc2-loc1-1);
   while (std::regex_search(str_shape, sm, num_regex)) {
-    // TODO: link
+    // https://github.com/rogersce/cnpy/commit/ca6c0ce5bed57e3b5b64aede4f39aa07a9e71f5e
     shape.push_back(std::stoll(sm[0].str()));
     str_shape = sm.suffix().str();
   }
@@ -195,12 +196,7 @@ void visp::cnpy::parse_npy_header(unsigned char *buffer, size_t &word_size, std:
 
   std::string str_ws = header.substr(loc1+2);
   loc2 = str_ws.find("'");
-
-  // TODO:
   word_size = atoll(str_ws.substr(0, loc2).c_str());
-
-  // TODO:
-  std::cout << "[parse_npy_header][uchar*] word_size=" << word_size << std::endl;
 }
 
 void visp::cnpy::parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_t> &shape,
@@ -237,12 +233,10 @@ void visp::cnpy::parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_
 
   std::string str_shape = header.substr(loc1+1, loc2-loc1-1);
   while (std::regex_search(str_shape, sm, num_regex)) {
+    // https://github.com/rogersce/cnpy/commit/ca6c0ce5bed57e3b5b64aede4f39aa07a9e71f5e
     shape.push_back(std::stoll(sm[0].str()));
     str_shape = sm.suffix().str();
   }
-
-  // TODO:
-  std::cout << "[parse_npy_header][FILE *] str_shape=" << str_shape << std::endl;
 
   //endian, word size, data type
   //byte order code | stands for not applicable.
@@ -255,19 +249,9 @@ void visp::cnpy::parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_
   little_endian = ((header[loc1] == '<') || (header[loc1] == '|') ? true : false);
   data_type = header[loc1+1];
 
-  // TODO:
-  std::cout << "[parse_npy_header][FILE *] little_endian=" << little_endian << std::endl;
-  std::cout << "[parse_npy_header][FILE *] data_type=" << data_type << std::endl;
-
   std::string str_ws = header.substr(loc1+2);
   loc2 = str_ws.find("'");
-  std::cout << "[parse_npy_header][FILE *] word_size, str_ws=" << str_ws.substr(0, loc2) << std::endl;
-
-  // TODO:
   word_size = atoll(str_ws.substr(0, loc2).c_str());
-
-  // TODO:
-  std::cout << "[parse_npy_header][FILE *] word_size=" << word_size << std::endl;
 }
 
 void visp::cnpy::parse_zip_footer(FILE *fp, uint16_t &nrecs, size_t &global_header_size, size_t &global_header_offset)
@@ -280,11 +264,7 @@ void visp::cnpy::parse_zip_footer(FILE *fp, uint16_t &nrecs, size_t &global_head
   }
 
   uint16_t disk_no, disk_start, nrecs_on_disk, comment_len;
-
-  // TODO:
 #ifdef VISP_BIG_ENDIAN
-  std::cout << "[parse_zip_footer] #ifdef VISP_BIG_ENDIAN=" << std::endl;
-
   disk_no = vpEndian::swap16bits(*(uint16_t *)&footer[4]);
   disk_start = vpEndian::swap16bits(*(uint16_t *)&footer[6]);
   nrecs_on_disk = vpEndian::swap16bits(*(uint16_t *)&footer[8]);
@@ -301,16 +281,6 @@ void visp::cnpy::parse_zip_footer(FILE *fp, uint16_t &nrecs, size_t &global_head
   global_header_offset = *(uint32_t *)&footer[16];
   comment_len = *(uint16_t *)&footer[20];
 #endif
-
-  {
-    std::cout << "[parse_zip_footer] disk_no_=" << disk_no << std::endl;
-    std::cout << "[parse_zip_footer] disk_start_=" << disk_start << std::endl;
-    std::cout << "[parse_zip_footer] nrecs_on_disk_=" << nrecs_on_disk << std::endl;
-    std::cout << "[parse_zip_footer] nrecs_=" << nrecs << std::endl;
-    std::cout << "[parse_zip_footer] global_header_size_=" << global_header_size << std::endl;
-    std::cout << "[parse_zip_footer] global_header_offset_=" << global_header_offset << std::endl;
-    std::cout << "[parse_zip_footer] comment_len_=" << comment_len << std::endl;
-  }
 
   UNUSED(disk_no); assert(disk_no == 0);
   UNUSED(disk_start); assert(disk_start == 0);
@@ -331,9 +301,6 @@ visp::cnpy::NpyArray load_the_npy_file(FILE *fp)
   if (nread != arr.num_bytes()) {
     throw std::runtime_error("load_the_npy_file: failed fread");
   }
-
-  // TODO:
-  std::cout << "[load_the_npy_file] raw data size=" << arr.data_holder->size() << " ; shape.size=" << arr.shape.size() << std::endl;
 
 #ifdef VISP_LITTLE_ENDIAN
   if (!little_endian) {
@@ -364,7 +331,10 @@ visp::cnpy::NpyArray load_the_npz_array(FILE *fp, uint32_t compr_bytes, uint32_t
   d_stream.avail_in = 0;
   d_stream.next_in = Z_NULL;
   int err = inflateInit2(&d_stream, -MAX_WBITS);
-  UNUSED(err); assert(err == 0);
+  // https://github.com/rogersce/cnpy/commit/3ed2bc4063c455269b37af63442c595ee1bd60e1
+  if (err != Z_OK) {
+    throw std::runtime_error("load_the_npz_array: zlib inflateInit2 failed");
+  }
 
   d_stream.avail_in = compr_bytes;
   d_stream.next_in = &buffer_compr[0];
@@ -372,9 +342,13 @@ visp::cnpy::NpyArray load_the_npz_array(FILE *fp, uint32_t compr_bytes, uint32_t
   d_stream.next_out = &buffer_uncompr[0];
 
   err = inflate(&d_stream, Z_FINISH);
-  UNUSED(err); assert(err == 0);
+  if (err != Z_OK) {
+    throw std::runtime_error("load_the_npz_array: zlib inflate failed");
+  }
   err = inflateEnd(&d_stream);
-  UNUSED(err); assert(err == 0);
+  if (err != Z_OK) {
+    throw std::runtime_error("load_the_npz_array: zlib inflateEnd failed");
+  }
 
   std::vector<size_t> shape;
   size_t word_size;
@@ -440,9 +414,8 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
   host_is_LE = false;
 #endif
 
-  // bool get_file_endianness = false;
-  bool file_is_LE = true;
-  bool same_endianness = (host_is_LE == file_is_LE);
+  bool header_file_is_LE = true;
+  bool same_endianness = (host_is_LE == header_file_is_LE);
   while (!quit) {
     std::vector<char> local_header(val_30);
     size_t headerres = fread(&local_header[0], sizeof(char), val_30, closer.fp);
@@ -483,11 +456,6 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
       uint32_t compr_bytes = swap32bits_if(*reinterpret_cast<uint32_t *>(&local_header[0] + val_18), !same_endianness);
       uint32_t uncompr_bytes = swap32bits_if(*reinterpret_cast<uint32_t *>(&local_header[0] + val_22), !same_endianness);
 
-      // TODO:
-      std::cout << "[npz_load] compr_method=" << compr_method << std::endl;
-      std::cout << "[npz_load] compr_bytes=" << compr_bytes << std::endl;
-      std::cout << "[npz_load] uncompr_bytes=" << uncompr_bytes << std::endl;
-
       if (compr_method == 0) {
         arrays[varname] = load_the_npy_file(closer.fp);
       }
@@ -495,7 +463,7 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
         arrays[varname] = load_the_npz_array(closer.fp, compr_bytes, uncompr_bytes);
       }
     }
-}
+  }
 
   return arrays;
 }

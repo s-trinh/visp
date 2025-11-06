@@ -225,6 +225,7 @@ template<typename T> void npy_save(const std::string &fname, const T *data, cons
   }
 
   std::vector<char> header = create_npy_header<T>(true_data_shape);
+  // https://github.com/rogersce/cnpy/pull/58/files
   size_t nels = std::accumulate(shape.begin(), shape.end(), static_cast<size_t>(1), std::multiplies<size_t>());
 
   fseek(fp, 0, SEEK_SET);
@@ -276,8 +277,6 @@ template<typename T> void npz_save(std::string zipname, std::string fname, const
     global_header.resize(global_header_size);
     size_t res = fread(&global_header[0], sizeof(char), global_header_size, fp);
 
-    // TODO:
-    std::cout << "[npz_save] res=" << res << " ; global_header_size=" << global_header_size << std::endl;
     if (res != global_header_size) {
       throw std::runtime_error("npz_save: header read error while adding to existing zip");
     }
@@ -289,6 +288,7 @@ template<typename T> void npz_save(std::string zipname, std::string fname, const
 
   std::vector<char> npy_header = create_npy_header<T>(shape);
 
+  // https://github.com/rogersce/cnpy/pull/58/files
   size_t nels = std::accumulate(shape.begin(), shape.end(), static_cast<size_t>(1), std::multiplies<size_t>());
   size_t nbytes = nels*sizeof(T) + npy_header.size();
 
