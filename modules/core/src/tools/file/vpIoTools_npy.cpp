@@ -33,7 +33,6 @@
 
 #include <visp3/core/vpConfig.h>
 #include <visp3/core/vpIoTools.h>
-#include <visp3/core/vpEndian.h>
 
 #if defined(VISP_HAVE_MINIZ) && defined(VISP_HAVE_WORKING_REGEX)
 #define USE_ZLIB_API 0
@@ -47,10 +46,6 @@ using namespace buminiz;
 #else
 #include <zlib.h>
 #endif
-
-// TODO:
-// #undef VISP_LITTLE_ENDIAN
-// #define VISP_BIG_ENDIAN
 
 // To avoid warnings such as: warning: unused variable ‘littleEndian’ [-Wunused-variable]
 #define UNUSED(x) ((void)(x)) // see: https://stackoverflow.com/a/777359
@@ -121,15 +116,16 @@ uint32_t swap32bits_if(uint32_t val, bool swap)
   return val;
 }
 
-// TODO: defined but not used
-uint64_t swap64bits_if(uint64_t val, bool swap)
+  // https://github.com/nmcclatchey/Bugfix-for-cnpy/blob/e148a5ce5db80fa3e28ce6d551343cfc8ebdc832/cnpy.cpp#L285
+struct AutoCloser
 {
-  if (swap) {
-    return vpEndian::swap64bits(val);
+  FILE *fp;
+  AutoCloser() : fp(nullptr) { }
+  ~AutoCloser()
+  {
+    fclose(fp);
   }
-
-  return val;
-}
+};
 } // anonymous namespace
 
 char visp::cnpy::BigEndianTest()
@@ -200,29 +196,8 @@ void visp::cnpy::parse_npy_header(unsigned char *buffer, size_t &word_size, std:
   std::string str_ws = header.substr(loc1+2);
   loc2 = str_ws.find("'");
 
-  // TODO: !!!!!!
-//   static_assert(sizeof(long long) == 8);
-//   word_size = atoll(str_ws.substr(0, loc2).c_str());
-// #ifdef VISP_BIG_ENDIAN
-//   word_size = vpEndian::swap64bits(word_size);
-// #endif
-
   // TODO:
-#ifdef VISP_BIG_ENDIAN
-  static_assert(sizeof(long long) == 8);
-  size_t str_ws_val_atoll = atoll(str_ws.substr(0, loc2).c_str());
-  size_t str_ws_val_atoi = atoi(str_ws.substr(0, loc2).c_str());
-
-  std::string str_ws_sub = str_ws.substr(0, loc2);
-  std::reverse(str_ws_sub.begin(), str_ws_sub.end());
-  word_size = atoll(str_ws_sub.c_str());
-  std::cout << "[parse_npy_header][FILE *][BE] word_size, str_ws_val_atoll=" << str_ws_val_atoll << " ; str_ws_val_atoi=" << str_ws_val_atoi
-    << " ; swap(atoll)=" << vpEndian::swap64bits(str_ws_val_atoll) << " ; swap(atoi)=" << vpEndian::swap64bits(str_ws_val_atoi)
-    << " ; atoll(str.reverse)=" << word_size << " ; atoi(str.reverse)=" << atoi(str_ws_sub.c_str()) << std::endl;
-#else
   word_size = atoll(str_ws.substr(0, loc2).c_str());
-#endif
-  word_size = atoi(str_ws.substr(0, loc2).c_str());
 
   // TODO:
   std::cout << "[parse_npy_header][uchar*] word_size=" << word_size << std::endl;
@@ -289,21 +264,7 @@ void visp::cnpy::parse_npy_header(FILE *fp, size_t &word_size, std::vector<size_
   std::cout << "[parse_npy_header][FILE *] word_size, str_ws=" << str_ws.substr(0, loc2) << std::endl;
 
   // TODO:
-#ifdef VISP_BIG_ENDIAN
-  static_assert(sizeof(long long) == 8);
-  size_t str_ws_val_atoll = atoll(str_ws.substr(0, loc2).c_str());
-  size_t str_ws_val_atoi = atoi(str_ws.substr(0, loc2).c_str());
-
-  std::string str_ws_sub = str_ws.substr(0, loc2);
-  std::reverse(str_ws_sub.begin(), str_ws_sub.end());
-  word_size = atoll(str_ws_sub.c_str());
-  std::cout << "[parse_npy_header][FILE *][BE] word_size, str_ws_val_atoll=" << str_ws_val_atoll << " ; str_ws_val_atoi=" << str_ws_val_atoi
-    << " ; swap(atoll)=" << vpEndian::swap64bits(str_ws_val_atoll) << " ; swap(atoi)=" << vpEndian::swap64bits(str_ws_val_atoi)
-    << " ; atoll(str.reverse)=" << word_size << " ; atoi(str.reverse)=" << atoi(str_ws_sub.c_str()) << std::endl;
-#else
   word_size = atoll(str_ws.substr(0, loc2).c_str());
-#endif
-  word_size = atoi(str_ws.substr(0, loc2).c_str());
 
   // TODO:
   std::cout << "[parse_npy_header][FILE *] word_size=" << word_size << std::endl;
@@ -318,12 +279,6 @@ void visp::cnpy::parse_zip_footer(FILE *fp, uint16_t &nrecs, size_t &global_head
     throw std::runtime_error("parse_zip_footer: failed fread");
   }
 
-  std::cout << "[parse_zip_footer] footer:" << std::endl;
-  for (auto foo : footer) {
-    std::cout << static_cast<uint8_t>(foo);
-  }
-  std::cout << std::endl;
-
   uint16_t disk_no, disk_start, nrecs_on_disk, comment_len;
 
   // TODO:
@@ -337,7 +292,6 @@ void visp::cnpy::parse_zip_footer(FILE *fp, uint16_t &nrecs, size_t &global_head
   global_header_size = vpEndian::swap32bits(*(uint32_t *)&footer[12]);
   global_header_offset = vpEndian::swap32bits(*(uint32_t *)&footer[16]);
   comment_len = vpEndian::swap16bits(*(uint16_t *)&footer[20]);
-
 #else
   disk_no = *(uint16_t *)&footer[4];
   disk_start = *(uint16_t *)&footer[6];
@@ -380,10 +334,6 @@ visp::cnpy::NpyArray load_the_npy_file(FILE *fp)
 
   // TODO:
   std::cout << "[load_the_npy_file] raw data size=" << arr.data_holder->size() << " ; shape.size=" << arr.shape.size() << std::endl;
-  for (auto ch : *arr.data_holder) {
-    std::cout << static_cast<int>(ch);
-  }
-  std::cout << std::endl;
 
 #ifdef VISP_LITTLE_ENDIAN
   if (!little_endian) {
@@ -463,15 +413,11 @@ visp::cnpy::NpyArray load_the_npz_array(FILE *fp, uint32_t compr_bytes, uint32_t
  */
 visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
 {
-  struct AutoCloser
-  {
-    FILE *fp;
-    AutoCloser() : fp(nullptr) { }
-    ~AutoCloser()
-    {
-      fclose(fp);
-    }
-  } closer;
+  if (!vpIoTools::checkFilename(fname)) {
+    throw vpException(vpException::ioError, "This file does not exist: " + fname);
+  }
+
+  AutoCloser closer;
   closer.fp = fopen(fname.c_str(), "rb");
 
   if (!closer.fp) {
@@ -505,20 +451,8 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
       throw std::runtime_error("npz_load: failed fread 1");
     }
 
-    // TODO: these info are always stored as LE
-    // if (!get_file_endianness) {
-    //   get_file_endianness = true;
-    //   if (local_header[index_2] == 0x04 && local_header[index_3] == 0x03) {
-    //     file_is_LE = false;
-    //   }
-    //   same_endianness = (host_is_LE == file_is_LE);
-    // }
-
-    if (
-      ((local_header[index_2] != 0x03) || (local_header[index_3] != 0x04)) /* &&
-      ((local_header[index_2] != 0x04) || (local_header[index_3] != 0x03)) */
-    ) {
-      //if we've reached the global header, stop reading
+    //if we've reached the global header, stop reading
+    if ((local_header[index_2] != 0x03) || (local_header[index_3] != 0x04)) {
       quit = true;
     }
     else {
@@ -538,7 +472,7 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
       uint16_t extra_field_len = swap16bits_if(*(uint16_t *)&local_header[index_28], !same_endianness);
       if (extra_field_len > 0) {
         std::vector<char> buff(extra_field_len);
-        size_t efield_res = swap16bits_if(fread(&buff[0], sizeof(char), extra_field_len, closer.fp), !same_endianness);
+        size_t efield_res = fread(&buff[0], sizeof(char), extra_field_len, closer.fp);
         std::cerr << "efield_res=" << efield_res << " ; extra_field_len=" << extra_field_len << std::endl;
         if (efield_res != extra_field_len) {
           throw std::runtime_error("npz_load: failed fread 3");
@@ -561,7 +495,7 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
         arrays[varname] = load_the_npz_array(closer.fp, compr_bytes, uncompr_bytes);
       }
     }
-  }
+}
 
   return arrays;
 }
@@ -579,16 +513,11 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
  */
 visp::cnpy::NpyArray visp::cnpy::npz_load(const std::string &fname, const std::string &varname)
 {
-  // https://github.com/nmcclatchey/Bugfix-for-cnpy/blob/e148a5ce5db80fa3e28ce6d551343cfc8ebdc832/cnpy.cpp#L285
-  struct AutoCloser
-  {
-    FILE *fp;
-    AutoCloser() : fp(nullptr) { }
-    ~AutoCloser()
-    {
-      fclose(fp);
-    }
-  } closer;
+  if (!vpIoTools::checkFilename(fname)) {
+    throw vpException(vpException::ioError, "This file does not exist: " + fname);
+  }
+
+  AutoCloser closer;
   closer.fp = fopen(fname.c_str(), "rb");
 
   if (!closer.fp) {
@@ -610,9 +539,8 @@ visp::cnpy::NpyArray visp::cnpy::npz_load(const std::string &fname, const std::s
   host_is_LE = false;
 #endif
 
-  // bool get_file_endianness = false;
-  bool file_is_LE = true;
-  bool same_endianness = (host_is_LE == file_is_LE);
+  const bool header_file_is_LE = true;
+  bool same_endianness = (host_is_LE == header_file_is_LE);
   while (!quit) {
     std::vector<char> local_header(val_30);
     size_t header_res = fread(&local_header[0], sizeof(char), val_30, closer.fp);
@@ -621,20 +549,8 @@ visp::cnpy::NpyArray visp::cnpy::npz_load(const std::string &fname, const std::s
       throw std::runtime_error("npz_load 2: failed fread");
     }
 
-    // TODO: these info are always stored as LE
-    // if (!get_file_endianness) {
-    //   get_file_endianness = true;
-    //   if (local_header[index_2] == 0x04 && local_header[index_3] == 0x03) {
-    //     file_is_LE = false;
-    //   }
-    //   same_endianness = (host_is_LE == file_is_LE);
-    // }
-
     //if we've reached the global header, stop reading
-    if (
-      ((local_header[index_2] != 0x03) || (local_header[index_3] != 0x04)) /* &&
-      ((local_header[index_2] != 0x04) || (local_header[index_3] != 0x03)) */
-    ) {
+    if ((local_header[index_2] != 0x03) || (local_header[index_3] != 0x04)) {
       quit = true;
     }
     else {
@@ -682,15 +598,11 @@ visp::cnpy::NpyArray visp::cnpy::npz_load(const std::string &fname, const std::s
  */
 visp::cnpy::NpyArray visp::cnpy::npy_load(const std::string &fname)
 {
-  struct AutoCloser
-  {
-    FILE *fp;
-    AutoCloser() : fp(nullptr) { }
-    ~AutoCloser()
-    {
-      fclose(fp);
-    }
-  } closer;
+  if (!vpIoTools::checkFilename(fname)) {
+    throw vpException(vpException::ioError, "This file does not exist: " + fname);
+  }
+
+  AutoCloser closer;
   closer.fp = fopen(fname.c_str(), "rb");
 
   if (!closer.fp) {

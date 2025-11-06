@@ -56,10 +56,6 @@
 #include <cassert>
 #include <complex>
 
-// TODO:
-// #undef VISP_LITTLE_ENDIAN
-// #define VISP_BIG_ENDIAN
-
 #if VISP_CXX_STANDARD > VISP_CXX_STANDARD_98
 
 namespace visp
@@ -188,7 +184,7 @@ template<> inline std::vector<char> &operator+=(std::vector<char> &lhs, const ch
   \param[in] data : Pointer to an array of basic datatype (int, float, double, std::complex<double>, ...).
   \param[in] shape : Shape of the array, e.g. Nz x Ny x Nx.
   \param[in] mode : Writing mode, i.e. overwrite (w) or append (a) to the file.
-  \warning This function has only been tested on little endian platform.
+  \warning This function should also work on big-endian platform, without guarantee since it has not been tested extensively.
   \note Original library: <a href="https://github.com/rogersce/cnpy">cnpy</a> with MIT license.
  */
 template<typename T> void npy_save(const std::string &fname, const T *data, const std::vector<size_t> shape, const std::string &mode = "w")
@@ -217,7 +213,7 @@ template<typename T> void npy_save(const std::string &fname, const T *data, cons
 
     for (size_t i = 1; i < shape.size(); ++i) {
       if (shape[i] != true_data_shape[i]) {
-        std::cout << "libnpy error: npy_save attempting to append misshaped data to " << fname << "\n";
+        std::cerr << "libnpy error: npy_save attempting to append misshaped data to " << fname << "\n";
         assert(shape[i] == true_data_shape[i]);
       }
     }
@@ -251,7 +247,7 @@ template<typename T> void npy_save(const std::string &fname, const T *data, cons
   \param[in] data : Pointer to an array of basic datatype (int, float, double, std::complex<double>, ...).
   \param[in] shape : Shape of the array, e.g. Nz x Ny x Nx.
   \param[in] mode : Writing mode, i.e. overwrite (w) or append (a) to the file.
-  \warning This function has only been tested on little endian platform.
+  \warning This function should also work on big-endian platform, without guarantee since it has not been tested extensively.
   \note Original library: <a href="https://github.com/rogersce/cnpy">cnpy</a> with MIT license.
 
   \sa To see how to use it, you may have a look at \ref tutorial-npz
@@ -377,12 +373,6 @@ template<typename T> void npz_save(std::string zipname, std::string fname, const
 #endif
   footer += static_cast<uint16_t>(0); //zip file comment length
 
-  std::cout << "[npz_save] footer:" << std::endl;
-  for (auto foo : footer) {
-    std::cout << static_cast<uint8_t>(foo);
-  }
-  std::cout << std::endl;
-
   //write everything
   fwrite(&local_header[0], sizeof(char), local_header.size(), fp);
   fwrite(&npy_header[0], sizeof(char), npy_header.size(), fp);
@@ -400,7 +390,7 @@ template<typename T> void npz_save(std::string zipname, std::string fname, const
   \param[in] fname : Path to the npy file.
   \param[in] data : Pointer to a 1-D array of basic datatype (int, float, double, std::complex<double>, ...).
   \param[in] mode : Writing mode, i.e. overwrite (w) or append (a) to the file.
-  \warning This function has only been tested on little endian platform.
+  \warning This function should also work on big-endian platform, without guarantee since it has not been tested extensively.
   \note Original library: <a href="https://github.com/rogersce/cnpy">cnpy</a> with MIT license.
  */
 template<typename T> void npy_save(const std::string &fname, const std::vector<T> data, const std::string &mode = "w")
@@ -417,7 +407,7 @@ template<typename T> void npy_save(const std::string &fname, const std::vector<T
   \param[in] fname : Identifier for the corresponding array of data.
   \param[in] data : Pointer to a 1-D array of basic datatype (int, float, double, std::complex<double>, ...).
   \param[in] mode : Writing mode, i.e. overwrite (w) or append (a) to the file.
-  \warning This function has only been tested on little endian platform.
+  \warning This function should also work on big-endian platform, without guarantee since it has not been tested extensively.
   \note Original library: <a href="https://github.com/rogersce/cnpy">cnpy</a> with MIT license.
 
   \sa To see how to use it, you may have a look at \ref tutorial-npz
