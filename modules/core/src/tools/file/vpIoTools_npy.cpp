@@ -296,7 +296,7 @@ visp::cnpy::NpyArray load_the_npy_file(FILE *fp)
   char data_type = 'i'; // integer type
   visp::cnpy::parse_npy_header(fp, word_size, shape, fortran_order, little_endian, data_type);
 
-  visp::cnpy::NpyArray arr(shape, word_size, fortran_order);
+  visp::cnpy::NpyArray arr(shape, word_size, fortran_order, data_type);
   size_t nread = fread(arr.data<char>(), 1, arr.num_bytes(), fp);
   if (nread != arr.num_bytes()) {
     throw std::runtime_error("load_the_npy_file: failed fread");
@@ -357,7 +357,7 @@ visp::cnpy::NpyArray load_the_npz_array(FILE *fp, uint32_t compr_bytes, uint32_t
   char data_type = 'i'; // integer type
   visp::cnpy::parse_npy_header(&buffer_uncompr[0], word_size, shape, fortran_order, little_endian, data_type);
 
-  visp::cnpy::NpyArray array(shape, word_size, fortran_order);
+  visp::cnpy::NpyArray array(shape, word_size, fortran_order, data_type);
 
   size_t offset = uncompr_bytes - array.num_bytes();
   memcpy(array.data<unsigned char>(), &buffer_uncompr[0]+offset, array.num_bytes());
@@ -414,12 +414,11 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
   host_is_LE = false;
 #endif
 
-  bool header_file_is_LE = true;
+  const bool header_file_is_LE = true;
   bool same_endianness = (host_is_LE == header_file_is_LE);
   while (!quit) {
     std::vector<char> local_header(val_30);
     size_t headerres = fread(&local_header[0], sizeof(char), val_30, closer.fp);
-    std::cerr << "headerres=" << headerres << std::endl;
     if (headerres != 30) {
       throw std::runtime_error("npz_load: failed fread 1");
     }
@@ -433,7 +432,6 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
       uint16_t name_len = swap16bits_if(*(uint16_t *)&local_header[index_26], !same_endianness);
       std::string varname(name_len, ' ');
       size_t vname_res = fread(&varname[0], sizeof(char), name_len, closer.fp);
-      std::cerr << "vname_res=" << vname_res << " ; name_len=" << name_len << std::endl;
       if (vname_res != name_len) {
         throw std::runtime_error("npz_load: failed fread 2");
       }
@@ -446,7 +444,6 @@ visp::cnpy::npz_t visp::cnpy::npz_load(const std::string &fname)
       if (extra_field_len > 0) {
         std::vector<char> buff(extra_field_len);
         size_t efield_res = fread(&buff[0], sizeof(char), extra_field_len, closer.fp);
-        std::cerr << "efield_res=" << efield_res << " ; extra_field_len=" << extra_field_len << std::endl;
         if (efield_res != extra_field_len) {
           throw std::runtime_error("npz_load: failed fread 3");
         }
@@ -512,7 +509,6 @@ visp::cnpy::NpyArray visp::cnpy::npz_load(const std::string &fname, const std::s
   while (!quit) {
     std::vector<char> local_header(val_30);
     size_t header_res = fread(&local_header[0], sizeof(char), val_30, closer.fp);
-    std::cerr << "header_res=" << header_res << std::endl;
     if (header_res != 30) {
       throw std::runtime_error("npz_load 2: failed fread");
     }
@@ -526,7 +522,6 @@ visp::cnpy::NpyArray visp::cnpy::npz_load(const std::string &fname, const std::s
       uint16_t name_len = swap16bits_if(*(uint16_t *)&local_header[index_26], !same_endianness);
       std::string vname(name_len, ' ');
       size_t vname_res = fread(&vname[0], sizeof(char), name_len, closer.fp);
-      std::cerr << "vname_res=" << vname_res << std::endl;
       if (vname_res != name_len) {
         throw std::runtime_error("npz_load 2: failed fread");
       }

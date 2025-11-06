@@ -97,8 +97,8 @@ namespace cnpy
 // license available in LICENSE file, or at http://www.opensource.org/licenses/mit-license.php
 struct NpyArray
 {
-  NpyArray(const std::vector<size_t> &_shape, size_t _word_size, bool _fortran_order) :
-    shape(_shape), word_size(_word_size), fortran_order(_fortran_order)
+  NpyArray(const std::vector<size_t> &_shape, size_t _word_size, bool _fortran_order, char _data_type) :
+    shape(_shape), word_size(_word_size), fortran_order(_fortran_order), data_type(_data_type)
   {
     num_vals = 1;
     for (size_t i = 0; i < shape.size(); ++i) num_vals *= shape[i];
@@ -137,6 +137,7 @@ struct NpyArray
   size_t word_size;
   bool fortran_order;
   size_t num_vals;
+  char data_type;
 };
 
 using npz_t = std::map<std::string, NpyArray>;
