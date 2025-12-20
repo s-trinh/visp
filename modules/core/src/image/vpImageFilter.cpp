@@ -590,14 +590,19 @@ void vpImageFilter::computePartialDerivatives(const cv::Mat &cv_I,
                                               const bool &computeDx, const bool &computeDy, const bool &normalize,
                                               const unsigned int &gaussianKernelSize, const float &gaussianStdev,
                                               const unsigned int &apertureGradient,
-                                              const vpImageFilter::vpCannyFilteringAndGradientType &filteringType)
+                                              const vpImageFilter::vpCannyFilteringAndGradientType &filteringType,
+                                              int nb_iters)
 {
   if ((filteringType == vpImageFilter::CANNY_GBLUR_SCHARR_FILTERING)
       || (filteringType == vpImageFilter::CANNY_GBLUR_SOBEL_FILTERING)) {
-    cv::Mat img_blur;
+    cv::Mat img_blur, img_blur_tmp;
     // Apply Gaussian blur to the image
     cv::Size gsz(gaussianKernelSize, gaussianKernelSize);
-    cv::GaussianBlur(cv_I, img_blur, gsz, gaussianStdev);
+    img_blur_tmp = cv_I.clone();
+    for (int iter = 0; iter < nb_iters; iter++) {
+      cv::GaussianBlur(img_blur_tmp, img_blur, gsz, gaussianStdev);
+      img_blur_tmp = img_blur.clone();
+    }
 
     // Compute the gradient of the blurred image
     if (filteringType == vpImageFilter::CANNY_GBLUR_SOBEL_FILTERING) {
@@ -609,10 +614,10 @@ void vpImageFilter::computePartialDerivatives(const cv::Mat &cv_I,
         }
       }
       if (computeDx) {
-        cv::Sobel(img_blur, cv_dIx, CV_16S, 1, 0, apertureGradient, scale, 0., cv::BORDER_REPLICATE);
+        cv::Sobel(img_blur, cv_dIx, CV_32F, 1, 0, apertureGradient, scale, 0., cv::BORDER_REPLICATE);
       }
       if (computeDy) {
-        cv::Sobel(img_blur, cv_dIy, CV_16S, 0, 1, apertureGradient, scale, 0., cv::BORDER_REPLICATE);
+        cv::Sobel(img_blur, cv_dIy, CV_32F, 0, 1, apertureGradient, scale, 0., cv::BORDER_REPLICATE);
       }
     }
     else if (filteringType == vpImageFilter::CANNY_GBLUR_SCHARR_FILTERING) {
@@ -621,10 +626,10 @@ void vpImageFilter::computePartialDerivatives(const cv::Mat &cv_I,
         scale = 1. / 32.;
       }
       if (computeDx) {
-        cv::Scharr(img_blur, cv_dIx, CV_16S, 1, 0, scale);
+        cv::Scharr(img_blur, cv_dIx, CV_32F, 1, 0, scale);
       }
       if (computeDy) {
-        cv::Scharr(img_blur, cv_dIy, CV_16S, 0, 1, scale);
+        cv::Scharr(img_blur, cv_dIy, CV_32F, 0, 1, scale);
       }
     }
   }
@@ -641,7 +646,8 @@ void vpImageFilter::computePartialDerivatives<unsigned char, float>(const vpImag
                                                                     const unsigned int &gaussianKernelSize, const float &gaussianStdev,
                                                                     const unsigned int &apertureGradient,
                                                                     const vpCannyFilteringAndGradientType &filteringType,
-                                                                    const vpCannyBackendType &backend, const vpImage<bool> *p_mask);
+                                                                    const vpCannyBackendType &backend, const vpImage<bool> *p_mask,
+                                                                    int nb_iters);
 
 template
 void vpImageFilter::computePartialDerivatives<unsigned char, double>(const vpImage<unsigned char> &I,
@@ -650,7 +656,8 @@ void vpImageFilter::computePartialDerivatives<unsigned char, double>(const vpIma
                                                                      const unsigned int &gaussianKernelSize, const double &gaussianStdev,
                                                                      const unsigned int &apertureGradient,
                                                                      const vpCannyFilteringAndGradientType &filteringType,
-                                                                     const vpCannyBackendType &backend, const vpImage<bool> *p_mask);
+                                                                     const vpCannyBackendType &backend, const vpImage<bool> *p_mask,
+                                                                     int nb_iters);
 
 template
 void vpImageFilter::computePartialDerivatives<float, float>(const vpImage<float> &I,
@@ -659,7 +666,8 @@ void vpImageFilter::computePartialDerivatives<float, float>(const vpImage<float>
                                                             const unsigned int &gaussianKernelSize, const float &gaussianStdev,
                                                             const unsigned int &apertureGradient,
                                                             const vpCannyFilteringAndGradientType &filteringType,
-                                                            const vpCannyBackendType &backend, const vpImage<bool> *p_mask);
+                                                            const vpCannyBackendType &backend, const vpImage<bool> *p_mask,
+                                                            int nb_iters);
 
 template
 void vpImageFilter::computePartialDerivatives<float, double>(const vpImage<float> &I,
@@ -668,7 +676,8 @@ void vpImageFilter::computePartialDerivatives<float, double>(const vpImage<float
                                                              const unsigned int &gaussianKernelSize, const double &gaussianStdev,
                                                              const unsigned int &apertureGradient,
                                                              const vpCannyFilteringAndGradientType &filteringType,
-                                                             const vpCannyBackendType &backend, const vpImage<bool> *p_mask);
+                                                             const vpCannyBackendType &backend, const vpImage<bool> *p_mask,
+                                                             int nb_iters);
 
 template
 void vpImageFilter::computePartialDerivatives<double, float>(const vpImage<double> &I,
@@ -677,7 +686,8 @@ void vpImageFilter::computePartialDerivatives<double, float>(const vpImage<doubl
                                                              const unsigned int &gaussianKernelSize, const float &gaussianStdev,
                                                              const unsigned int &apertureGradient,
                                                              const vpCannyFilteringAndGradientType &filteringType,
-                                                             const vpCannyBackendType &backend, const vpImage<bool> *p_mask);
+                                                             const vpCannyBackendType &backend, const vpImage<bool> *p_mask,
+                                                             int nb_iters);
 
 template
 void vpImageFilter::computePartialDerivatives<double, double>(const vpImage<double> &I,
@@ -686,7 +696,8 @@ void vpImageFilter::computePartialDerivatives<double, double>(const vpImage<doub
                                                               const unsigned int &gaussianKernelSize, const double &gaussianStdev,
                                                               const unsigned int &apertureGradient,
                                                               const vpCannyFilteringAndGradientType &filteringType,
-                                                              const vpCannyBackendType &backend, const vpImage<bool> *p_mask);
+                                                              const vpCannyBackendType &backend, const vpImage<bool> *p_mask,
+                                                              int nb_iters);
 
 template
 float vpImageFilter::computeCannyThreshold<double>(const vpImage<unsigned char> &I, float &lowerThresh,

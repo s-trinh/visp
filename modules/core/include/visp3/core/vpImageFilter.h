@@ -144,7 +144,8 @@ public:
                                         const bool &computeDx = true, const bool &computeDy = true, const bool &normalize = true,
                                         const unsigned int &gaussianKernelSize = 5, const float &gaussianStdev = 2.f,
                                         const unsigned int &apertureGradient = 3,
-                                        const vpCannyFilteringAndGradientType &filteringType = CANNY_GBLUR_SOBEL_FILTERING);
+                                        const vpCannyFilteringAndGradientType &filteringType = CANNY_GBLUR_SOBEL_FILTERING,
+                                        int nb_iters = 1);
 #endif
 
   /**
@@ -175,14 +176,14 @@ public:
                                                const unsigned int &apertureGradient = 3,
                                                const vpCannyFilteringAndGradientType &filteringType = CANNY_GBLUR_SOBEL_FILTERING,
                                                const vpCannyBackendType &backend = CANNY_VISP_BACKEND,
-                                               const vpImage<bool> *p_mask = nullptr)
+                                               const vpImage<bool> *p_mask = nullptr, int nb_iters = 1)
   {
     if (backend == CANNY_OPENCV_BACKEND) {
 #if defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC)
       cv::Mat cv_I, cv_dIx, cv_dIy;
       vpImageConvert::convert(I, cv_I);
       computePartialDerivatives(cv_I, cv_dIx, cv_dIy, computeDx, computeDy, normalize, gaussianKernelSize,
-                                static_cast<float>(gaussianStdev), apertureGradient, filteringType);
+                                static_cast<float>(gaussianStdev), apertureGradient, filteringType, nb_iters);
       if (computeDx) {
         vpImageConvert::convert(cv_dIx, dIx);
       }
@@ -277,7 +278,8 @@ public:
                                                const unsigned int &gaussianKernelSize = 5, const FilterType &gaussianStdev = 2.f,
                                                const unsigned int &apertureGradient = 3,
                                                const vpCannyFilteringAndGradientType &filteringType = CANNY_GBLUR_SOBEL_FILTERING,
-                                               const vpCannyBackendType &backend = CANNY_VISP_BACKEND, const vpImage<bool> *p_mask = nullptr) = delete;
+                                               const vpCannyBackendType &backend = CANNY_VISP_BACKEND, const vpImage<bool> *p_mask = nullptr,
+                                               int nb_iters = 1) = delete;
 
   template <typename ImageType>
   inline static void computePartialDerivatives(const vpImage<ImageType> &I,
@@ -286,7 +288,8 @@ public:
                                                const unsigned int &gaussianKernelSize = 5, const unsigned char &gaussianStdev = 2.f,
                                                const unsigned int &apertureGradient = 3,
                                                const vpCannyFilteringAndGradientType &filteringType = CANNY_GBLUR_SOBEL_FILTERING,
-                                               const vpCannyBackendType &backend = CANNY_VISP_BACKEND, const vpImage<bool> *p_mask = nullptr) = delete;
+                                               const vpCannyBackendType &backend = CANNY_VISP_BACKEND, const vpImage<bool> *p_mask = nullptr,
+                                               int nb_iters = 1) = delete;
 
   template <typename ImageType>
   inline static void computePartialDerivatives(const vpImage<ImageType> &I,
@@ -295,7 +298,8 @@ public:
                                                const unsigned int gaussianKernelSize = 5, const vpRGBa gaussianStdev = vpRGBa(),
                                                const unsigned int apertureGradient = 3,
                                                const vpCannyFilteringAndGradientType &filteringType = CANNY_GBLUR_SOBEL_FILTERING,
-                                               const vpCannyBackendType &backend = CANNY_VISP_BACKEND, const vpImage<bool> *p_mask = nullptr) = delete;
+                                               const vpCannyBackendType &backend = CANNY_VISP_BACKEND, const vpImage<bool> *p_mask = nullptr,
+                                               int nb_iters = 1) = delete;
 #else
   template <typename FilterType>
   inline static void computePartialDerivatives(const vpImage<vpRGBa> &I,
@@ -304,7 +308,8 @@ public:
                                                const unsigned int &gaussianKernelSize = 5, const FilterType &gaussianStdev = 2.f,
                                                const unsigned int &apertureGradient = 3,
                                                const vpCannyFilteringAndGradientType &filteringType = CANNY_GBLUR_SOBEL_FILTERING,
-                                               const vpCannyBackendType &backend = CANNY_VISP_BACKEND, const vpImage<bool> *p_mask = nullptr);
+                                               const vpCannyBackendType &backend = CANNY_VISP_BACKEND, const vpImage<bool> *p_mask = nullptr,
+                                               int nb_iters = 1);
 
   template <typename ImageType>
   inline static void computePartialDerivatives(const vpImage<ImageType> &I,
@@ -313,7 +318,8 @@ public:
                                                const unsigned int &gaussianKernelSize = 5, const unsigned char &gaussianStdev = 2.f,
                                                const unsigned int &apertureGradient = 3,
                                                const vpCannyFilteringAndGradientType &filteringType = CANNY_GBLUR_SOBEL_FILTERING,
-                                               const vpCannyBackendType &backend = CANNY_VISP_BACKEND, const vpImage<bool> *p_mask = nullptr);
+                                               const vpCannyBackendType &backend = CANNY_VISP_BACKEND, const vpImage<bool> *p_mask = nullptr,
+                                               int nb_iters = 1);
 
   template <typename ImageType>
   inline static void computePartialDerivatives(const vpImage<ImageType> &I,
@@ -322,7 +328,8 @@ public:
                                                const unsigned int gaussianKernelSize = 5, const vpRGBa gaussianStdev = vpRGBa(),
                                                const unsigned int apertureGradient = 3,
                                                const vpCannyFilteringAndGradientType &filteringType = CANNY_GBLUR_SOBEL_FILTERING,
-                                               const vpCannyBackendType &backend = CANNY_VISP_BACKEND, const vpImage<bool> *p_mask = nullptr);
+                                               const vpCannyBackendType &backend = CANNY_VISP_BACKEND, const vpImage<bool> *p_mask = nullptr,
+                                               int nb_iters = 1);
 #endif
 
   /**

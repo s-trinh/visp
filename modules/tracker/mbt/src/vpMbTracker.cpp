@@ -2138,7 +2138,7 @@ void vpMbTracker::loadCAOModel(const std::string &modelFile, std::vector<std::st
 #if defined(VISP_HAVE_THREADS)
       std::lock_guard<std::mutex> lock(g_mutex_cout);
 #endif
-      std::cout << "> " << caoNbrPoint << " points" << std::endl;
+      // std::cout << "> " << caoNbrPoint << " points" << std::endl;
     }
 
     if (caoNbrPoint > maxDataCAO) {
@@ -2188,7 +2188,7 @@ void vpMbTracker::loadCAOModel(const std::string &modelFile, std::vector<std::st
 #if defined(VISP_HAVE_THREADS)
       std::lock_guard<std::mutex> lock(g_mutex_cout);
 #endif
-      std::cout << "> " << caoNbrLine << " lines" << std::endl;
+      // std::cout << "> " << caoNbrLine << " lines" << std::endl;
     }
 
     if (caoNbrLine > maxDataCAO) {
@@ -2270,7 +2270,7 @@ void vpMbTracker::loadCAOModel(const std::string &modelFile, std::vector<std::st
 #if defined(VISP_HAVE_THREADS)
       std::lock_guard<std::mutex> lock(g_mutex_cout);
 #endif
-      std::cout << "> " << caoNbrPolygonLine << " polygon lines" << std::endl;
+      // std::cout << "> " << caoNbrPolygonLine << " polygon lines" << std::endl;
     }
 
     if (caoNbrPolygonLine > maxDataCAO) {
@@ -2360,7 +2360,7 @@ void vpMbTracker::loadCAOModel(const std::string &modelFile, std::vector<std::st
 #if defined(VISP_HAVE_THREADS)
       std::lock_guard<std::mutex> lock(g_mutex_cout);
 #endif
-      std::cout << "> " << caoNbrPolygonPoint << " polygon points" << std::endl;
+      // std::cout << "> " << caoNbrPolygonPoint << " polygon points" << std::endl;
     }
 
     if (caoNbrPolygonPoint > maxDataCAO) {
@@ -2433,7 +2433,7 @@ void vpMbTracker::loadCAOModel(const std::string &modelFile, std::vector<std::st
 #if defined(VISP_HAVE_THREADS)
         std::lock_guard<std::mutex> lock(g_mutex_cout);
 #endif
-        std::cout << "> " << caoNbCylinder << " cylinders" << std::endl;
+        // std::cout << "> " << caoNbCylinder << " cylinders" << std::endl;
       }
 
       if (caoNbCylinder > maxDataCAO) {
@@ -2524,7 +2524,7 @@ void vpMbTracker::loadCAOModel(const std::string &modelFile, std::vector<std::st
 #if defined(VISP_HAVE_THREADS)
           std::lock_guard<std::mutex> lock(g_mutex_cout);
 #endif
-          std::cout << "> " << caoNbCircle << " circles" << std::endl;
+          // std::cout << "> " << caoNbCircle << " circles" << std::endl;
         }
 
         if (caoNbCircle > maxDataCAO) {
@@ -2599,12 +2599,12 @@ void vpMbTracker::loadCAOModel(const std::string &modelFile, std::vector<std::st
 #if defined(VISP_HAVE_THREADS)
         std::lock_guard<std::mutex> lock(g_mutex_cout);
 #endif
-        std::cout << "> " << nbPoints << " points" << std::endl;
-        std::cout << "> " << nbLines << " lines" << std::endl;
-        std::cout << "> " << nbPolygonLines << " polygon lines" << std::endl;
-        std::cout << "> " << nbPolygonPoints << " polygon points" << std::endl;
-        std::cout << "> " << nbCylinders << " cylinders" << std::endl;
-        std::cout << "> " << nbCircles << " circles" << std::endl;
+        // std::cout << "> " << nbPoints << " points" << std::endl;
+        // std::cout << "> " << nbLines << " lines" << std::endl;
+        // std::cout << "> " << nbPolygonLines << " polygon lines" << std::endl;
+        // std::cout << "> " << nbPolygonPoints << " polygon points" << std::endl;
+        // std::cout << "> " << nbCylinders << " cylinders" << std::endl;
+        // std::cout << "> " << nbCircles << " circles" << std::endl;
       }
     }
 
