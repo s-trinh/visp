@@ -39,13 +39,13 @@
 #define XSTR(x) STR(x)
 #define STR(x) #x
 
+#pragma message "The value of VISP_CXX_STANDARD: " XSTR(VISP_CXX_STANDARD)
+#pragma message "The value of VISP_CXX_STANDARD_11: " XSTR(VISP_CXX_STANDARD_11)
+#pragma message "The value of VISP_CXX_STANDARD_14: " XSTR(VISP_CXX_STANDARD_14)
+#pragma message "The value of VISP_CXX_STANDARD_17: " XSTR(VISP_CXX_STANDARD_17)
+
 int main(int, const char **)
 {
-  #pragma message "The value of VISP_CXX_STANDARD: " XSTR(VISP_CXX_STANDARD)
-  #pragma message "The value of VISP_CXX_STANDARD_11: " XSTR(VISP_CXX_STANDARD_11)
-  #pragma message "The value of VISP_CXX_STANDARD_14: " XSTR(VISP_CXX_STANDARD_14)
-  #pragma message "The value of VISP_CXX_STANDARD_17: " XSTR(VISP_CXX_STANDARD_17)
-
 #if (VISP_CXX_STANDARD < VISP_CXX_STANDARD_11)
   std::cout << "Compiler with C++11 support is required." << std::endl;
 #else
@@ -54,8 +54,8 @@ int main(int, const char **)
   // std::cout << "ptr=" << *ptr << std::endl;
 #endif
 
-  int val = 5;
-  std::unique_ptr<int> ptr = std::make_unique<int>(val);
+  const int val = 5;
+  std::unique_ptr<int> ptr(new int(val));
   std::cout << "ptr=" << *ptr << std::endl;
 
   return EXIT_SUCCESS;
