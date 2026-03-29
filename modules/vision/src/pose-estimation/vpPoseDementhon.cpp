@@ -320,6 +320,8 @@ int vpPose::calculArbreDementhon(vpMatrix &Ap, vpColVector &U, vpHomogeneousMatr
       }
     }
 
+    std::cout << "\nerreur1=" << erreur1 << " ; erreur2=" << erreur2 << std::endl;
+
     if ((erreur1 == -1) && (erreur2 == -1)) {
       cMo = cMo_old;
       break; // outside of while due to z < 0
@@ -327,14 +329,19 @@ int vpPose::calculArbreDementhon(vpMatrix &Ap, vpColVector &U, vpHomogeneousMatr
     if ((erreur1 == 0) && (erreur2 == -1)) {
       cMo = cMo1;
       res_min = sqrt(computeResidualDementhon(cMo) / npt);
+      std::cout << "res_min1=" << res_min << std::endl;
     }
     if ((erreur1 == -1) && (erreur2 == 0)) {
       cMo = cMo2;
       res_min = sqrt(computeResidualDementhon(cMo) / npt);
+      std::cout << "res_min2=" << res_min << std::endl;
     }
     if ((erreur1 == 0) && (erreur2 == 0)) {
       double res1 = sqrt(computeResidualDementhon(cMo1) / npt);
       double res2 = sqrt(computeResidualDementhon(cMo2) / npt);
+      std::cout << "res1=" << res1 << " ; res2=" << res2 << std::endl;
+      std::cout << "cMo1=" << vpPoseVector(cMo1).t() << std::endl;
+      std::cout << "cMo2=" << vpPoseVector(cMo2).t() << std::endl;
       if (res1 <= res2) {
         res_min = res1;
         cMo = cMo1;
@@ -343,13 +350,16 @@ int vpPose::calculArbreDementhon(vpMatrix &Ap, vpColVector &U, vpHomogeneousMatr
         res_min = res2;
         cMo = cMo2;
       }
+      std::cout << "(res1 <= res2)? " << (res1 <= res2) << std::endl;
     }
 
+    std::cout << "(res_min > res_old)? " << (res_min > res_old) << std::endl;
     if (res_min > res_old) {
       cMo = cMo_old;
     }
     ++cpt;
   } /* end of while */
+  std::cout << "\n end of while" << std::endl;
 
   return erreur;
 }
@@ -458,6 +468,20 @@ void vpPose::poseDementhonPlan(vpHomogeneousMatrix &cMo)
   int erreur1 = calculArbreDementhon(Ap, U, cMo1);
   int erreur2 = calculArbreDementhon(Ap, U, cMo2);
 
+  vpPose pose_vvs = *this;
+  vpHomogeneousMatrix cMo1_vvs = cMo1;
+  pose_vvs.computePose(vpPose::VIRTUAL_VS, cMo1_vvs);
+
+  vpHomogeneousMatrix cMo2_vvs = cMo2;
+  pose_vvs.computePose(vpPose::VIRTUAL_VS, cMo2_vvs);
+
+  double res_1 = computeResidualDementhon(cMo1_vvs);
+  double res_2 = computeResidualDementhon(cMo2_vvs);
+
+  std::cout << "\n";
+  std::cout << "cMo1_vvs=" << vpPoseVector(cMo1_vvs).t() << " ; res=" << res_1 << std::endl;
+  std::cout << "cMo2_vvs=" << vpPoseVector(cMo2_vvs).t() << " ; res=" << res_2 << std::endl;
+
   if ((erreur1 == -1) && (erreur2 == -1)) {
     throw(
         vpException(vpException::fatalError, "Error in Dementhon planar: z < 0 with Start Tree 1 and Start Tree 2..."));
@@ -471,6 +495,22 @@ void vpPose::poseDementhonPlan(vpHomogeneousMatrix &cMo)
   if ((erreur1 == 0) && (erreur2 == 0)) {
     double s1 = computeResidualDementhon(cMo1);
     double s2 = computeResidualDementhon(cMo2);
+    std::cout << "\ns1=" << s1 << " ; s2=" << s2 << std::endl;
+
+    vpHomogeneousMatrix cMo1_trans = cMo1;
+    const unsigned int idTranslation = 3;
+    cMo1_trans[idX][idTranslation] -= ((cdg[idX] * cMo1_trans[idX][idX]) + (cdg[idY] * cMo1_trans[idX][idY]) + (cdg[idZ] * cMo1_trans[idX][idZ]));
+    cMo1_trans[idY][idTranslation] -= ((cdg[idX] * cMo1_trans[idY][idX]) + (cdg[idY] * cMo1_trans[idY][idY]) + (cdg[idZ] * cMo1_trans[idY][idZ]));
+    cMo1_trans[idZ][idTranslation] -= ((cdg[idX] * cMo1_trans[idZ][idX]) + (cdg[idY] * cMo1_trans[idZ][idY]) + (cdg[idZ] * cMo1_trans[idZ][idZ]));
+
+    vpHomogeneousMatrix cMo2_trans = cMo2;
+    cMo2_trans[idX][idTranslation] -= ((cdg[idX] * cMo2_trans[idX][idX]) + (cdg[idY] * cMo2_trans[idX][idY]) + (cdg[idZ] * cMo2_trans[idX][idZ]));
+    cMo2_trans[idY][idTranslation] -= ((cdg[idX] * cMo2_trans[idY][idX]) + (cdg[idY] * cMo2_trans[idY][idY]) + (cdg[idZ] * cMo2_trans[idY][idZ]));
+    cMo2_trans[idZ][idTranslation] -= ((cdg[idX] * cMo2_trans[idZ][idX]) + (cdg[idY] * cMo2_trans[idZ][idY]) + (cdg[idZ] * cMo2_trans[idZ][idZ]));
+
+    double s1_trans = computeResidualDementhon(cMo1_trans);
+    double s2_trans = computeResidualDementhon(cMo2_trans);
+    std::cout << "s1_trans=" << s1_trans << " ; s2_trans=" << s2_trans << std::endl;
 
     if (s1 <= s2) {
       cMo = cMo1;
@@ -483,6 +523,8 @@ void vpPose::poseDementhonPlan(vpHomogeneousMatrix &cMo)
   cMo[idX][idTranslation] -= ((cdg[idX] * cMo[idX][idX]) + (cdg[idY] * cMo[idX][idY]) + (cdg[idZ] * cMo[idX][idZ]));
   cMo[idY][idTranslation] -= ((cdg[idX] * cMo[idY][idX]) + (cdg[idY] * cMo[idY][idY]) + (cdg[idZ] * cMo[idY][idZ]));
   cMo[idZ][idTranslation] -= ((cdg[idX] * cMo[idZ][idX]) + (cdg[idY] * cMo[idZ][idY]) + (cdg[idZ] * cMo[idZ][idZ]));
+
+  std::cout << "\ncMo final=" << vpPoseVector(cMo).t() << std::endl;
 }
 
 double vpPose::computeResidualDementhon(const vpHomogeneousMatrix &cMo)
