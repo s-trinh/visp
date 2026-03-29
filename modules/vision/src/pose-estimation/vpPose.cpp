@@ -68,8 +68,8 @@ vpPose::vpPose()
   ransacNbInlierConsensus(def_ransacNbInlier), ransacMaxTrials(def_ransacMaxTrials), ransacInliers(), ransacInlierIndex(), ransacThreshold(0.0001),
   distToPlaneForCoplanarityTest(0.001), ransacFlag(vpPose::NO_FILTER), listOfPoints(), useParallelRansac(false),
   nbParallelRansacThreads(0), // 0 means that we use C++11 (if available) to get the number of threads
-  vvsEpsilon(1e-8)
-{ }
+  vvsEpsilon(1e-8), dementhon_fix(false)
+{}
 
 vpPose::vpPose(const std::vector<vpPoint> &lP)
   : npt(static_cast<unsigned int>(lP.size())), listP(lP.begin(), lP.end()), residual(0), m_lambda(0.9),
@@ -78,8 +78,8 @@ vpPose::vpPose(const std::vector<vpPoint> &lP)
   ransacInliers(), ransacInlierIndex(), ransacThreshold(0.0001), distToPlaneForCoplanarityTest(0.001),
   ransacFlag(vpPose::NO_FILTER), listOfPoints(lP), useParallelRansac(false),
   nbParallelRansacThreads(0), // 0 means that we use C++11 (if available) to get the number of threads
-  vvsEpsilon(1e-8)
-{ }
+  vvsEpsilon(1e-8), dementhon_fix(false)
+{}
 
 vpPose::~vpPose()
 {
@@ -391,9 +391,13 @@ bool vpPose::computePose(vpPoseMethodType method, vpHomogeneousMatrix &cMo, Func
     << "(at least " << minNbPtDementhon << " points are required)"
     << "Not enough point (" << npt << ") to compute the pose  ";
 
+  // TODO:
+  dementhon_fix = (method == DEMENTHON_FIX);
+
   switch (method) {
   case DEMENTHON:
   case DEMENTHON_VIRTUAL_VS:
+  case DEMENTHON_FIX:
   case DEMENTHON_LOWE: {
     if (npt < minNbPtDementhon) {
       throw(vpPoseException(vpPoseException::notEnoughPointError, errMsgDementhon.str()));
@@ -435,6 +439,7 @@ bool vpPose::computePose(vpPoseMethodType method, vpHomogeneousMatrix &cMo, Func
   switch (method) {
   case LAGRANGE:
   case DEMENTHON:
+  case DEMENTHON_FIX:
   case DEMENTHON_LAGRANGE_VIRTUAL_VS:
   case RANSAC:
     break;

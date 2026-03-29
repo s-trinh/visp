@@ -100,9 +100,10 @@ public:
                              initialized by Dementhon approach */
     LAGRANGE_VIRTUAL_VS,  /*!< Non linear virtual visual servoing approach
                              initialized by Lagrange approach */
-    DEMENTHON_LAGRANGE_VIRTUAL_VS /*!< Non linear virtual visual servoing approach
+    DEMENTHON_LAGRANGE_VIRTUAL_VS, /*!< Non linear virtual visual servoing approach
                              initialized by either Dementhon or Lagrange approach,
                              depending on which method has the smallest residual. */
+    DEMENTHON_FIX
   } vpPoseMethodType;
 
   /*!
@@ -835,6 +836,8 @@ private:
   //! Stop the optimization loop when the residual change (|r-r_prec|) <=
   //! epsilon
   double vvsEpsilon;
+  // TODO:
+  bool dementhon_fix;
 
   /*!
    * Class dedicated to parallelize RANSAC.
@@ -852,7 +855,7 @@ private:
       m_func(func_), m_listOfUniquePoints(listOfUniquePoints_), m_nbInliers(0), m_ransacMaxTrials(ransacMaxTrials_),
       m_ransacNbInlierConsensus(ransacNbInlierConsensus_), m_ransacThreshold(ransacThreshold_),
       m_uniRand(initial_seed_)
-    { }
+    {}
 
     /*!
      * Operator() that calls Ransac.

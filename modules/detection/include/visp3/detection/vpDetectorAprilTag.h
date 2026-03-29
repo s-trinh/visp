@@ -365,6 +365,7 @@ public:
 #if defined(VISP_HAVE_APRILTAG_EXTENDED_API)
     HOMOGRAPHY_ORTHOGONAL_ITERATION, /*!< Pose from homography followed by a refinement by Orthogonal Iteration. */
 #endif
+    DEMENTHON_VIRTUAL_VS_FIX,
     POSE_COUNT                       /*!< Number of methods; used to stop iterating when parsing from/to string. */
   };
 

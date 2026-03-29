@@ -473,6 +473,7 @@ public:
     }
 
     m_mapOfCorrespondingPoseMethods[DEMENTHON_VIRTUAL_VS] = vpPose::DEMENTHON;
+    m_mapOfCorrespondingPoseMethods[DEMENTHON_VIRTUAL_VS_FIX] = vpPose::DEMENTHON_FIX;
     m_mapOfCorrespondingPoseMethods[LAGRANGE_VIRTUAL_VS] = vpPose::LAGRANGE;
   }
 
@@ -612,6 +613,7 @@ public:
     }
 
     m_mapOfCorrespondingPoseMethods[DEMENTHON_VIRTUAL_VS] = vpPose::DEMENTHON;
+    m_mapOfCorrespondingPoseMethods[DEMENTHON_VIRTUAL_VS_FIX] = vpPose::DEMENTHON_FIX;
     m_mapOfCorrespondingPoseMethods[LAGRANGE_VIRTUAL_VS] = vpPose::LAGRANGE;
 
     if (o.m_detections != nullptr) {
@@ -1091,7 +1093,7 @@ public:
 
     pose.addPoints(pts);
 
-    if ((m_poseEstimationMethod == DEMENTHON_VIRTUAL_VS)
+    if ((m_poseEstimationMethod == DEMENTHON_VIRTUAL_VS || m_poseEstimationMethod == DEMENTHON_VIRTUAL_VS_FIX)
        || (m_poseEstimationMethod == LAGRANGE_VIRTUAL_VS)
        || (m_poseEstimationMethod == BEST_RESIDUAL_VIRTUAL_VS)) {
       if (m_poseEstimationMethod == BEST_RESIDUAL_VIRTUAL_VS) {
@@ -1137,7 +1139,7 @@ public:
     }
 
     //if ((m_poseEstimationMethod != HOMOGRAPHY) && (m_poseEstimationMethod != HOMOGRAPHY_ORTHOGONAL_ITERATION)) {
-    if ((m_poseEstimationMethod == DEMENTHON_VIRTUAL_VS)
+    if ((m_poseEstimationMethod == DEMENTHON_VIRTUAL_VS || m_poseEstimationMethod == DEMENTHON_VIRTUAL_VS_FIX)
         || (m_poseEstimationMethod == LAGRANGE_VIRTUAL_VS)
         || (m_poseEstimationMethod == BEST_RESIDUAL_VIRTUAL_VS)
 #if defined(VISP_HAVE_APRILTAG_EXTENDED_API)
@@ -1387,7 +1389,7 @@ public:
     }
   }
 
-  void setRefineDecode(bool) { }
+  void setRefineDecode(bool) {}
 
   void setRefineEdges(bool refineEdges)
   {
@@ -1396,7 +1398,7 @@ public:
     }
   }
 
-  void setRefinePose(bool) { }
+  void setRefinePose(bool) {}
 
   void setPoseEstimationMethod(const vpPoseEstimationMethod &method)
   {
@@ -1552,7 +1554,7 @@ vpDetectorAprilTag::vpAprilTagFamily vpDetectorAprilTag::tagFamilyFromString(con
     throw(vpException(vpException::badValue, "Could not find a tag family that corresponds to the name '%s'", name.c_str()));
   }
   return res;
-  }
+}
 
 std::string vpDetectorAprilTag::getAvailableTagFamily(const std::string &prefix, const std::string &sep, const std::string &suffix)
 {
@@ -1572,7 +1574,7 @@ std::string vpDetectorAprilTag::getAvailableTagFamily(const std::string &prefix,
 #endif
   modes += tagFamilyToString(candidate) + suffix;
   return modes;
-  }
+}
 
 std::string vpDetectorAprilTag::poseMethodToString(const vpDetectorAprilTag::vpPoseEstimationMethod &method)
 {
@@ -1588,6 +1590,9 @@ std::string vpDetectorAprilTag::poseMethodToString(const vpDetectorAprilTag::vpP
 #endif
   case vpDetectorAprilTag::DEMENTHON_VIRTUAL_VS:
     name = "dementhon_virtual_vs";
+    break;
+  case vpDetectorAprilTag::DEMENTHON_VIRTUAL_VS_FIX:
+    name = "dementhon_virtual_vs_fix";
     break;
   case vpDetectorAprilTag::LAGRANGE_VIRTUAL_VS:
     name = "lagrange_virtual_vs";
@@ -1632,7 +1637,7 @@ vpDetectorAprilTag::vpPoseEstimationMethod vpDetectorAprilTag::poseMethodFromStr
     throw(vpException(vpException::badValue, "Could not find a pose estimation method that corresponds to the name '%s'", name.c_str()));
   }
   return res;
-  }
+}
 
 std::string vpDetectorAprilTag::getAvailablePoseMethod(const std::string &prefix, const std::string &sep, const std::string &suffix)
 {
@@ -1652,7 +1657,7 @@ std::string vpDetectorAprilTag::getAvailablePoseMethod(const std::string &prefix
 #endif
   modes += poseMethodToString(candidate) + suffix;
   return modes;
-  }
+}
 
 #ifdef VISP_HAVE_NLOHMANN_JSON
 void to_json(nlohmann::json &j, const vpDetectorAprilTag &detector)
@@ -1742,13 +1747,13 @@ vpDetectorAprilTag::vpDetectorAprilTag(const vpAprilTagFamily &tagFamily,
   : m_displayTag(false), m_displayTagColor(vpColor::none), m_displayTagThickness(def_tagThickness),
   m_poseEstimationMethod(poseEstimationMethod), m_tagFamily(tagFamily), m_defaultCam(),
   m_impl(new Impl(tagFamily, poseEstimationMethod))
-{ }
+{}
 
 vpDetectorAprilTag::vpDetectorAprilTag(const vpDetectorAprilTag &o)
   : vpDetectorBase(o), m_displayTag(false), m_displayTagColor(vpColor::none), m_displayTagThickness(def_tagThickness),
   m_poseEstimationMethod(o.m_poseEstimationMethod), m_tagFamily(o.m_tagFamily), m_defaultCam(),
   m_impl(new Impl(*o.m_impl))
-{ }
+{}
 
 vpDetectorAprilTag &vpDetectorAprilTag::operator=(vpDetectorAprilTag o)
 {
@@ -2301,5 +2306,5 @@ END_VISP_NAMESPACE
 #elif !defined(VISP_BUILD_SHARED_LIBS)
 // Work around to avoid warning: libvisp_core.a(vpDetectorAprilTag.cpp.o) has
 // no symbols
-void dummy_vpDetectorAprilTag() { }
+void dummy_vpDetectorAprilTag() {}
 #endif
