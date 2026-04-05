@@ -304,6 +304,11 @@ int vpPose::calculArbreDementhon(vpMatrix &Ap, vpColVector &U, vpHomogeneousMatr
     J04 = Ap * yprim;
 
     calculTwoSolutionsDementhonPlan(I04, J04, U, cMo1, cMo2);
+    if (dementhon_fix) {
+      vpPose pose_vvs = *this;
+      pose_vvs.computePose(vpPose::VIRTUAL_VS, cMo1);
+      pose_vvs.computePose(vpPose::VIRTUAL_VS, cMo2);
+    }
 
     // test if all points are in front of the camera for cMo1 and cMo2
     int erreur1 = 0;
@@ -454,6 +459,11 @@ void vpPose::poseDementhonPlan(vpHomogeneousMatrix &cMo)
 
   vpHomogeneousMatrix cMo1, cMo2;
   calculTwoSolutionsDementhonPlan(I04, J04, U, cMo1, cMo2);
+  if (dementhon_fix) {
+    vpPose pose_vvs = *this;
+    pose_vvs.computePose(vpPose::VIRTUAL_VS, cMo1);
+    pose_vvs.computePose(vpPose::VIRTUAL_VS, cMo2);
+  }
 
   int erreur1 = calculArbreDementhon(Ap, U, cMo1);
   int erreur2 = calculArbreDementhon(Ap, U, cMo2);
@@ -486,11 +496,13 @@ void vpPose::poseDementhonPlan(vpHomogeneousMatrix &cMo)
       double res_2 = computeResidualDementhon(cMo2_vvs);
       std::cout << "s1=" << s1 << " ; res_1=" << res_1 << " / s2=" << s2 << " ; res_2=" << res_2 << std::endl;
 
-      if (res_1/s1 < 0.95) {
+      // if (res_1/s1 < 0.975) {
+      if (res_1 < s1) {
         s1 = res_1;
         cMo1 = cMo1_vvs;
       }
-      if (res_2/s2 < 0.95) {
+      // if (res_2/s2 < 0.975) {
+      if (res_2 < s2) {
         s2 = res_2;
         cMo2 = cMo2_vvs;
       }

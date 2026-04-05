@@ -78,6 +78,7 @@ extern "C" {
 #include <visp3/core/vpDisplay.h>
 #include <visp3/core/vpIoTools.h>
 #include <visp3/core/vpPixelMeterConversion.h>
+#include <visp3/core/vpMeterPixelConversion.h>
 #include <visp3/core/vpPoint.h>
 #include <visp3/detection/vpDetectorAprilTag.h>
 #include <visp3/vision/vpPose.h>
@@ -996,8 +997,26 @@ public:
     apriltag_detection_t *det;
     zarray_get(m_detections, static_cast<int>(tagIndex), &det);
 
+    apriltag_detection_t *det_copy = NULL;
+    if ((m_poseEstimationMethod == HOMOGRAPHY) ||
+        (m_poseEstimationMethod == HOMOGRAPHY_VIRTUAL_VS) ||
+        (m_poseEstimationMethod == HOMOGRAPHY_ORTHOGONAL_ITERATION) ||
+        (m_poseEstimationMethod == BEST_RESIDUAL_VIRTUAL_VS)) {
+      det_copy = (apriltag_detection_t *)calloc(1, sizeof(apriltag_detection_t));
+      apriltag_detection_copy(det, det_copy);
+
+      if (cam.get_projModel() != vpCameraParameters::perspectiveProjWithoutDistortion) {
+        for (int cpt = 0; cpt < 4; cpt++) {
+          double x, y;
+          vpPixelMeterConversion::convertPoint(cam, det_copy->p[cpt][0], det_copy->p[cpt][1], x, y);
+          vpMeterPixelConversion::convertPoint(cam, x, y, det_copy->p[cpt][0], det_copy->p[cpt][1]);
+        }
+      }
+    }
+
     int nb_detections = zarray_size(m_detections);
     if (tagIndex >= static_cast<size_t>(nb_detections)) {
+      apriltag_detection_destroy(det_copy);
       return false;
     }
 
@@ -1015,7 +1034,7 @@ public:
       double cx = cam.get_u0(), cy = cam.get_v0();
 
       apriltag_detection_info_t info;
-      info.det = det;
+      info.det = det_copy;
       info.tagsize = tagSize;
       info.fx = fx;
       info.fy = fy;
@@ -1034,7 +1053,7 @@ public:
       double cx = cam.get_u0(), cy = cam.get_v0();
 
       apriltag_detection_info_t info;
-      info.det = det;
+      info.det = det_copy;
       info.tagsize = tagSize;
       info.fx = fx;
       info.fy = fy;
@@ -1165,8 +1184,9 @@ public:
                                 matd_create_data(nbRows, 1, data_p2), matd_create_data(nbRows, 1, data_p3) };
         matd_t *v[nbPoints];
         for (unsigned int i = 0; i < nbPoints; ++i) {
-          double data_v[] = { (det->p[i][0] - cam.get_u0()) / cam.get_px(), (det->p[i][1] - cam.get_v0()) / cam.get_py(),
-                             1 };
+          double x, y;
+          vpPixelMeterConversion::convertPoint(cam, det->p[i][0], det->p[i][1], x, y);
+          double data_v[] = { x, y, 1 };
           v[i] = matd_create_data(nbRows, 1, data_v);
         }
 
@@ -1224,6 +1244,7 @@ public:
       }
     }
 
+    apriltag_detection_destroy(det_copy);
     return true;
   }
 
