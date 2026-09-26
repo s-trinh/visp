@@ -1,0 +1,119 @@
+name: Orchestrator
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  schedule:
+    - cron: '0 2 * * SUN'
+  workflow_dispatch:
+
+jobs:
+  # priority 1
+  build_ubuntu-dep-apt:
+    uses: ./.github/workflows/ubuntu-dep-apt.yml
+
+  build_ubuntu-dep-src:
+    uses: ./.github/workflows/ubuntu-dep-src.yml
+
+  # priority 2
+  build_ios:
+    uses: ./.github/workflows/ios.yml
+    needs:
+      - build_ubuntu-dep-apt
+      - build_ubuntu-dep-src
+
+  build_macos-linux-namespace:
+    uses: ./.github/workflows/macos-linux-namespace.yml
+    needs:
+      - build_ubuntu-dep-apt
+      - build_ubuntu-dep-src
+
+  build_macos:
+    uses: ./.github/workflows/macos.yml
+    needs:
+      - build_ubuntu-dep-apt
+      - build_ubuntu-dep-src
+
+  build_nix:
+    uses: ./.github/workflows/nix.yml
+    needs:
+      - build_ubuntu-dep-apt
+      - build_ubuntu-dep-src
+
+  build_ros:
+    uses: ./.github/workflows/ros.yml
+    needs:
+      - build_ubuntu-dep-apt
+      - build_ubuntu-dep-src
+
+  build_ubuntu-isolated:
+    uses: ./.github/workflows/ubuntu-isolated.yml
+    needs:
+      - build_ubuntu-dep-apt
+      - build_ubuntu-dep-src
+
+  build_ubuntu-sanitizers:
+    uses: ./.github/workflows/ubuntu-sanitizers.yml
+    needs:
+      - build_ubuntu-dep-apt
+      - build_ubuntu-dep-src
+
+  build_ubuntu-ustk:
+    uses: ./.github/workflows/ubuntu-ustk.yml
+    needs:
+      - build_ubuntu-dep-apt
+      - build_ubuntu-dep-src
+
+  build_ubuntu-venv:
+    uses: ./.github/workflows/ubuntu-venv.yml
+    needs:
+      - build_ubuntu-dep-apt
+      - build_ubuntu-dep-src
+
+  # priority 3
+  build_coverage-pixi:
+    uses: ./.github/workflows/coverage-pixi.yml
+    needs:
+      - build_ios
+      - build_macos-linux-namespace
+      - build_nix
+      - build_ros
+      - build_ubuntu-isolated
+      - build_ubuntu-sanitizers
+      - build_ubuntu-ustk
+      - build_ubuntu-venv
+
+  build_other-arch-isolated:
+    uses: ./.github/workflows/other-arch-isolated.yml
+    needs:
+      - build_ios
+      - build_macos-linux-namespace
+      - build_nix
+      - build_ros
+      - build_ubuntu-isolated
+      - build_ubuntu-sanitizers
+      - build_ubuntu-ustk
+      - build_ubuntu-venv
+
+  build_other-arch:
+    uses: ./.github/workflows/other-arch.yml
+    needs:
+      - build_ios
+      - build_macos-linux-namespace
+      - build_nix
+      - build_ros
+      - build_ubuntu-isolated
+      - build_ubuntu-sanitizers
+      - build_ubuntu-ustk
+      - build_ubuntu-venv
+
+  build_valgrind:
+    uses: ./.github/workflows/valgrind.yml
+    needs:
+      - build_ios
+      - build_macos-linux-namespace
+      - build_nix
+      - build_ros
+      - build_ubuntu-isolated
+      - build_ubuntu-sanitizers
+      - build_ubuntu-ustk
+      - build_ubuntu-venv
