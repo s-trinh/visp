@@ -564,7 +564,7 @@ int main(int argc, const char **argv)
         else {
           cMo_prev = cMo;
           normError_prev = normError;
-          if (iter-1 > 1 && mu > 1e-12) {
+          if (iter > 2 && mu > 1e-12) {
             mu /= 10.0;
           }
 

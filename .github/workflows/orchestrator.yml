@@ -8,11 +8,11 @@ on:
 
 jobs:
   # priority 1
-  build_ubuntu-dep-apt:
-    uses: ./.github/workflows/ubuntu-dep-apt.yml
-
   build_ubuntu-dep-src:
     uses: ./.github/workflows/ubuntu-dep-src.yml
+
+  build_ubuntu-dep-apt:
+    uses: ./.github/workflows/ubuntu-dep-apt.yml
 
   # priority 2
   build_ios:
